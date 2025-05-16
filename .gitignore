@@ -4,7 +4,6 @@
 #
 .utmp/
 /[Ll]ibrary/
-/MonoChrome/[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
 /[Bb]uild/
@@ -50,16 +49,6 @@ ExportedObj/
 *.opendb
 *.VC.db
 
-# Rider
-.idea/
-*.sln.DotSettings
-*.DotSettings.user
-
-# User-specific files
-.DS_Store
-Thumbs.db
-
-
 # Unity3D generated meta files
 *.pidb.meta
 *.pdb.meta
@@ -84,3 +73,38 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# Unity 프로젝트 내부 무시할 항목
+MonoChrome/Library/
+MonoChrome/Temp/
+MonoChrome/Obj/
+MonoChrome/Build/
+MonoChrome/Builds/
+MonoChrome/Logs/
+MonoChrome/UserSettings/
+MonoChrome/MemoryCaptures/
+MonoChrome/Recordings/
+
+# JetBrains Rider
+MonoChrome/.idea/
+MonoChrome/*.sln.DotSettings
+MonoChrome/*.DotSettings.user
+
+# VS/Gradle
+MonoChrome/.vs/
+MonoChrome/.gradle/
+MonoChrome/*.csproj
+MonoChrome/*.sln
+MonoChrome/*.user
+MonoChrome/*.tmp
+
+# 기타
+MonoChrome/*.log
+MonoChrome/*.apk
+MonoChrome/*.unitypackage
+MonoChrome/*.aab
+MonoChrome/*.pdb
+MonoChrome/*.mdb
+MonoChrome/sysinfo.txt
+MonoChrome/.DS_Store
+MonoChrome/Thumbs.db
