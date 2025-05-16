@@ -50,6 +50,16 @@ ExportedObj/
 *.opendb
 *.VC.db
 
+# Rider
+.idea/
+*.sln.DotSettings
+*.DotSettings.user
+
+# User-specific files
+.DS_Store
+Thumbs.db
+
+
 # Unity3D generated meta files
 *.pidb.meta
 *.pdb.meta
