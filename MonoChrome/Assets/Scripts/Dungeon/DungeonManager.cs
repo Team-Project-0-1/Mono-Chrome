@@ -63,6 +63,7 @@ namespace MonoChrome.Dungeon
         
         private GameManager _gameManager;
         private UIManager _uiManager;
+        private DungeonUI _dungeonUI;
         
         private void Start()
         {
@@ -76,6 +77,76 @@ namespace MonoChrome.Dungeon
             else
             {
                 Debug.LogError("DungeonManager: GameManager instance not found");
+            }
+            
+            // DungeonUI 참조 가져오기
+            // 조금 딜레이를 주어 UI가 초기화될 시간 확보
+            StartCoroutine(FindDungeonUIWithDelay());
+        }
+        
+        private IEnumerator FindDungeonUIWithDelay()
+        {
+            // UI 초기화를 위해 1프레임 대기
+            yield return null;
+            
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas != null)
+            {
+                // Canvas에서 DungeonPanel 찾기
+                Transform dungeonPanelTransform = canvas.transform.Find("DungeonPanel");
+                
+                if (dungeonPanelTransform != null)
+                {
+                    // DungeonPanel에서 DungeonUI 컴포넌트 찾기
+                    _dungeonUI = dungeonPanelTransform.GetComponent<DungeonUI>();
+                    if (_dungeonUI == null)
+                    {
+                        _dungeonUI = dungeonPanelTransform.gameObject.AddComponent<DungeonUI>();
+                        Debug.Log("DungeonManager: Added DungeonUI component to existing DungeonPanel");
+                    }
+                    else
+                    {
+                        Debug.Log("DungeonManager: Found DungeonUI component on DungeonPanel");
+                    }
+                }
+                else
+                {
+                    // DungeonPanel이 없으면 생성
+                    GameObject dungeonPanel = new GameObject("DungeonPanel");
+                    dungeonPanel.transform.SetParent(canvas.transform, false);
+                    
+                    // UI 컴포넌트 추가
+                    RectTransform rectTransform = dungeonPanel.AddComponent<RectTransform>();
+                    rectTransform.anchorMin = new Vector2(0, 0);
+                    rectTransform.anchorMax = new Vector2(1, 1);
+                    rectTransform.offsetMin = Vector2.zero;
+                    rectTransform.offsetMax = Vector2.zero;
+                    
+                    // DungeonUI 컴포넌트 추가
+                    _dungeonUI = dungeonPanel.AddComponent<DungeonUI>();
+                    Debug.Log("DungeonManager: Created new DungeonPanel with DungeonUI component");
+                    
+                    // DungeonUI 초기화 시간 확보
+                    yield return null;
+                }
+            }
+            else
+            {
+                Debug.LogError("DungeonManager: Canvas not found in the scene");
+            }
+            
+            // 전체 씬에서 DungeonUI 컴포넌트 찾기 (탭백 방법)
+            if (_dungeonUI == null)
+            {
+                _dungeonUI = FindObjectOfType<DungeonUI>();
+                if (_dungeonUI != null)
+                {
+                    Debug.Log("DungeonManager: Found DungeonUI component in the scene");
+                }
+                else
+                {
+                    Debug.LogWarning("DungeonManager: DungeonUI component not found in the scene");
+                }
             }
         }
         
@@ -254,6 +325,16 @@ namespace MonoChrome.Dungeon
             {
                 Debug.LogError("DungeonManager: Cannot update dungeon UI - UIManager not found");
             }
+            
+            // 던전 정보 패널 및 상태 업데이트
+            if (_dungeonUI != null)
+            {
+                // 현재 층 및 방 정보 업데이트
+                _dungeonUI.UpdateStageInfo(_currentFloor + 1, _currentNodeIndex + 1);
+                
+                // 방 선택 패널 활성화 (새로운 메서드 활용)
+                _dungeonUI.ShowRoomSelectionPanel();
+            }
         }
         
         /// <summary>
@@ -306,36 +387,113 @@ namespace MonoChrome.Dungeon
         /// </summary>
         private void ProcessNodeByType(DungeonNode node)
         {
+            // DungeonUI 참조 업데이트
+            if (_dungeonUI == null)
+            {
+                _dungeonUI = FindObjectOfType<DungeonUI>();
+                if (_dungeonUI == null)
+                {
+                    Debug.LogError("DungeonManager: DungeonUI component not found during ProcessNodeByType");
+                }
+            }
+            
             switch (node.Type)
             {
                 case NodeType.Combat:
+                    Debug.Log("DungeonManager: Processing Combat node");
+                    
+                    // UI 패널 전환 - 전투 패널 활성화
+                    if (_gameManager != null)
+                    {
+                        _gameManager.SwitchPanel("CombatPanel");
+                    }
+                    
                     // 전투 시작
                     StartCombat("루멘 리퍼", CharacterType.Normal);
                     break;
                     
                 case NodeType.MiniBoss:
+                    Debug.Log("DungeonManager: Processing MiniBoss node");
+                    
+                    // UI 패널 전환 - 전투 패널 활성화
+                    if (_gameManager != null)
+                    {
+                        _gameManager.SwitchPanel("CombatPanel");
+                    }
+                    
                     // 미니보스 전투
                     StartCombat("그림자 수호자", CharacterType.MiniBoss);
                     break;
                     
                 case NodeType.Boss:
+                    Debug.Log("DungeonManager: Processing Boss node");
+                    
+                    // UI 패널 전환 - 전투 패널 활성화
+                    if (_gameManager != null)
+                    {
+                        _gameManager.SwitchPanel("CombatPanel");
+                    }
+                    
                     // 보스 전투
                     StartCombat("검은 심연", CharacterType.Boss);
                     break;
                     
                 case NodeType.Event:
+                    Debug.Log("DungeonManager: Processing Event node");
+                    
+                    // UI 패널 전환 - 이벤트 패널 활성화
+                    if (_dungeonUI != null)
+                    {
+                        _dungeonUI.ShowEventPanel();
+                    }
+                    else if (_gameManager != null)
+                    {
+                        // 폴백 - GameManager를 통한 패널 전환
+                        _gameManager.SwitchPanel("EventPanel");
+                    }
+                    
                     // 이벤트 발생
                     TriggerEvent();
                     break;
                     
                 case NodeType.Shop:
+                    Debug.Log("DungeonManager: Processing Shop node");
+                    
+                    // UI 패널 전환 - 상점 패널 활성화
+                    if (_dungeonUI != null)
+                    {
+                        _dungeonUI.ShowShopPanel();
+                    }
+                    else if (_gameManager != null)
+                    {
+                        // 폴백 - GameManager를 통한 패널 전환
+                        _gameManager.SwitchPanel("ShopPanel");
+                    }
+                    
                     // 상점 UI 표시
                     ShowShop();
                     break;
                     
                 case NodeType.Rest:
+                    Debug.Log("DungeonManager: Processing Rest node");
+                    
+                    // UI 패널 전환 - 휴식 패널 활성화
+                    if (_dungeonUI != null)
+                    {
+                        _dungeonUI.ShowRestPanel();
+                    }
+                    else if (_gameManager != null)
+                    {
+                        // 폴백 - GameManager를 통한 패널 전환
+                        _gameManager.SwitchPanel("RestPanel");
+                    }
+                    
                     // 휴식 효과 적용
                     ApplyRest();
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"DungeonManager: Unknown node type: {node.Type}");
                     break;
             }
         }
@@ -385,13 +543,16 @@ namespace MonoChrome.Dungeon
             }
             else
             {
-                Debug.LogError("DungeonManager: EventManager not found or currentNode is null");
+                Debug.LogWarning("DungeonManager: EventManager not found or currentNode is null");
                 
                 // 이벤트 매니저가 없는 경우에는 게임 상태만 변경
                 if (_gameManager != null)
                 {
                     _gameManager.ChangeState(GameManager.GameState.Event);
                 }
+                
+                // 일정 시간 후 방 완료 처리 (임시 코드)
+                StartCoroutine(AutoCompleteRoomAfterDelay(3f));
             }
         }
         
@@ -411,9 +572,10 @@ namespace MonoChrome.Dungeon
             }
             else
             {
-                Debug.LogError("DungeonManager: ShopManager not found or currentNode is null");
-                // 상점 허거타임 에러 처리
-                OnRoomCompleted(); // 방 종료
+                Debug.LogWarning("DungeonManager: ShopManager not found or currentNode is null");
+                
+                // ShopManager가 없는 경우 일정 시간 후 방 완료 처리
+                StartCoroutine(AutoCompleteRoomAfterDelay(3f));
             }
         }
         
@@ -434,7 +596,57 @@ namespace MonoChrome.Dungeon
                 player.Heal(healAmount);
                 
                 Debug.Log($"DungeonManager: Player healed for {healAmount}");
+                
+                // 휴식 UI 설정
+                SetupRestUI(healAmount);
+                
+                // 일정 시간 후 방 완료 처리 (임시 코드)
+                StartCoroutine(AutoCompleteRoomAfterDelay(2f));
             }
+        }
+        
+        /// <summary>
+        /// 휴식 UI 설정
+        /// </summary>
+        private void SetupRestUI(int healAmount)
+        {
+            if (_dungeonUI != null)
+            {
+                Transform restPanel = _dungeonUI.transform.Find("DungeonPanel/RestPanel");
+                if (restPanel != null)
+                {
+                    // 휴식 타이틀 텍스트 설정
+                    TMPro.TextMeshProUGUI restTitle = restPanel.Find("RestTitle")?.GetComponent<TMPro.TextMeshProUGUI>();
+                    if (restTitle != null)
+                    {
+                        restTitle.text = "휴식 지점";
+                    }
+                    
+                    // 휴식 설명 텍스트 설정
+                    TMPro.TextMeshProUGUI restDesc = restPanel.Find("RestDescription")?.GetComponent<TMPro.TextMeshProUGUI>();
+                    if (restDesc != null)
+                    {
+                        restDesc.text = $"휴식을 취하여 체력을 회복합니다. 회복량: {healAmount}HP";
+                    }
+                    
+                    // 휴식 버튼 설정
+                    UnityEngine.UI.Button restButton = restPanel.Find("RestButton")?.GetComponent<UnityEngine.UI.Button>();
+                    if (restButton != null)
+                    {
+                        restButton.onClick.RemoveAllListeners();
+                        restButton.onClick.AddListener(() => OnRoomCompleted());
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 일정 시간 후 방 활동 완료 처리 (임시 코드)
+        /// </summary>
+        private IEnumerator AutoCompleteRoomAfterDelay(float delayInSeconds)
+        {
+            yield return new WaitForSeconds(delayInSeconds);
+            OnRoomCompleted();
         }
         
         /// <summary>
@@ -444,12 +656,20 @@ namespace MonoChrome.Dungeon
         {
             Debug.Log("DungeonManager: Room activity completed");
             
-            // 다음 방 선택을 위한 준비 - 추후 구현
-            // 현재는 단순히 UI로 보여주지 않고 자동으로 던전 화면으로 복귀
+            // 던전 상태로 변경
             if (_gameManager != null)
             {
                 _gameManager.ChangeState(GameManager.GameState.Dungeon);
             }
+            
+            // DungeonUI가 있다면 방 선택 패널 활성화
+            if (_dungeonUI != null)
+            {
+                _dungeonUI.ShowRoomSelectionPanel();
+            }
+            
+            // UI 업데이트
+            UpdateDungeonUI();
         }
     }
 }

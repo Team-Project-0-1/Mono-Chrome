@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using MonoChrome.Dungeon;
+using MonoChrome.Managers;
 using UnityEngine;
+using DungeonManager = MonoChrome.Dungeon.DungeonManager;
 
 namespace MonoChrome
 {

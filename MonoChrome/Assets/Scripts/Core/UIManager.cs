@@ -27,6 +27,7 @@ namespace MonoChrome
         
         // UI 컴포넌트 참조
         private CombatUI _combatUI;
+        private DungeonUI _dungeonUI;
         #endregion
 
         #region Initialization
@@ -95,6 +96,17 @@ namespace MonoChrome
             if (_gameOverPanel != null) _gameOverPanel.SetActive(false);
             if (_victoryPanel != null) _victoryPanel.SetActive(false);
             if (_optionsPanel != null) _optionsPanel.SetActive(false);
+            
+            // DungeonUI 참조 찾기
+            if (_dungeonPanel != null)
+            {
+                _dungeonUI = _dungeonPanel.GetComponent<DungeonUI>();
+                if (_dungeonUI == null)
+                {
+                    _dungeonUI = _dungeonPanel.AddComponent<DungeonUI>();
+                    Debug.Log("UIManager: Added DungeonUI component to DungeonPanel");
+                }
+            }
             
             // CombatUI 참조 찾기
             if (_combatPanel != null)
@@ -165,6 +177,13 @@ namespace MonoChrome
         {
             Debug.Log("UIManager: Initializing Dungeon UI");
             // 던전 UI 초기화 로직 구현
+            
+            // DungeonUI 참조 업데이트
+            if (_dungeonUI == null && _dungeonPanel != null)
+            {
+                _dungeonUI = _dungeonPanel.GetComponent<DungeonUI>();
+                Debug.Log("UIManager: Updated DungeonUI reference");
+            }
         }
         
         /// <summary>
@@ -374,23 +393,96 @@ namespace MonoChrome
         {
             Debug.Log($"UIManager: Updating dungeon map with {nodes.Count} nodes, current position: {currentNodeIndex}");
             
-            // 던전 UI 참조 찾기
-            GameObject dungeonPanel = GameObject.Find("DungeonPanel");
-            if (dungeonPanel != null)
+            // DungeonPanel이 없을 경우 생성 시도
+            EnsureDungeonPanelExists();
+            
+            // DungeonUI 참조 업데이트
+            if (_dungeonUI == null && _dungeonPanel != null)
             {
-                DungeonUI dungeonUI = dungeonPanel.GetComponent<DungeonUI>();
-                if (dungeonUI != null)
+                _dungeonUI = _dungeonPanel.GetComponent<DungeonUI>();
+                Debug.Log($"UIManager: Attempting to find DungeonUI again: {(_dungeonUI != null ? "Found" : "Not Found")}");
+                
+                // DungeonUI 컴포넌트가 없으면 추가
+                if (_dungeonUI == null)
                 {
-                    dungeonUI.UpdateDungeonMap(nodes, currentNodeIndex);
+                    _dungeonUI = _dungeonPanel.AddComponent<DungeonUI>();
+                    Debug.Log("UIManager: Added DungeonUI component to panel");
                 }
-                else
+            }
+            
+            // DungeonUI로 맵 업데이트
+            if (_dungeonUI != null)
+            {
+                // DungeonPanel 활성화 확인
+                if (!_dungeonPanel.activeInHierarchy)
                 {
-                    Debug.LogError("UIManager: DungeonUI component not found on DungeonPanel");
+                    _dungeonPanel.SetActive(true);
+                    Debug.Log("UIManager: Activated DungeonPanel");
                 }
+                
+                _dungeonUI.UpdateDungeonMap(nodes, currentNodeIndex);
+                Debug.Log("UIManager: Updated dungeon map via DungeonUI");
             }
             else
             {
-                Debug.LogError("UIManager: DungeonPanel not found");
+                Debug.LogError("UIManager: DungeonUI component could not be initialized");
+            }
+        }
+        
+        /// <summary>
+        /// DungeonPanel이 존재하는지 확인하고 없으면 생성
+        /// </summary>
+        private void EnsureDungeonPanelExists()
+        {
+            if (_dungeonPanel != null) return;
+            
+            Debug.Log("UIManager: Searching for DungeonPanel...");
+            
+            // 방법 1: Canvas에서 찾기
+            Canvas canvas = FindObjectOfType<Canvas>();
+            if (canvas != null)
+            {
+                _dungeonPanel = canvas.transform.Find("DungeonPanel")?.gameObject;
+                Debug.Log($"UIManager: DungeonPanel in Canvas: {(_dungeonPanel != null ? "Found" : "Not Found")}");
+            }
+            
+            // 방법 2: 전체 씬에서 DungeonPanel 찾기
+            if (_dungeonPanel == null)
+            {
+                _dungeonPanel = GameObject.Find("DungeonPanel");
+                Debug.Log($"UIManager: DungeonPanel in scene: {(_dungeonPanel != null ? "Found" : "Not Found")}");
+            }
+            
+            // 방법 3: DungeonUI 컴포넌트로 찾기
+            if (_dungeonPanel == null)
+            {
+                DungeonUI dungeonUI = FindObjectOfType<DungeonUI>();
+                if (dungeonUI != null)
+                {
+                    _dungeonPanel = dungeonUI.gameObject;
+                    _dungeonUI = dungeonUI;
+                    Debug.Log("UIManager: Found DungeonPanel via DungeonUI component");
+                }
+            }
+            
+            // 방법 4: 없으면 생성
+            if (_dungeonPanel == null && canvas != null)
+            {
+                Debug.Log("UIManager: Creating new DungeonPanel");
+                _dungeonPanel = new GameObject("DungeonPanel");
+                _dungeonPanel.transform.SetParent(canvas.transform, false);
+                
+                // UI 컴포넌트 추가
+                RectTransform rectTransform = _dungeonPanel.AddComponent<RectTransform>();
+                rectTransform.anchorMin = Vector2.zero;
+                rectTransform.anchorMax = Vector2.one;
+                rectTransform.offsetMin = Vector2.zero;
+                rectTransform.offsetMax = Vector2.zero;
+                
+                // DungeonUI 컴포넌트 추가
+                _dungeonUI = _dungeonPanel.AddComponent<DungeonUI>();
+                
+                Debug.Log("UIManager: Created new DungeonPanel with DungeonUI component");
             }
         }
         #endregion

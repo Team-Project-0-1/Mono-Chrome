@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using MonoChrome;
 using MonoChrome.Combat;
-using MonoChrome.StatusEffects;
 using MonoChrome.Extensions;
 
 
@@ -132,7 +131,7 @@ namespace MonoChrome
         /// <param name="enemyType">적 유형</param>
         /// <param name="type">캐릭터 등급 (일반/엘리트/보스 등)</param>
         /// <returns>생성된 적 캐릭터</returns>
-        public EnemyCharacter CreateEnemyCharacter(string enemyType, MonoChrome.CharacterType type = MonoChrome.CharacterType.Normal)
+        public EnemyCharacter CreateEnemyCharacter(string enemyType, CharacterType type = CharacterType.Normal)
         {
             // 캐시에 있는지 확인
             string cacheKey = $"{enemyType}_{type}";

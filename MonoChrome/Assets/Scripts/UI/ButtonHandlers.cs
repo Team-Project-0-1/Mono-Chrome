@@ -114,11 +114,7 @@ namespace MonoChrome
                 }
                 
                 // 캐릭터 선택 판널 비활성화
-                if (_characterSelectionPanel != null)
-                {
-                    _characterSelectionPanel.SetActive(false);
-                    Debug.Log("ButtonHandlers: Character selection panel deactivated");
-                }
+
                 
                 // 캐릭터 생성
                 Debug.Log($"ButtonHandlers: Creating player character with sense type: {_selectedSenseType}");

@@ -75,7 +75,19 @@ namespace MonoChrome
                 {
                     Debug.Log($"GameManager: Current state is {_currentState}, maintaining current state");
                 }
+                
+                // 관리자 참조 다시 초기화
+                InitializeManagers();
+                
+                // 폰트 매니저 초기화
+                InitializeFontManager();
             }
+        }
+        
+        // 씬 로드 이벤트 구독 해제
+        private void OnDestroy()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
         #endregion
         
@@ -89,6 +101,8 @@ namespace MonoChrome
             Dungeon,
             Combat,
             Event,
+            Shop,
+            Rest,
             GameOver,
             Victory,
             Paused
@@ -112,9 +126,6 @@ namespace MonoChrome
                     _currentState = value;
                     OnGameStateChanged?.Invoke(_currentState);
                     Debug.Log($"Game State changed from {oldState} to {_currentState}");
-                    
-                    // 상태 변경 시 UI 자동 업데이트
-                    UpdateUIBasedOnGameState();
                 }
             }
         }
@@ -131,6 +142,7 @@ namespace MonoChrome
         public UIManager UIManager { get; private set; }
         public DungeonManager DungeonManager { get; private set; }
         public CombatManager CombatManager { get; private set; } // 네임스페이스 명시
+        private FontManager FontManager { get; set; }
         
         // 매니저 초기화
         private void InitializeManagers()
@@ -178,9 +190,46 @@ namespace MonoChrome
             }
             
             // 초기 게임 상태 설정
-            CurrentState = GameState.MainMenu;
+            if (_currentState.ToString() == "0")
+            {
+                CurrentState = GameState.MainMenu;
+            }
             
             Debug.Log("All managers initialized successfully");
+        }
+        
+        // 폰트 매니저 초기화
+        private void InitializeFontManager()
+        {
+            FontManager = FindObjectOfType<FontManager>();
+            if (FontManager == null)
+            {
+                GameObject fontManagerObject = new GameObject("FontManager");
+                FontManager = fontManagerObject.AddComponent<FontManager>();
+                fontManagerObject.transform.SetParent(transform);
+                Debug.Log("Created new FontManager");
+            }
+            else
+            {
+                Debug.Log("Found existing FontManager");
+            }
+        }
+        #endregion
+        
+        #region UI Panel Management
+        /// <summary>
+        /// UI 패널을 전환하는 메서드
+        /// </summary>
+        public void SwitchPanel(string panelName)
+        {
+            if (UIManager != null)
+            {
+                UIManager.OnPanelSwitched(panelName);
+            }
+            else
+            {
+                Debug.LogError($"GameManager: Cannot switch to panel {panelName} - UIManager is null");
+            }
         }
         #endregion
         
@@ -193,12 +242,12 @@ namespace MonoChrome
             // 캐릭터 선택 화면으로 전환
             ChangeState(GameState.CharacterSelection);
             
-            // 메인메뉴 씬이라면 캠릭터 선택 패널 활성화, 그렇지 않으면 씬 전환
+            // 메인메뉴 씬이라면 캐릭터 선택 패널 활성화, 그렇지 않으면 씬 전환
             string currentScene = SceneManager.GetActiveScene().name;
             if (currentScene == "MainMenu")
             {
                 Debug.Log("GameManager: Showing character selection panel in main menu");
-                SwitchToPanel("CharacterSelectionPanel");
+                SwitchPanel("CharacterSelectionPanel");
             }
             else
             {
@@ -216,7 +265,7 @@ namespace MonoChrome
             if (SceneManager.GetActiveScene().name != "GameScene")
             {
                 Debug.Log("GameManager: Loading GameScene");
-                // 씬 전환 - OnSceneLoaded 채가 던전 생성 처리
+                // 씬 전환 - OnSceneLoaded 콜백이 던전 생성 처리
                 SceneManager.LoadScene("GameScene");
                 return;
             }
@@ -226,34 +275,72 @@ namespace MonoChrome
             
             Debug.Log("GameManager: DungeonManager reference: " + (DungeonManager != null ? "Valid" : "NULL"));
 
-            
             try
             {
+                // UIManager 참조 확인 및 초기화 확인
+                if (UIManager == null)
+                {
+                    Debug.LogError("GameManager: UIManager is null! Reinitializing...");
+                    InitializeManagers();
+                }
+                
+                // UI가 준비되도록 UIManager에게 우선 패널 설정 요청
+                if (UIManager != null)
+                {
+                    // DungeonPanel 준비 확인
+                    UIManager.GetType().GetMethod("EnsureDungeonPanelExists", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.Invoke(UIManager, null);
+                }
+                
+                // DungeonManager 준비 확인
+                if (DungeonManager == null)
+                {
+                    Debug.LogError("GameManager: DungeonManager is still null! Creating new instance...");
+                    GameObject dmObj = new GameObject("DungeonManager");
+                    DungeonManager = dmObj.AddComponent<DungeonManager>();
+                    dmObj.transform.SetParent(transform);
+                }
+                
+                // UI와 DungeonManager가 모두 준비되었으면 던전 생성
                 if (DungeonManager != null)
                 {
                     Debug.Log("GameManager: Calling DungeonManager.GenerateNewDungeon()");
-                    DungeonManager.GenerateNewDungeon();
+                    // 코루틴으로 약간의 딜레이 후 던전 생성 시도 (UI가 준비될 시간 확보)
+                    StartCoroutine(GenerateDungeonWithDelay());
                 }
                 else
                 {
-                    Debug.LogError("GameManager: DungeonManager is null! Reinitializing...");
-                    InitializeManagers();
-                    
-                    // 재초기화 후 다시 확인
-                    Debug.Log("GameManager: DungeonManager after reinit: " + (DungeonManager != null ? "Valid" : "NULL"));
-                    if (DungeonManager != null)
-                    {
-                        DungeonManager.GenerateNewDungeon();
-                    }
-                    else
-                    {
-                        Debug.LogError("GameManager: Still cannot find DungeonManager after reinitializing!");
-                    }
+                    Debug.LogError("GameManager: Failed to initialize DungeonManager!");
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogError($"GameManager: Error in EnterDungeon: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+        
+        /// <summary>
+        /// 약간의 딜레이 후 던전 생성 시도 (UI 초기화 시간 확보)
+        /// </summary>
+        private IEnumerator GenerateDungeonWithDelay()
+        {
+            // 1프레임 대기하여 UI 초기화 시간 확보
+            yield return null;
+            
+            if (DungeonManager != null)
+            {
+                try
+                {
+                    DungeonManager.GenerateNewDungeon();
+                    Debug.Log("GameManager: Successfully generated dungeon after delay");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"GameManager: Error generating dungeon: {ex.Message}\n{ex.StackTrace}");
+                }
+            }
+            else
+            {
+                Debug.LogError("GameManager: DungeonManager is null in delayed dungeon generation!");
             }
         }
         
@@ -264,7 +351,7 @@ namespace MonoChrome
             ChangeState(GameState.Combat);
             
             // 패널 전환 처리
-            SwitchToPanel("CombatPanel");
+            SwitchPanel("CombatPanel");
             
             try
             {
@@ -286,6 +373,36 @@ namespace MonoChrome
             }
         }
         
+        // 이벤트 시작
+        public void StartEvent()
+        {
+            Debug.Log("GameManager: Starting event - transitioning to Event state");
+            ChangeState(GameState.Event);
+            
+            // 패널 전환 처리
+            SwitchPanel("EventPanel");
+        }
+        
+        // 상점 시작
+        public void StartShop()
+        {
+            Debug.Log("GameManager: Starting shop - transitioning to Shop state");
+            ChangeState(GameState.Shop);
+            
+            // 패널 전환 처리
+            SwitchPanel("ShopPanel");
+        }
+        
+        // 휴식 시작
+        public void StartRest()
+        {
+            Debug.Log("GameManager: Starting rest - transitioning to Rest state");
+            ChangeState(GameState.Rest);
+            
+            // 패널 전환 처리
+            SwitchPanel("RestPanel");
+        }
+        
         // 전투 종료
         public void EndCombat(bool victory)
         {
@@ -302,6 +419,27 @@ namespace MonoChrome
                 ChangeState(GameState.GameOver);
                 Debug.Log("Game over after defeat");
             }
+        }
+        
+        // 이벤트 종료
+        public void EndEvent()
+        {
+            Debug.Log("Event ended - returning to dungeon");
+            ChangeState(GameState.Dungeon);
+        }
+        
+        // 상점 종료
+        public void EndShop()
+        {
+            Debug.Log("Shop ended - returning to dungeon");
+            ChangeState(GameState.Dungeon);
+        }
+        
+        // 휴식 종료
+        public void EndRest()
+        {
+            Debug.Log("Rest ended - returning to dungeon");
+            ChangeState(GameState.Dungeon);
         }
         
         // 게임 오버
@@ -362,111 +500,6 @@ namespace MonoChrome
             Debug.Log("Returning to main menu - transitioning to MainMenu state");
             ChangeState(GameState.MainMenu);
             SceneManager.LoadScene("MainMenu");
-        }
-        #endregion
-        
-        #region UI Panel Management
-        /// <summary>
-        /// UI 패널을 전환하는 메서드
-        /// </summary>
-        /// <param name="panelName">활성화할 패널의 이름</param>
-        public void SwitchToPanel(string panelName)
-        {
-            try
-            {
-                Debug.Log($"GameManager: Attempting to switch to panel: {panelName}");
-        
-                // 캔버스 찾기
-                Canvas mainCanvas = FindObjectOfType<Canvas>();
-                if (mainCanvas == null)
-                {
-                    Debug.LogError("GameManager: No Canvas found in the scene!");
-                    return;
-                }
-        
-                // 모든 패널 비활성화 (Transform.Find를 사용하여 직접 자식 찾기)
-                foreach (Transform child in mainCanvas.transform)
-                {
-                    // 패널인지 확인 (이름이 "Panel"로 끝나는지)
-                    if (child.name.EndsWith("Panel"))
-                    {
-                        Debug.Log($"Found panel: {child.name}, setting inactive");
-                        child.gameObject.SetActive(false);
-                    }
-                }
-        
-                // 지정된 패널 활성화
-                Transform targetPanel = mainCanvas.transform.Find(panelName);
-                if (targetPanel != null)
-                {
-                    targetPanel.gameObject.SetActive(true);
-                    Debug.Log($"GameManager: Successfully switched to {panelName}");
-            
-                    // UI Manager 알림
-                    if (UIManager != null)
-                    {
-                        UIManager.OnPanelSwitched(panelName);
-                    }
-                }
-                else
-                {
-                    Debug.LogError($"GameManager: Could not find panel {panelName} as child of Canvas");
-                    // 모든 자식 로깅
-                    foreach (Transform child in mainCanvas.transform)
-                    {
-                        Debug.Log($"Canvas child: {child.name}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"GameManager: Error switching to panel {panelName}: {ex.Message}\n{ex.StackTrace}");
-            }
-        }
-        
-        /// <summary>
-        /// 게임 상태에 따라 적절한 UI 패널로 자동 전환
-        /// </summary>
-        private void UpdateUIBasedOnGameState()
-        {
-            UpdateUIBasedOnGameState(CurrentState);
-        }
-
-        /// <summary>
-        /// 지정된 게임 상태에 따라 UI 패널 전환
-        /// </summary>
-        /// <param name="state">활성화할 패널에 해당하는 게임 상태</param> 
-        private void UpdateUIBasedOnGameState(GameState state)
-        {
-            Debug.Log($"GameManager: Updating UI based on game state: {state}");
-            
-            switch (state)
-            {
-                case GameState.MainMenu:
-                    SwitchToPanel("MainMenuPanel");
-                    break;
-                case GameState.CharacterSelection:
-                    SwitchToPanel("CharacterSelectionPanel");
-                    break;
-                case GameState.Dungeon:
-                    SwitchToPanel("DungeonPanel");
-                    break;
-                case GameState.Combat:
-                    SwitchToPanel("CombatPanel");
-                    break;
-                case GameState.Event:
-                    SwitchToPanel("EventPanel");
-                    break;
-                case GameState.GameOver:
-                    SwitchToPanel("GameOverPanel");
-                    break;
-                case GameState.Victory:
-                    SwitchToPanel("VictoryPanel");
-                    break;
-                case GameState.Paused:
-                    SwitchToPanel("SettingsPanel");
-                    break;
-            }
         }
         #endregion
     }
