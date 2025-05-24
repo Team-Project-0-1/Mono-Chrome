@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using MonoChrome.Managers;
+using MonoChrome.Dungeon;
 using MonoChrome.StatusEffects;
+using MonoChrome.UI;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -28,6 +29,10 @@ namespace MonoChrome
         [SerializeField] private GameObject miniMapPanel;
         [SerializeField] private Transform nodesContainer;
         [SerializeField] private GameObject nodeButtonPrefab;
+        
+        [Header("노드 배치 시스템")]
+        [SerializeField] private NodePositionManager nodePositionManager;
+        [SerializeField] private bool useAdvancedPositioning = true;
         
         [Header("Player Status")]
         [SerializeField] private TextMeshProUGUI playerHealthText;
@@ -571,6 +576,78 @@ namespace MonoChrome
                 Destroy(child.gameObject);
             }
             
+            // 고급 노드 배치 시스템 사용
+            if (useAdvancedPositioning && nodePositionManager != null)
+            {
+                CreateNodesWithAdvancedPositioning(mapNodes, currentNodeIndex);
+            }
+            else
+            {
+                CreateNodesWithBasicPositioning(mapNodes, currentNodeIndex);
+            }
+        }
+        
+        /// <summary>
+        /// 고급 노드 배치 시스템을 사용한 노드 생성
+        /// </summary>
+        private void CreateNodesWithAdvancedPositioning(List<DungeonNode> mapNodes, int currentNodeIndex)
+        {
+            // NodePositionManager 초기화
+            if (nodePositionManager == null)
+            {
+                nodePositionManager = GetComponent<NodePositionManager>();
+                if (nodePositionManager == null)
+                {
+                    nodePositionManager = gameObject.AddComponent<NodePositionManager>();
+                }
+            }
+            
+            nodePositionManager.Initialize(nodesContainer as RectTransform);
+            
+            // 최적 위치 계산
+            List<Vector2> nodePositions = nodePositionManager.CalculateNodePositions(mapNodes.Count, true);
+            
+            // 노드 생성 및 배치
+            for (int i = 0; i < mapNodes.Count; i++)
+            {
+                if (mapNodes[i] == null) continue;
+                
+                try
+                {
+                    GameObject nodeObj = Instantiate(nodeButtonPrefab, nodesContainer);
+                    RectTransform nodeRect = nodeObj.GetComponent<RectTransform>();
+                    NodeUI nodeUI = nodeObj.GetComponent<NodeUI>();
+                    
+                    // 위치 설정
+                    if (nodeRect != null && i < nodePositions.Count)
+                    {
+                        nodeRect.anchoredPosition = nodePositions[i];
+                    }
+                    
+                    // 노드 UI 설정
+                    if (nodeUI != null)
+                    {
+                        nodeUI.SetupNode(mapNodes[i], mapNodes[i].ID == currentNodeIndex);
+                    }
+                    else
+                    {
+                        Debug.LogError("DungeonUI: NodeUI component missing on nodeButtonPrefab");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"DungeonUI: Error creating node UI with advanced positioning: {ex.Message}");
+                }
+            }
+            
+            Debug.Log($"DungeonUI: Created {mapNodes.Count} nodes with advanced positioning");
+        }
+        
+        /// <summary>
+        /// 기본 노드 배치 시스템 (레거시 지원)
+        /// </summary>
+        private void CreateNodesWithBasicPositioning(List<DungeonNode> mapNodes, int currentNodeIndex)
+        {
             // Create new nodes based on the dungeon map
             foreach (var node in mapNodes)
             {

@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 868994d12422a0d42a08d80cbccfdb37, type: 3}
+  m_Name: "\uBC15\uC7AC\uC11D"
+  m_EditorClassIdentifier: 
+  characterName: "\uBC15\uC7AC\uC11D"
+  description: "\uC601\uC801 \uC2DC\uC57C\uB85C \uBCF4\uB294 \uC218\uD589\uC790"
+  characterType: 1
+  senseType: 3
+  portrait: {fileID: 0}
+  maxHealth: 70
+  baseAttackPower: 6
+  baseDefensePower: 4
+  skillCooldown: 3
+  primaryEffectType: 7
+  secondaryEffectType: 8
+  patternSet: {fileID: 0}
+  skillName: "\uC8FC\uBB38 \uBC30\uCE58"
+  skillDescription: "\uB3D9\uC804 2\uAC1C \uC704\uCE58 \uAD50\uD658 + \uC800\uC8FC
+    +2"
+  skillType: 4
+  isEnemyBoss: 0
+  behaviorPriority: 0

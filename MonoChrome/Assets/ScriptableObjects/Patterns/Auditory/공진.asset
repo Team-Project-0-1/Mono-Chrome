@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1859244ddae71e4ab47df24cf26958f, type: 3}
+  m_Name: "\uACF5\uC9C4"
+  m_EditorClassIdentifier: 
+  patternName: "\uACF5\uC9C4"
+  description: "\uC99D\uD3ED \uC804\uBD80 \uC18C\uBAA8 \u2192 \uC218\uCE58 x2 \uB9CC\uD07C
+    \uD53C\uD574"
+  id: 15
+  icon: {fileID: 0}
+  patternType: 4
+  patternValue: 1
+  isAttack: 1
+  condition: {fileID: 0}
+  applicableCharacterTypes: 
+  applicableSenseTypes: 00000000
+  attackBonus: 0
+  defenseBonus: 0
+  specialEffect: "\uC99D\uD3ED \uC804\uBD80 \uC18C\uBAA8 \u2192 \uC218\uCE58 x2 \uB9CC\uD07C
+    \uD53C\uD574"
+  statusEffects: []
+  animationTrigger: 

@@ -96,72 +96,91 @@ namespace MonoChrome
             try
             {
                 Debug.Log("CombatUI: Initializing combat UI");
-                
+        
                 // 컴포넌트 참조 확인
                 ValidateComponents();
-                
-                // 메니저 참조 업데이트 확인
+        
+                // 매니저 참조 업데이트 확인
                 if (GameManager.Instance != null && combatManager == null)
                 {
                     // Core.GameManager에서 MonoChrome.Combat.CombatManager 참조 다시 시도
                     CombatManager managerWrapper = GameManager.Instance.CombatManager;
                     if (managerWrapper != null) {
-                        combatManager = managerWrapper.GetComponent<CombatManager>();
+                        combatManager = managerWrapper;
                     }
                     Debug.Log("CombatUI: Updated CombatManager reference during initialization");
                 }
-                
+        
                 // 초기 UI 상태 설정
                 if (activeSkillButton != null)
                 {
                     UpdateActiveSkillButton(false); // 초기에는 액티브 스킬 비활성화
                 }
-                
-                // 체력바 초기화
-                if (playerHealthBar != null && enemyHealthBar != null)
-                {
-                    // 체력바 초기 값 설정
-                    playerHealthBar.value = playerHealthBar.maxValue;
-                    enemyHealthBar.value = enemyHealthBar.maxValue;
-                    
-                    // 텍스트 초기화
-                    if (playerHealthText != null)
-                    {
-                        playerHealthText.text = $"{playerHealthBar.maxValue}/{playerHealthBar.maxValue}";
-                    }
-                    
-                    if (enemyHealthText != null)
-                    {
-                        enemyHealthText.text = $"{enemyHealthBar.maxValue}/{enemyHealthBar.maxValue}";
-                    }
-                    
-                    Debug.Log("CombatUI: Initialized health bars");
-                }
-                else
-                {
-                    Debug.LogWarning("CombatUI: Cannot initialize health bars - references are missing");
-                }
-                
+        
+                // 체력바 초기화 - 수정된 부분
+                InitializeHealthBars();
+        
                 // 상태 초기화
                 if (turnInfoText != null)
                 {
                     turnInfoText.text = "Turn: 1"; // 첫 턴으로 초기화
                 }
-                
+        
                 if (enemyIntentionText != null)
                 {
                     enemyIntentionText.text = "Enemy is preparing..."; // 적 의도 초기화
                 }
-                
+        
                 // 기존 UI 요소 정리
                 ClearUIElements();
-                
+        
                 Debug.Log("CombatUI: Combat UI initialized successfully");
             }
             catch (System.Exception ex)
             {
                 Debug.LogError($"CombatUI: Error initializing combat UI - {ex.Message}\n{ex.StackTrace}");
             }
+        }
+        
+        /// <summary>
+        /// 체력바 초기화 - 새로 추가된 메서드
+        /// </summary>
+        private void InitializeHealthBars()
+        {
+            // 체력바 참조 확인
+            if (playerHealthBar == null || enemyHealthBar == null)
+            {
+                ValidateComponents();
+        
+                if (playerHealthBar == null || enemyHealthBar == null)
+                {
+                    Debug.LogError("CombatUI: Failed to find health bar references");
+                    return;
+                }
+            }
+    
+            // 체력바 초기 값 설정
+            if (playerHealthBar != null)
+            {
+                playerHealthBar.value = playerHealthBar.maxValue;
+        
+                if (playerHealthText != null)
+                {
+                    playerHealthText.text = $"{Mathf.RoundToInt(playerHealthBar.maxValue)}/{Mathf.RoundToInt(playerHealthBar.maxValue)}";
+                }
+            }
+    
+            if (enemyHealthBar != null)
+            {
+                enemyHealthBar.value = enemyHealthBar.maxValue;
+        
+                if (enemyHealthText != null)
+                {
+                    enemyHealthText.text = $"{Mathf.RoundToInt(enemyHealthBar.maxValue)}/{Mathf.RoundToInt(enemyHealthBar.maxValue)}";
+                }
+            }
+    
+            Debug.Log("CombatUI: Health bars initialized");
         }
         
         /// <summary>

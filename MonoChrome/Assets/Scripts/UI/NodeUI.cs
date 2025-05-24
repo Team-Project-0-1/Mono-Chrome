@@ -1,5 +1,3 @@
-using MonoChrome.Dungeon;
-using MonoChrome.Managers;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;

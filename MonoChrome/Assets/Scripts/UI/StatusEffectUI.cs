@@ -1,178 +1,233 @@
 using MonoChrome.StatusEffects;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
-namespace MonoChrome
+namespace MonoChrome.UI
 {
+    /// <summary>
+    /// 상태 효과 UI 컴포넌트
+    /// Prefab에 붙여서 사용하는 전용 컴포넌트
+    /// </summary>
     public class StatusEffectUI : MonoBehaviour
     {
-        [SerializeField] private Image effectIcon;
-        [SerializeField] private TextMeshProUGUI stacksText;
-        [SerializeField] private TextMeshProUGUI durationText;
-        [SerializeField] private TooltipTrigger tooltipTrigger;
-
-        // Dictionary of effect descriptions for common status effects
-        private static readonly System.Collections.Generic.Dictionary<StatusEffectType, string> EffectDescriptions = 
-            new System.Collections.Generic.Dictionary<StatusEffectType, string>
+        [Header("UI References")]
+        [SerializeField] private Image backgroundImage;
+        [SerializeField] private Image iconImage;
+        [SerializeField] private Text nameText;
+        [SerializeField] private Text magnitudeText;
+        [SerializeField] private Text durationText;
+        
+        private StatusEffect _statusEffect;
+        
+        private void Awake()
         {
-            { StatusEffectType.Amplify, "공격력/방어력을 +1 획득하며 최대 10까지 누적된다. 증폭 1당 매 턴 1 자해 피해" },
-            { StatusEffectType.Mark, "적에게 부여한 수치만큼 다음번 자신의 공격 횟수를 증가 (턴 마다 누적 수치 1 감소)" },
-            { StatusEffectType.Curse, "턴마다 지속 고정 피해 (턴 마다 누적 수치 1 감소)" },
-            { StatusEffectType.Counter, "피격 시 수치당 적에게 2 고정 피해 (턴 마다 누적 수치 1 감소)" },
-            { StatusEffectType.Bleed, "방어력 무시 지속 피해 (턴 마다 누적 수치 1 감소)" },
-            { StatusEffectType.Resonance, "누적된 후 2턴 뒤 공명 수치만큼 즉시 피해" },
-            { StatusEffectType.Seal, "동전 n개 무작위 봉쇄 (턴 마다 누적 수치 1 감소)" },
-            { StatusEffectType.Crush, "방어력 1.5배 감소 (지속형 상태 효과)" },
-            { StatusEffectType.Poison, "턴마다 지속 피해 (턴 마다 누적 수치 1 감소)" },
-            { StatusEffectType.Burn, "즉시 피해 후 소멸" },
-            { StatusEffectType.MultiAttack, "여러번 연속 공격" }
-        };
-
-        // 전투 StatusEffect 설정
-        public void SetupEffect(StatusEffect effect)
+            ValidateReferences();
+        }
+        
+        /// <summary>
+        /// 참조 검증
+        /// </summary>
+        private void ValidateReferences()
         {
-            // Exit early if the passed effect is null
-            if (effect == null)
+            if (backgroundImage == null)
+                backgroundImage = GetComponent<Image>();
+                
+            if (nameText == null)
             {
-                Debug.LogError("Null StatusEffect passed to StatusEffectUI.SetupEffect");
-                gameObject.SetActive(false);
-                return;
-            }
-            
-            // Set the icon
-            string iconPath = $"Icons/StatusEffects/{effect.EffectType}Icon";
-            Sprite icon = Resources.Load<Sprite>(iconPath);
-            
-            if (icon != null)
-            {
-                effectIcon.sprite = icon;
-            }
-            else
-            {
-                Debug.LogWarning($"Status effect icon not found: {iconPath}");
-                // Load a default icon
-                effectIcon.sprite = Resources.Load<Sprite>("Icons/StatusEffects/DefaultIcon");
-            }
-            
-            // Set stacks text if more than 1, otherwise hide it
-            if (effect.Magnitude > 1)
-            {
-                stacksText.gameObject.SetActive(true);
-                stacksText.text = effect.Magnitude.ToString();
-            }
-            else
-            {
-                stacksText.gameObject.SetActive(false);
-            }
-            
-            // Set duration text if has duration, otherwise hide it
-            if (effect.RemainingDuration > 0)
-            {
-                durationText.gameObject.SetActive(true);
-                durationText.text = effect.RemainingDuration.ToString();
-            }
-            else
-            {
-                durationText.gameObject.SetActive(false);
-            }
-            
-            // Set up tooltip if available
-            if (tooltipTrigger != null)
-            {
-                tooltipTrigger.tooltipHeader = effect.EffectType.ToString();
-                tooltipTrigger.tooltipContent = GetEffectDescription(effect);
+                Text[] texts = GetComponentsInChildren<Text>();
+                if (texts.Length > 0)
+                    nameText = texts[0];
             }
         }
         
-        // 던전 StatusEffect 설정
-        public void SetupDungeonEffect(DungeonStatusEffect effect)
+        /// <summary>
+        /// 상태 효과 설정
+        /// </summary>
+        public void Setup(StatusEffect statusEffect)
         {
-            // Exit early if the passed effect is null
-            if (effect == null)
+            _statusEffect = statusEffect;
+            UpdateVisuals();
+        }
+        
+        /// <summary>
+        /// 비주얼 업데이트
+        /// </summary>
+        private void UpdateVisuals()
+        {
+            if (_statusEffect == null) return;
+            
+            // 배경 색상
+            if (backgroundImage != null)
             {
-                Debug.LogError("Null DungeonStatusEffect passed to StatusEffectUI.SetupDungeonEffect");
-                gameObject.SetActive(false);
-                return;
+                backgroundImage.color = GetStatusEffectColor(_statusEffect.EffectType);
             }
             
-            // Set the icon
-            if (effect.icon != null)
+            // 이름
+            if (nameText != null)
             {
-                effectIcon.sprite = effect.icon;
-            }
-            else
-            {
-                // Try to load the icon if not already set
-                string iconPath = $"Icons/StatusEffects/{effect.name}Icon";
-                Sprite icon = Resources.Load<Sprite>(iconPath);
-                
-                if (icon != null)
+                if (magnitudeText == null && durationText == null)
                 {
-                    effectIcon.sprite = icon;
-                    // Update the original effect's icon reference for future use
-                    effect.icon = icon;
+                    // 단일 텍스트인 경우 모든 정보를 표시
+                    nameText.text = $"{GetStatusEffectShortName(_statusEffect.EffectType)}\n{_statusEffect.Magnitude}";
                 }
                 else
                 {
-                    Debug.LogWarning($"Status effect icon not found: {iconPath}");
-                    // Load a default icon
-                    effectIcon.sprite = Resources.Load<Sprite>("Icons/StatusEffects/DefaultIcon");
+                    nameText.text = GetStatusEffectShortName(_statusEffect.EffectType);
                 }
             }
             
-            // Set stacks text if more than 1, otherwise hide it
-            if (effect.stacks > 1)
+            // 수치
+            if (magnitudeText != null)
             {
-                stacksText.gameObject.SetActive(true);
-                stacksText.text = effect.stacks.ToString();
-            }
-            else
-            {
-                stacksText.gameObject.SetActive(false);
+                magnitudeText.text = _statusEffect.Magnitude.ToString();
             }
             
-            // Set duration text if has duration, otherwise hide it
-            if (effect.duration > 0)
+            // 지속 시간
+            if (durationText != null)
             {
-                durationText.gameObject.SetActive(true);
-                durationText.text = effect.duration.ToString();
-            }
-            else if (effect.duration == -1) // Permanent effect
-            {
-                durationText.gameObject.SetActive(true);
-                durationText.text = "∞"; // Infinity symbol for permanent effects
-            }
-            else
-            {
-                durationText.gameObject.SetActive(false);
+                if (_statusEffect.RemainingDuration > 0)
+                {
+                    durationText.text = _statusEffect.RemainingDuration.ToString();
+                }
+                else
+                {
+                    durationText.text = "∞"; // 무한 지속
+                }
             }
             
-            // Set up tooltip if available
-            if (tooltipTrigger != null)
+            // 아이콘 (있다면)
+            if (iconImage != null)
             {
-                tooltipTrigger.tooltipHeader = effect.name;
-                tooltipTrigger.tooltipContent = GetDungeonEffectDescription(effect);
+                iconImage.color = GetStatusEffectColor(_statusEffect.EffectType);
             }
         }
         
-        private string GetEffectDescription(StatusEffect effect)
+        /// <summary>
+        /// 상태 효과 업데이트 (매 턴마다 호출)
+        /// </summary>
+        public void UpdateEffect()
         {
-            // Check if we have a pre-defined description for this effect
-            if (EffectDescriptions.TryGetValue(effect.EffectType, out string description))
+            if (_statusEffect != null)
             {
-                return $"{description} ({effect.Magnitude} 중첩, {effect.RemainingDuration} 턴 남음)";
+                UpdateVisuals();
             }
-            
-            // Default description for unknown effects
-            return $"{effect.EffectType}: 상태 효과, {effect.Magnitude} 중첩, {effect.RemainingDuration} 턴 남음";
         }
         
-        private string GetDungeonEffectDescription(DungeonStatusEffect effect)
+        /// <summary>
+        /// 상태 효과 색상 반환
+        /// </summary>
+        private Color GetStatusEffectColor(StatusEffectType effectType)
         {
-            // More general description for dungeon effects
-            string durationText = effect.duration == -1 ? "영구적" : effect.duration + " 턴 남음";
-            return $"{effect.name}: {effect.stacks} 중첩, {durationText}";
+            switch (effectType)
+            {
+                case StatusEffectType.Amplify:
+                    return new Color(0.8f, 0.5f, 0.0f); // 주황색
+                case StatusEffectType.Resonance:
+                    return new Color(0.8f, 0.8f, 0.2f); // 노란색
+                case StatusEffectType.Mark:
+                    return new Color(0.5f, 0.8f, 0.5f); // 녹색
+                case StatusEffectType.Bleed:
+                    return new Color(0.8f, 0.0f, 0.0f); // 빨간색
+                case StatusEffectType.Counter:
+                    return new Color(0.5f, 0.5f, 0.8f); // 파란색
+                case StatusEffectType.Crush:
+                    return new Color(0.5f, 0.2f, 0.0f); // 갈색
+                case StatusEffectType.Curse:
+                    return new Color(0.5f, 0.0f, 0.5f); // 보라색
+                case StatusEffectType.Seal:
+                    return new Color(0.2f, 0.2f, 0.2f); // 회색
+                default:
+                    return Color.gray;
+            }
         }
+        
+        /// <summary>
+        /// 상태 효과 짧은 이름 반환
+        /// </summary>
+        private string GetStatusEffectShortName(StatusEffectType effectType)
+        {
+            switch (effectType)
+            {
+                case StatusEffectType.Amplify:
+                    return "증폭";
+                case StatusEffectType.Resonance:
+                    return "공명";
+                case StatusEffectType.Mark:
+                    return "표식";
+                case StatusEffectType.Bleed:
+                    return "출혈";
+                case StatusEffectType.Counter:
+                    return "반격";
+                case StatusEffectType.Crush:
+                    return "분쇄";
+                case StatusEffectType.Curse:
+                    return "저주";
+                case StatusEffectType.Seal:
+                    return "봉인";
+                default:
+                    return "효과";
+            }
+        }
+        
+        /// <summary>
+        /// 던전 상태 효과 설정 (DungeonStatusEffect 용)
+        /// </summary>
+        public void SetupDungeonEffect(DungeonStatusEffect dungeonEffect)
+        {
+            if (dungeonEffect == null) return;
+            
+            // DungeonStatusEffect의 실제 프로퍼티 사용
+            StatusEffectType effectType = ParseEffectTypeFromName(dungeonEffect.name);
+            
+            // DungeonStatusEffect를 StatusEffect로 변환해서 기존 Setup 메서드 사용
+            StatusEffect statusEffect = new StatusEffect(
+                effectType,
+                dungeonEffect.stacks,  // magnitude 대신 stacks 사용
+                dungeonEffect.duration  // duration 사용
+            );
+            
+            Setup(statusEffect);
+        }
+        
+        /// <summary>
+        /// 문자열 이름에서 StatusEffectType 파싱
+        /// </summary>
+        private StatusEffectType ParseEffectTypeFromName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return StatusEffectType.None;
+            
+            // enum 이름으로 파싱 시도
+            if (System.Enum.TryParse<StatusEffectType>(name, true, out StatusEffectType result))
+            {
+                return result;
+            }
+            
+            // 한글 이름으로 매칭
+            switch (name.ToLower())
+            {
+                case "증폭": return StatusEffectType.Amplify;
+                case "공명": return StatusEffectType.Resonance;
+                case "표식": return StatusEffectType.Mark;
+                case "출혈": return StatusEffectType.Bleed;
+                case "반격": return StatusEffectType.Counter;
+                case "분쇄": return StatusEffectType.Crush;
+                case "저주": return StatusEffectType.Curse;
+                case "봉인": return StatusEffectType.Seal;
+                default: return StatusEffectType.None;
+            }
+        }
+        
+        /// <summary>
+        /// 상태 효과 설정 (레거시 지원용 별칭)
+        /// </summary>
+        public void SetupEffect(StatusEffect statusEffect)
+        {
+            Setup(statusEffect);
+        }
+        
+        /// <summary>
+        /// 상태 효과 반환
+        /// </summary>
+        public StatusEffect GetStatusEffect() => _statusEffect;
     }
 }

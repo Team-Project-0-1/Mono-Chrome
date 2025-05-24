@@ -17,6 +17,7 @@ namespace MonoChrome
         
         private void Start()
         {
+            Debug.Log("MainMenuController: Start() called!");
             InitializeUI();
             
             // GameManager가 없으면 생성

@@ -1,10 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
-namespace MonoChrome
+namespace MonoChrome.UI
 {
     /// <summary>
     /// 게임 시작 버튼을 직접 처리하는 단순한 핸들러

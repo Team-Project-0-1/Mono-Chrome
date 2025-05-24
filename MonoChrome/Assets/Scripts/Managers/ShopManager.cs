@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using MonoChrome.Managers;
+using MonoChrome.Dungeon;
 using UnityEngine;
 
 namespace MonoChrome

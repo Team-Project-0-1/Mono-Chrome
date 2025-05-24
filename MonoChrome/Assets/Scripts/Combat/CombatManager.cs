@@ -148,32 +148,35 @@ namespace MonoChrome.Combat
             try
             {
                 Debug.Log("CombatManager: Initializing combat");
-                
+        
                 // 전투 상태 초기화
                 _turnCount = 1;
                 _isPlayerTurn = true;
                 _isCombatActive = true;
-                
+        
                 // 캐릭터 생성 (임시 - 추후 캐릭터 매니저에서 관리)
                 CreateTempCharacters();
-                
+        
                 // 캐릭터 초기화
                 if (_playerCharacter != null)
                 {
                     _playerCharacter.ResetForCombat();
                 }
-                
+        
                 if (_enemyCharacter != null)
                 {
                     _enemyCharacter.ResetForCombat();
                 }
-                
+        
                 // UI 업데이트
                 UpdateCombatUI();
-                
+        
+                // 명시적으로 체력바 초기화 (중요: 추가된 부분)
+                InitializeHealthBars();
+        
                 // 첫 턴 시작
                 StartCoroutine(StartTurn());
-                
+        
                 Debug.Log("CombatManager: Combat initialized successfully");
             }
             catch (Exception ex)
@@ -183,31 +186,80 @@ namespace MonoChrome.Combat
         }
         
         /// <summary>
-        /// 임시 캐릭터 생성 (추후 캐릭터 매니저로 대체)
+        /// 체력바 명시적 초기화 - 새로 추가된 메서드
+        /// </summary>
+        private void InitializeHealthBars()
+        {
+            if (_uiManager == null)
+            {
+                _uiManager = FindObjectOfType<UIManager>();
+                if (_uiManager == null)
+                {
+                    Debug.LogError("CombatManager: Cannot initialize health bars - UIManager not found");
+                    return;
+                }
+            }
+    
+            // 플레이어와 적 체력 설정
+            if (_playerCharacter != null && _enemyCharacter != null)
+            {
+                Debug.Log($"CombatManager: Initializing health bars - Player: {_playerCharacter.CurrentHealth}/{_playerCharacter.MaxHealth}, Enemy: {_enemyCharacter.CurrentHealth}/{_enemyCharacter.MaxHealth}");
+        
+                try
+                {
+                    _uiManager.UpdateHealthBars(
+                        _playerCharacter.CurrentHealth,
+                        _playerCharacter.MaxHealth,
+                        _enemyCharacter.CurrentHealth,
+                        _enemyCharacter.MaxHealth
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"CombatManager: Error updating health bars - {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.LogError("CombatManager: Cannot initialize health bars - Characters not initialized");
+            }
+        }
+        
+        /// <summary>
+        /// 캐릭터 생성 (DataConnector 사용)
         /// </summary>
         private void CreateTempCharacters()
         {
-            // 플레이어 캐릭터 생성
-            _playerCharacter = new PlayerCharacter(
-                "모험가",
-                SenseType.Auditory,
-                100, // maxHealth
-                10,  // attackPower
-                5    // defensePower
-            );
+            // DataConnector를 통해 캐릭터 생성
+            DataConnector dataConnector = DataConnector.Instance;
+            
+            // 플레이어 캐릭터 생성 (기본으로 김훈희 사용)
+            _playerCharacter = dataConnector.CreatePlayerCharacter("김훈희");
+            if (_playerCharacter == null)
+            {
+                Debug.LogWarning("CombatManager: 플레이어 캐릭터 생성 실패, 기본 캐릭터 사용");
+                _playerCharacter = new PlayerCharacter(
+                    "모험가",
+                    SenseType.Auditory,
+                    80, 5, 5
+                );
+            }
             
             // 적 캐릭터 생성
-            _enemyCharacter = new EnemyCharacter(
-                "루멘 리퍼",
-                CharacterType.Normal,
-                80,  // maxHealth
-                8,   // attackPower
-                3,   // defensePower
-                StatusEffectType.Mark,      // primaryEffect
-                StatusEffectType.Bleed      // secondaryEffect
-            );
+            _enemyCharacter = dataConnector.CreateEnemyCharacter("루멘 리퍼");
+            if (_enemyCharacter == null)
+            {
+                Debug.LogWarning("CombatManager: 적 캐릭터 생성 실패, 기본 적 사용");
+                _enemyCharacter = new EnemyCharacter(
+                    "루멘 리퍼",
+                    CharacterType.Normal,
+                    60, 6, 3,
+                    StatusEffectType.Mark,
+                    StatusEffectType.Bleed
+                );
+            }
             
-            Debug.Log("CombatManager: Temporary characters created");
+            Debug.Log($"CombatManager: 캐릭터 생성 완료 - 플레이어: {_playerCharacter.CharacterName}, 적: {_enemyCharacter.CharacterName}");
         }
         
         /// <summary>
@@ -244,10 +296,17 @@ namespace MonoChrome.Combat
             // 패턴 확인
             if (_isPlayerTurn)
             {
-                // 플레이어 턴
-                List<Pattern> availablePatterns = _patternManager.DetermineAvailablePatterns(
-                    coinResults, _playerCharacter.GetAvailablePatterns()
-                );
+                // DataConnector를 통해 패턴 가져오기
+                DataConnector dataConnector = DataConnector.Instance;
+                List<Pattern> availablePatterns = dataConnector.GetAvailablePatterns(_playerCharacter.SenseType, coinResults.ToArray());
+                
+                Debug.Log($"CombatManager: DataConnector에서 {availablePatterns.Count}개의 패턴을 가져왔습니다.");
+                
+                // 패턴 정보 출력 (디버깅용)
+                foreach (Pattern pattern in availablePatterns)
+                {
+                    Debug.Log($"  - {pattern.Name}: {pattern.Description} (공격: {pattern.AttackBonus}, 방어: {pattern.DefenseBonus})");
+                }
                 
                 // UI에 패턴 선택지 표시
                 if (_uiManager != null)

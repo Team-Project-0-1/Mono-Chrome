@@ -99,7 +99,7 @@ namespace MonoChrome.Combat
         /// <param name="coinResults">동전 결과</param>
         /// <param name="availablePatterns">캐릭터가 가진 패턴 목록</param>
         /// <returns>사용 가능한 패턴 목록</returns>
-        public List<MonoChrome.Combat.Pattern> DetermineAvailablePatterns(List<bool> coinResults, List<MonoChrome.Combat.Pattern> availablePatterns)
+        public List<Pattern> DetermineAvailablePatterns(List<bool> coinResults, List<Pattern> availablePatterns)
         {
             if (coinResults == null || availablePatterns == null)
             {

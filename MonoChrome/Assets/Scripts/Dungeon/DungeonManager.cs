@@ -53,6 +53,12 @@ namespace MonoChrome.Dungeon
         [Range(0, 1)] [SerializeField] private float _eventRoomChance = 0.2f;
         [Range(0, 1)] [SerializeField] private float _shopRoomChance = 0.15f;
         [Range(0, 1)] [SerializeField] private float _restRoomChance = 0.15f;
+    
+        [Header("개선된 던전 생성기")]
+        [SerializeField] private ImprovedDungeonGenerator _improvedGenerator;
+        [SerializeField] private AdvancedDungeonGenerator _advancedGenerator;
+        [SerializeField] private bool _useImprovedGenerator = true;
+        [SerializeField] private bool _useAdvancedGenerator = true;
         
         [Header("현재 던전 상태")]
         [SerializeField] private int _currentFloor = 0;
@@ -184,34 +190,114 @@ namespace MonoChrome.Dungeon
         }
         
         /// <summary>
-        /// 던전 노드 생성
+        /// 던전 노드 생성 (최적화된 버전 사용)
         /// </summary>
         private void GenerateDungeonNodes()
         {
+            if (_useAdvancedGenerator)
+            {
+                GenerateDungeonNodesAdvanced();
+                return;
+            }
+            
+            if (_useImprovedGenerator)
+            {
+                GenerateDungeonNodesImproved();
+                return;
+            }
+            
+            // 기존 방식 (fallback)
+            GenerateDungeonNodesLegacy();
+        }
+        
+        /// <summary>
+        /// 고급 던전 노드 생성 (최신 버전)
+        /// </summary>
+        private void GenerateDungeonNodesAdvanced()
+        {
+            if (_advancedGenerator == null)
+            {
+                _advancedGenerator = gameObject.AddComponent<AdvancedDungeonGenerator>();
+            }
+            
+            _dungeonNodes = _advancedGenerator.GenerateAdvancedDungeon();
+            Debug.Log($"DungeonManager: Generated {_dungeonNodes.Count} nodes using advanced generator");
+        }
+        
+        /// <summary>
+        /// 개선된 던전 노드 생성
+        /// </summary>
+        private void GenerateDungeonNodesImproved()
+        {
+            if (_improvedGenerator == null)
+            {
+                _improvedGenerator = gameObject.AddComponent<ImprovedDungeonGenerator>();
+            }
+            
+            _dungeonNodes = _improvedGenerator.GenerateImprovedDungeon();
+            Debug.Log($"DungeonManager: Generated {_dungeonNodes.Count} nodes using improved generator");
+        }
+        
+        /// <summary>
+        /// 기존 던전 노드 생성 방식 (레거시)
+        /// </summary>
+        private void GenerateDungeonNodesLegacy()
+        {
             // ID 카운터
             int nextId = 0;
+            
+            // 스테이지별 노드 개수
+            int nodesPerStage = _roomsPerFloor;
+            
+            // 고정 스테이지 위치 (스테이지 진행에 따라 배치)
+            float xStep = 200f; // X축 간격
+            float yOffset = 150f; // Y축 분기 최대 간격
             
             // 시작 노드 생성 (시작 노드는 Combat 타입으로 설정)
             DungeonNode startNode = new DungeonNode(nextId++, NodeType.Combat, new Vector2(0, 0));
             startNode.IsAccessible = true;
             _dungeonNodes.Add(startNode);
             
-            // 중간 노드 생성
-            for (int i = 1; i < _roomsPerFloor - 1; i++)
+            // 분기 트리 구조를 위한 레벨별 노드 생성
+            for (int level = 1; level < nodesPerStage - 1; level++)
             {
+                // 각 레벨에서 생성할 노드 수 계산 (시작과 끝으로 갈수록 분기 줄임)
+                int nodesAtThisLevel = Mathf.Min(_branchCount, 
+                    Mathf.RoundToInt(_branchCount * (1f - Mathf.Abs(level - nodesPerStage/2) / (float)nodesPerStage)));
+                
+                // 최소 1개 이상
+                nodesAtThisLevel = Mathf.Max(1, nodesAtThisLevel);
+                
+                // 위치 스케일링 비율 (레벨에 따라 너비 조정)
+                float levelWidthScale = 1.0f;
+                if (level < 3 || level > nodesPerStage - 4)
+                    levelWidthScale = 0.5f; // 시작과 끝 부분은 더 좁게
+                
                 // 각 위치별로 분기 생성
-                for (int branch = 0; branch < _branchCount; branch++)
+                for (int branch = 0; branch < nodesAtThisLevel; branch++)
                 {
                     NodeType type = GetRandomNodeType();
                     
                     // 중간 보스방 설정 (5번째 방)
-                    if (i == 5)
+                    if (level == 5)
                     {
                         type = NodeType.MiniBoss;
                     }
                     
                     // 위치 계산 (x: 진행도, y: 분기)
-                    Vector2 position = new Vector2(i, branch - (_branchCount - 1) / 2.0f);
+                    // y값 계산 시 균등 분포하되 약간의 랜덤성 추가
+                    float yPos = 0;
+                    if (nodesAtThisLevel > 1)
+                    {
+                        // 정규화된 위치 (-1 ~ 1 범위)
+                        float normalizedPos = (branch / (float)(nodesAtThisLevel - 1)) * 2f - 1f;
+                        // 약간의 랜덤 오프셋 추가 (±10%)
+                        float randomOffset = Random.Range(-0.1f, 0.1f);
+                        yPos = (normalizedPos + randomOffset) * yOffset * levelWidthScale;
+                    }
+                    
+                    // 최종 위치 (x축은 레벨에 비례, y축은 분기 위치)
+                    Vector2 position = new Vector2(level * xStep, yPos);
                     
                     DungeonNode node = new DungeonNode(nextId++, type, position);
                     _dungeonNodes.Add(node);
@@ -219,7 +305,7 @@ namespace MonoChrome.Dungeon
             }
             
             // 보스 노드 생성
-            DungeonNode bossNode = new DungeonNode(nextId++, NodeType.Boss, new Vector2(_roomsPerFloor - 1, 0));
+            DungeonNode bossNode = new DungeonNode(nextId++, NodeType.Boss, new Vector2((nodesPerStage - 1) * xStep, 0));
             _dungeonNodes.Add(bossNode);
             
             // 노드 간 연결 설정
@@ -231,40 +317,65 @@ namespace MonoChrome.Dungeon
         /// </summary>
         private void ConnectNodes()
         {
-            // 각 위치별로 다음 위치의 노드와 연결
-            for (int i = 0; i < _roomsPerFloor - 1; i++)
+            // 스테이지별 노드 그룹화
+            Dictionary<int, List<DungeonNode>> nodesByLevel = new Dictionary<int, List<DungeonNode>>();
+            
+            // 각 노드를 x 위치에 따라 레벨별로 분류
+            foreach (DungeonNode node in _dungeonNodes)
             {
-                // 현재 위치의 노드 찾기
-                List<DungeonNode> currentPositionNodes = _dungeonNodes.FindAll(n => Mathf.RoundToInt(n.Position.x) == i);
+                // x 위치를 기준으로 레벨 계산 (200 단위로 나눔)
+                int level = Mathf.RoundToInt(node.Position.x / 200f);
                 
-                // 다음 위치의 노드 찾기
-                List<DungeonNode> nextPositionNodes = _dungeonNodes.FindAll(n => Mathf.RoundToInt(n.Position.x) == i + 1);
-                
-                // 연결 설정
-                foreach (DungeonNode currentNode in currentPositionNodes)
+                if (!nodesByLevel.ContainsKey(level))
                 {
-                    // 다음 위치에 노드가 1개만 있는 경우 (시작 노드 또는 보스 노드)
-                    if (nextPositionNodes.Count == 1)
+                    nodesByLevel[level] = new List<DungeonNode>();
+                }
+                
+                nodesByLevel[level].Add(node);
+            }
+            
+            // 각 레벨에서 다음 레벨로 연결
+            for (int level = 0; level < _roomsPerFloor - 1; level++)
+            {
+                // 현재 레벨과 다음 레벨의 노드 확인
+                if (!nodesByLevel.ContainsKey(level) || !nodesByLevel.ContainsKey(level + 1))
+                    continue;
+                    
+                List<DungeonNode> currentLevelNodes = nodesByLevel[level];
+                List<DungeonNode> nextLevelNodes = nodesByLevel[level + 1];
+                
+                // 모든 현재 레벨 노드에 대해
+                foreach (DungeonNode currentNode in currentLevelNodes)
+                {
+                    // 다음 레벨에 노드가 1개만 있는 경우 (시작 노드 또는 보스 노드로 연결되는 경우)
+                    if (nextLevelNodes.Count == 1)
                     {
-                        currentNode.ConnectedNodes.Add(nextPositionNodes[0].ID);
-                        // 첫 번째 노드에서 접근 가능한 모든 노드는 접근 가능 표시
+                        currentNode.ConnectedNodes.Add(nextLevelNodes[0].ID);
+                        
+                        // 첫 번째 노드에서 접근 가능하거나 방문한 노드의 연결 노드도 접근 가능하게 설정
                         if (currentNode.IsAccessible || currentNode.IsVisited)
                         {
-                            nextPositionNodes[0].IsAccessible = true;
+                            nextLevelNodes[0].IsAccessible = true;
                         }
                     }
-                    // 다음 위치에 여러 노드가 있는 경우
+                    // 다음 레벨에 여러 노드가 있는 경우
                     else
                     {
-                        // 가장 가까운 노드들과 연결
-                        List<DungeonNode> nearestNodes = FindNearestNodes(currentNode, nextPositionNodes, 2);
+                        // Y 위치 기반으로 가장 가까운 노드 찾기
+                        List<DungeonNode> nearestNodes = FindNearestNodes(currentNode, nextLevelNodes, 2);
+                        
                         foreach (DungeonNode nearNode in nearestNodes)
                         {
-                            currentNode.ConnectedNodes.Add(nearNode.ID);
-                            // 첫 번째 노드에서 접근 가능한 모든 노드는 접근 가능 표시
-                            if (currentNode.IsAccessible || currentNode.IsVisited)
+                            // 이미 연결되어 있지 않은 경우에만 연결
+                            if (!currentNode.ConnectedNodes.Contains(nearNode.ID))
                             {
-                                nearNode.IsAccessible = true;
+                                currentNode.ConnectedNodes.Add(nearNode.ID);
+                                
+                                // 접근 가능한 노드에서 연결된 노드도 접근 가능하게 설정
+                                if (currentNode.IsAccessible || currentNode.IsVisited)
+                                {
+                                    nearNode.IsAccessible = true;
+                                }
                             }
                         }
                     }

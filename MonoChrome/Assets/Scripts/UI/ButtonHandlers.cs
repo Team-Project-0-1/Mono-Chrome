@@ -8,6 +8,7 @@ namespace MonoChrome
 {
     /// <summary>
     /// UI 버튼들의 이벤트 핸들러를 관리하는 클래스
+    /// 브릿지 패턴과 호환되도록 수정됨
     /// </summary>
     public class ButtonHandlers : MonoBehaviour
     {
@@ -27,7 +28,7 @@ namespace MonoChrome
         {
             FindButtons();
             SubscribeEvents();
-            Debug.Log("ButtonHandlers: Initialized successfully");
+            Debug.Log("ButtonHandlers: Initialized successfully with bridge pattern support");
         }
         
         private void FindButtons()
@@ -113,15 +114,36 @@ namespace MonoChrome
                     return;
                 }
                 
-                // 캐릭터 선택 판널 비활성화
-
+                // 캐릭터 선택 패널 명시적 비활성화 (중요!)
+                if (_characterSelectionPanel != null)
+                {
+                    _characterSelectionPanel.SetActive(false);
+                    Debug.Log("ButtonHandlers: Character selection panel deactivated");
+                }
+                else
+                {
+                    // 패널 참조가 없으면 전체 화면에서 찾기
+                    GameObject panel = GameObject.Find("CharacterSelectionPanel");
+                    if (panel != null)
+                    {
+                        panel.SetActive(false);
+                        Debug.Log("ButtonHandlers: Found and deactivated CharacterSelectionPanel by name");
+                    }
+                    
+                    // UI Manager를 통한 패널 비활성화 시도
+                    if (GameManager.Instance.UIManager != null)
+                    {
+                        GameManager.Instance.UIManager.OnPanelSwitched("DungeonPanel");
+                        Debug.Log("ButtonHandlers: Switched to DungeonPanel via UIManager");
+                    }
+                }
                 
                 // 캐릭터 생성
                 Debug.Log($"ButtonHandlers: Creating player character with sense type: {_selectedSenseType}");
                 CharacterManager.Instance.CreatePlayerCharacter(_selectedSenseType);
                 
-                // 던전 진입 - 이것이 게임 씬으로 전환과 게임 시작을 함
-                Debug.Log("ButtonHandlers: Starting game by entering dungeon");
+                // 던전 진입 - 브릿지 패턴을 통한 게임 시작
+                Debug.Log("ButtonHandlers: Starting game by entering dungeon (using bridge pattern)");
                 GameManager.Instance.EnterDungeon();
             }
             catch (System.Exception ex)

@@ -2,14 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using MonoChrome;
-using MonoChrome.Combat;
+using MonoChrome.Combat;  // 실제 구현체 직접 사용
 using MonoChrome.Extensions;
-
 
 namespace MonoChrome
 {
     /// <summary>
     /// 캐릭터 생성과 관리를 담당하는 싱글톤 매니저 클래스
+    /// 단일 구현체 사용으로 깔끔하게 정리됨
     /// </summary>
     public class CharacterManager : MonoBehaviour
     {
@@ -236,7 +236,7 @@ namespace MonoChrome
         }
         
         /// <summary>
-        /// CombatManager에 플레이어 캐릭터 설정
+        /// CombatManager에 플레이어 캐릭터 설정 (직접 구현체 사용)
         /// </summary>
         private void SetPlayerInCombatManager()
         {
@@ -253,6 +253,7 @@ namespace MonoChrome
                 return;
             }
             
+            // 직접 구현체 사용 (간단하고 명확함)
             CombatManager combatManager = gameManager.CombatManager;
             if (combatManager == null)
             {
@@ -261,7 +262,7 @@ namespace MonoChrome
             }
             
             combatManager.SetPlayerCharacter(_playerCharacter);
-            Debug.Log("CharacterManager: Set player character in CombatManager");
+            Debug.Log("CharacterManager: Set player character in CombatManager (direct implementation)");
         }
         
         /// <summary>

@@ -80,7 +80,7 @@ namespace MonoChrome
     public enum ActiveSkillType
     {
         None = 0,
-        RethrowAll = 1,  // 모든 동전 재던지기
+        RethrowAll = 1,   // 모든 동전 재던지기
         FlipOne = 2,     // 동전 1개 뒤집기
         LockOne = 3,     // 동전 1개 고정
         SwapTwo = 4      // 동전 2개 교환
