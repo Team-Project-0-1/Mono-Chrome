@@ -57,6 +57,22 @@ namespace MonoChrome
         public PlayerCharacter CurrentPlayer => _playerCharacter;
         
         /// <summary>
+        /// 현재 플레이어 캐릭터 반환 (CombatSystem 호환성을 위한 메서드)
+        /// </summary>
+        public PlayerCharacter GetCurrentPlayer()
+        {
+            return _playerCharacter;
+        }
+        
+        /// <summary>
+        /// 적 캐릭터 생성 (CombatSystem 호환성을 위한 메서드)
+        /// </summary>
+        public EnemyCharacter CreateEnemy(string enemyType, CharacterType type = CharacterType.Normal)
+        {
+            return CreateEnemyCharacter(enemyType, type);
+        }
+        
+        /// <summary>
         /// 초기화
         /// </summary>
         private void Initialize()
@@ -236,7 +252,7 @@ namespace MonoChrome
         }
         
         /// <summary>
-        /// CombatManager에 플레이어 캐릭터 설정 (직접 구현체 사용)
+        /// CombatManager에 플레이어 캐릭터 설정 (지연 초기화 패턴)
         /// </summary>
         private void SetPlayerInCombatManager()
         {
@@ -246,23 +262,42 @@ namespace MonoChrome
                 return;
             }
             
-            GameManager gameManager = GameManager.Instance;
-            if (gameManager == null)
+            // 코루틴으로 CombatManager 준비까지 대기
+            StartCoroutine(WaitForCombatManagerAndSet());
+        }
+        
+        /// <summary>
+        /// CombatManager가 준비될 때까지 대기한 후 플레이어 캐릭터 설정
+        /// </summary>
+        private IEnumerator WaitForCombatManagerAndSet()
+        {
+            float timeout = 10f; // 10초 타임아웃
+            float elapsed = 0f;
+            
+            while (elapsed < timeout)
             {
-                Debug.LogError("CharacterManager: GameManager instance is null");
-                return;
+                GameManager gameManager = GameManager.Instance;
+                if (gameManager != null)
+                {
+                    // GameManager의 매니저 참조 갱신 시도
+                    CombatManager combatManager = gameManager.CombatManager;
+                    
+                    if (combatManager != null)
+                    {
+                        // CombatManager가 준비되었으면 플레이어 캐릭터 설정
+                        combatManager.SetPlayerCharacter(_playerCharacter);
+                        Debug.Log("CharacterManager: Successfully set player character in CombatManager (delayed initialization)");
+                        yield break;
+                    }
+                }
+                
+                // 0.1초 대기 후 재시도
+                yield return new WaitForSeconds(0.1f);
+                elapsed += 0.1f;
             }
             
-            // 직접 구현체 사용 (간단하고 명확함)
-            CombatManager combatManager = gameManager.CombatManager;
-            if (combatManager == null)
-            {
-                Debug.LogError("CharacterManager: CombatManager reference is null from GameManager");
-                return;
-            }
-            
-            combatManager.SetPlayerCharacter(_playerCharacter);
-            Debug.Log("CharacterManager: Set player character in CombatManager (direct implementation)");
+            // 타임아웃 시 에러 로그
+            Debug.LogError($"CharacterManager: Failed to set player in CombatManager - timeout after {timeout} seconds");
         }
         
         /// <summary>

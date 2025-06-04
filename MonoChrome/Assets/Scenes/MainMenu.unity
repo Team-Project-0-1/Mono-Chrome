@@ -309,8 +309,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 084e61cec76e30149b592c6410222162, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _startButton: {fileID: 0}
-  _quitButton: {fileID: 0}
+  _startButton: {fileID: 740494717}
+  _quitButton: {fileID: 1604910150}
 --- !u!114 &597943816
 MonoBehaviour:
   m_ObjectHideFlags: 0

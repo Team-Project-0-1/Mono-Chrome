@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MonoChrome.Combat;
 using MonoChrome.Dungeon;
+using MonoChrome.StatusEffects;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -166,46 +167,114 @@ namespace MonoChrome
         
         /// <summary>
         /// 매니저 참조를 새로고침 - 씬 전환 시 호출
+        /// 비활성화된 매니저도 찾고 필요시 활성화
         /// </summary>
         private void RefreshManagerReferences()
         {
             Debug.Log("GameManager: Refreshing manager references...");
             
             // UIManager 찾기 (씬에 있는 것 우선)
-            UIManager[] uiManagers = FindObjectsOfType<UIManager>();
+            UIManager[] uiManagers = FindObjectsOfType<UIManager>(true); // includeInactive: true
             _uiManager = uiManagers.FirstOrDefault(ui => ui.gameObject.scene.isLoaded);
             
-            // DungeonManager 찾기 (활성화된 것 우선)
-            DungeonManager[] dungeonManagers = FindObjectsOfType<DungeonManager>();
-            _dungeonManager = dungeonManagers.FirstOrDefault(dm => dm.gameObject.activeInHierarchy);
+            // DungeonManager 찾기 (비활성화된 것도 포함)
+            DungeonManager[] dungeonManagers = FindObjectsOfType<DungeonManager>(true);
+            _dungeonManager = dungeonManagers.FirstOrDefault();
             
-            // CombatManager 찾기 (활성화된 것 우선)
-            CombatManager[] combatManagers = FindObjectsOfType<CombatManager>();
-            _combatManager = combatManagers.FirstOrDefault(cm => cm.gameObject.activeInHierarchy);
+            // 찾은 DungeonManager가 비활성화 상태면 활성화
+            if (_dungeonManager != null && !_dungeonManager.gameObject.activeInHierarchy)
+            {
+                _dungeonManager.gameObject.SetActive(true);
+                Debug.Log("GameManager: Activated DungeonManager");
+            }
+            
+            // CombatManager 찾기 (비활성화된 것도 포함)
+            CombatManager[] combatManagers = FindObjectsOfType<CombatManager>(true);
+            _combatManager = combatManagers.FirstOrDefault();
+            
+            // 찾은 CombatManager가 비활성화 상태면 활성화
+            if (_combatManager != null && !_combatManager.gameObject.activeInHierarchy)
+            {
+                _combatManager.gameObject.SetActive(true);
+                Debug.Log("GameManager: Activated CombatManager");
+            }
             
             Debug.Log($"GameManager: References refreshed - UI:{_uiManager != null}, Dungeon:{_dungeonManager != null}, Combat:{_combatManager != null}");
         }
         
         /// <summary>
-        /// 씬의 매니저들을 활성화하는 메서드
+        /// 씬의 매니저들을 활성화하는 메서드 (강화된 버전)
         /// </summary>
         private void ActivateSceneManagers()
         {
+            Debug.Log("GameManager: Activating scene managers...");
+            
             // 비활성화된 매니저들 찾아서 활성화
             var inactiveManagers = new[]
             {
-                "CombatManager", "CoinManager", "PatternManager", "StatusEffectManager"
+                "CombatManager", "CoinManager", "PatternManager", "StatusEffectManager", "DungeonManager", "ManagerInitializer"
             };
+            
+            int activatedCount = 0;
             
             foreach (string managerName in inactiveManagers)
             {
+                // 이름으로 직접 찾기
                 GameObject managerObj = GameObject.Find(managerName);
-                if (managerObj != null && !managerObj.activeInHierarchy)
+                
+                if (managerObj != null)
                 {
-                    managerObj.SetActive(true);
-                    Debug.Log($"GameManager: Activated {managerName}");
+                    if (!managerObj.activeInHierarchy)
+                    {
+                        managerObj.SetActive(true);
+                        activatedCount++;
+                        Debug.Log($"GameManager: Activated {managerName}");
+                    }
+                    else
+                    {
+                        Debug.Log($"GameManager: {managerName} already active");
+                    }
+                }
+                else
+                {
+                    // 이름으로 찾지 못한 경우 타입으로 찾기
+                    var managerComponent = FindManagerByType(managerName);
+                    if (managerComponent != null)
+                    {
+                        if (!managerComponent.gameObject.activeInHierarchy)
+                        {
+                            managerComponent.gameObject.SetActive(true);
+                            activatedCount++;
+                            Debug.Log($"GameManager: Activated {managerName} (found by type)");
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"GameManager: {managerName} not found in scene");
+                    }
                 }
             }
+            
+            Debug.Log($"GameManager: Activated {activatedCount} managers");
+            
+            // 매니저 활성화 후 참조 갱신
+            RefreshManagerReferences();
+        }
+        
+        /// <summary>
+        /// 매니저 이름에 따라 타입으로 찾기
+        /// </summary>
+        private MonoBehaviour FindManagerByType(string managerName)
+        {
+            return managerName switch
+            {
+                "CombatManager" => FindObjectOfType<CombatManager>(true),
+                "CoinManager" => FindObjectOfType<CoinManager>(true),
+                "PatternManager" => FindObjectOfType<PatternManager>(true),
+                "StatusEffectManager" => FindObjectOfType<StatusEffectManager>(true),
+                "DungeonManager" => FindObjectOfType<DungeonManager>(true),
+                _ => null
+            };
         }
         #endregion
         
@@ -327,8 +396,7 @@ namespace MonoChrome
         
         public void EnterDungeon()
         {
-            Debug.Log("GameManager: Entering dungeon");
-            ChangeState(GameState.Dungeon);
+            Debug.Log("GameManager: Entering dungeon - Starting comprehensive initialization");
             
             if (SceneManager.GetActiveScene().name != "GameScene")
             {
@@ -336,34 +404,92 @@ namespace MonoChrome
                 return;
             }
             
-            // 던전 생성
-            StartCoroutine(GenerateDungeonSafely());
+            // 직접 던전 초기화 프로세스 시작
+            StartCoroutine(InitializeDungeonCompletely());
         }
         
-        private IEnumerator GenerateDungeonSafely()
+        /// <summary>
+        /// 던전 초기화 전체 프로세스를 GameManager가 직접 제어
+        /// </summary>
+        private IEnumerator InitializeDungeonCompletely()
         {
-            // UI가 준비될 때까지 대기
-            while (UIManager == null)
-            {
-                yield return null;
-            }
-            
-            // 던전 매니저가 준비될 때까지 대기
-            while (DungeonManager == null)
-            {
-                yield return null;
-            }
-            
+            Debug.Log("GameManager: Starting complete dungeon initialization process");
+
+            // 예외 처리를 위한 상태 변수
+            bool hasError = false;
+            string errorMessage = null;
+
+            // 나중에 쓸 임시 참조들
+            GameObject dungeonPanel = null;
+            DungeonUI dungeonUI = null;
+
+            // 예외 처리 부분은 yield 없이 try/catch만 사용
             try
             {
-                DungeonManager.GenerateNewDungeon();
-                Debug.Log("GameManager: Successfully generated dungeon");
+                // 1단계: 상태 변경
+                ChangeState(GameState.Dungeon);
+
+                // 2단계: DungeonPanel 활성화 대기
+                float timeoutTime = Time.time + 5f;
+                while (dungeonPanel == null && Time.time < timeoutTime)
+                {
+                    dungeonPanel = GameObject.Find("DungeonPanel");
+                    if (dungeonPanel != null && dungeonPanel.activeInHierarchy)
+                        break;
+                }
+
+                if (dungeonPanel == null || !dungeonPanel.activeInHierarchy)
+                {
+                    throw new Exception("DungeonPanel not activated within timeout.");
+                }
+
+                // 3단계: DungeonUI 존재 확인
+                dungeonUI = dungeonPanel.GetComponent<DungeonUI>();
+                if (dungeonUI == null)
+                {
+                    throw new Exception("DungeonUI component not found on DungeonPanel.");
+                }
+
+                // 4단계: DungeonManager 준비
+                while (DungeonManager == null)
+                {
+                    RefreshManagerReferences();
+                }
+
+                // 5단계: 던전 생성 요청
+                DungeonManager.GenerateNewDungeon(0);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"GameManager: Error generating dungeon: {ex.Message}");
+                hasError = true;
+                errorMessage = $"GameManager: Error in dungeon initialization: {ex.Message}\n{ex.StackTrace}";
             }
+
+            // 이제부터 yield return 실행 — try/catch 바깥
+            yield return null;
+
+            if (hasError)
+            {
+                Debug.LogError(errorMessage);
+                yield break;
+            }
+
+            Debug.Log("GameManager: DungeonPanel is now active");
+            yield return new WaitForSeconds(0.5f);
+            Debug.Log("GameManager: DungeonUI initialization time provided");
+
+            yield return new WaitForSeconds(0.2f);
+            Debug.Log("GameManager: DungeonManager is ready");
+
+            if (UIManager != null)
+            {
+                Debug.Log("GameManager: Requesting UI update...");
+                // UIManager.UpdateDungeonUI(); // 필요 시
+            }
+
+            Debug.Log("GameManager: Dungeon initialization completed successfully!");
         }
+
         
         public void StartCombat()
         {

@@ -12,7 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7444b3a90a49f54696205084124d09e, type: 3}
   m_Name: CharacterDataManager
   m_EditorClassIdentifier: 
-  _playerCharacters: []
-  _normalEnemies: []
-  _miniBosses: []
-  _bosses: []
+  _playerCharacters:
+  - {fileID: 11400000, guid: 2c303f07aef2b66499f9592bfbc29598, type: 2}
+  - {fileID: 11400000, guid: 8e48a4a6ce12970479d31496f1a243fc, type: 2}
+  - {fileID: 11400000, guid: ad8a78303db5a9e4b961b221d4829f2d, type: 2}
+  - {fileID: 11400000, guid: 3453dd9af4353e544991e5d6dbc2a864, type: 2}
+  _normalEnemies:
+  - {fileID: 11400000, guid: b3b414da0ece10e4683385013ffb465b, type: 2}
+  - {fileID: 11400000, guid: 49436b5621f5ca64085fffd3f95a0f17, type: 2}
+  - {fileID: 11400000, guid: 097725ffef650b54d94c329dd0af1b4d, type: 2}
+  _miniBosses:
+  - {fileID: 11400000, guid: 936b26eef11deac4b98189cb3052c939, type: 2}
+  _bosses:
+  - {fileID: 11400000, guid: 1e0a2ec02e077cd4d84b488885b3aa63, type: 2}

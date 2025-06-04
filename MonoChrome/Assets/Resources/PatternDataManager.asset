@@ -13,9 +13,24 @@ MonoBehaviour:
   m_Name: PatternDataManager
   m_EditorClassIdentifier: 
   _basicPatterns: []
-  _auditoryPatterns: []
-  _olfactoryPatterns: []
-  _tactilePatterns: []
-  _spiritualPatterns: []
+  _auditoryPatterns:
+  - {fileID: 11400000, guid: 815bb5329ce1dd94c8ca88d0eaa69a35, type: 2}
+  - {fileID: 11400000, guid: 8c76861dab0ea154bb01670c516e18ae, type: 2}
+  - {fileID: 11400000, guid: 409a86637c104f448ac1b026d68883e4, type: 2}
+  - {fileID: 11400000, guid: 9f5268e623cd62749aac3126c23d42d8, type: 2}
+  _olfactoryPatterns:
+  - {fileID: 11400000, guid: 991782ffd1d5f6f47976cd165c1488f2, type: 2}
+  - {fileID: 11400000, guid: f488a6db03dd5fa4fa2eeae650793694, type: 2}
+  - {fileID: 11400000, guid: d52d70428c9103941901a5d4c3c99e13, type: 2}
+  - {fileID: 11400000, guid: c72a9e95ab31872428fc935aa4ba8aa6, type: 2}
+  _tactilePatterns:
+  - {fileID: 11400000, guid: 40e47bfa56c8f1e4eb574bf1e5d05f37, type: 2}
+  - {fileID: 11400000, guid: 8eed6f94164c6634aa1e0afd29f6ef0c, type: 2}
+  - {fileID: 11400000, guid: 185f6dfd54d843b40bf3bb0a6128ba2d, type: 2}
+  _spiritualPatterns:
+  - {fileID: 11400000, guid: 3c912cfd79ffae6429cc5c7f25507efc, type: 2}
+  - {fileID: 11400000, guid: 75ce396ce52872f479c2c1c8a57b3912, type: 2}
+  - {fileID: 11400000, guid: 965a30abf5a03e847968f7bcac2da5e4, type: 2}
+  - {fileID: 11400000, guid: e6550fec491545144bc7969dba025f97, type: 2}
   _enemyPatterns: []
   _bossPatterns: []

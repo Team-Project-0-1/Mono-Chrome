@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MonoChrome.Dungeon;
 using MonoChrome.StatusEffects;
 using MonoChrome.UI;
+using MonoChrome.Events;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -52,25 +53,162 @@ namespace MonoChrome
         [SerializeField] private Sprite bossIcon;
         [SerializeField] private Sprite defaultIcon;
         
-        private DungeonManager dungeonManager;
+        private bool _isInitialized = false;
         
         private void Awake()
         {
-            // Find and cache reference to DungeonManager
-            dungeonManager = FindObjectOfType<DungeonManager>();
-            
-            if (dungeonManager == null)
-            {
-                Debug.LogError("DungeonManager not found in the scene!");
-            }
-            
-            // Ensure UI panels are properly referenced
-            ValidateReferences();
+            // 더 이상 DungeonManager에 직접 의존하지 않음
+            // 이벤트 시스템을 통해서만 소통
+            Debug.Log("DungeonUI: Awake - 이벤트 기반 시스템으로 초기화");
         }
         
         private void Start()
         {
-            InitializeUI();
+            // Start는 GameObject가 활성화된 상태에서만 호출됨
+            EnsureInitialization();
+        }
+        
+        private void OnEnable()
+        {
+            // OnEnable은 GameObject가 활성화될 때마다 호출됨 (핵심!)
+            Debug.Log("DungeonUI: OnEnable called");
+            
+            // 이벤트 구독
+            SubscribeToEvents();
+            
+            EnsureInitialization();
+        }
+        
+        private void OnDisable()
+        {
+            // 이벤트 구독 해제
+            UnsubscribeFromEvents();
+        }
+        
+        /// <summary>
+        /// 이벤트 구독
+        /// </summary>
+        private void SubscribeToEvents()
+        {
+            UIEvents.OnDungeonMapUpdateRequested += OnDungeonMapUpdateRequested;
+            UIEvents.OnPlayerStatusUpdateRequested += OnPlayerStatusUpdateRequested;
+            DungeonEvents.OnDungeonGenerated += OnDungeonGenerated;
+        }
+        
+        /// <summary>
+        /// 이벤트 구독 해제
+        /// </summary>
+        private void UnsubscribeFromEvents()
+        {
+            UIEvents.OnDungeonMapUpdateRequested -= OnDungeonMapUpdateRequested;
+            UIEvents.OnPlayerStatusUpdateRequested -= OnPlayerStatusUpdateRequested;
+            DungeonEvents.OnDungeonGenerated -= OnDungeonGenerated;
+        }
+        
+        /// <summary>
+        /// 던전 맵 업데이트 이벤트 핸들러
+        /// </summary>
+        private void OnDungeonMapUpdateRequested(List<DungeonNode> nodes, int currentIndex)
+        {
+            UpdateDungeonMap(nodes, currentIndex);
+        }
+        
+        /// <summary>
+        /// 플레이어 상태 업데이트 이벤트 핸들러
+        /// </summary>
+        private void OnPlayerStatusUpdateRequested(int currentHealth, int maxHealth)
+        {
+            UpdatePlayerStatus(currentHealth, maxHealth);
+        }
+        
+        /// <summary>
+        /// 던전 생성 완료 이벤트 핸들러
+        /// </summary>
+        private void OnDungeonGenerated(List<DungeonNode> nodes, int currentIndex)
+        {
+            Debug.Log($"DungeonUI: 던전 생성 완료 이벤트 수신 - {nodes.Count}개 노드");
+            
+            // 현재 사용 가능한 노드들을 선택지로 표시
+            ShowAvailableNodes(nodes, currentIndex);
+        }
+        
+        /// <summary>
+        /// 사용 가능한 노드들을 선택지로 표시
+        /// </summary>
+        private void ShowAvailableNodes(List<DungeonNode> allNodes, int currentIndex)
+        {
+            // 현재 노드에서 접근 가능한 노드들 찾기
+            List<DungeonNode> availableNodes = new List<DungeonNode>();
+            
+            if (currentIndex >= 0 && currentIndex < allNodes.Count)
+            {
+                var currentNode = allNodes[currentIndex];
+                
+                // 연결된 노드들 중 접근 가능한 것들 찾기
+                foreach (int connectedId in currentNode.ConnectedNodes)
+                {
+                    var connectedNode = allNodes.Find(n => n.ID == connectedId);
+                    if (connectedNode != null && connectedNode.IsAccessible && !connectedNode.IsVisited)
+                    {
+                        availableNodes.Add(connectedNode);
+                    }
+                }
+            }
+            
+            // 선택 가능한 노드가 없으면 임시로 더미 노드들 생성 (테스트용)
+            if (availableNodes.Count == 0)
+            {
+                Debug.Log("DungeonUI: 접근 가능한 노드가 없어 테스트용 노드들 생성");
+                for (int i = 0; i < 3; i++)
+                {
+                    var dummyNode = new DungeonNode(i + 1, GetRandomNodeType(), Vector2.zero);
+                    dummyNode.IsAccessible = true;
+                    availableNodes.Add(dummyNode);
+                }
+            }
+            
+            // 룸 선택 UI 표시
+            ShowRoomSelection(availableNodes.ToArray());
+        }
+        
+        /// <summary>
+        /// 랜덤 노드 타입 생성 (테스트용)
+        /// </summary>
+        private NodeType GetRandomNodeType()
+        {
+            var types = new[] { NodeType.Combat, NodeType.Event, NodeType.Shop, NodeType.Rest };
+            return types[Random.Range(0, types.Length)];
+        }
+        
+        /// <summary>
+        /// 초기화 보장 메서드 - 중복 초기화 방지
+        /// </summary>
+        private void EnsureInitialization()
+        {
+            if (_isInitialized)
+            {
+                Debug.Log("DungeonUI: Already initialized, skipping");
+                return;
+            }
+            
+            Debug.Log("DungeonUI: Starting initialization...");
+            
+            try
+            {
+                // 1. 참조 검증 및 설정
+                ValidateReferences();
+                
+                // 2. UI 초기화
+                InitializeUI();
+                
+                // 3. 초기화 완료 표시
+                _isInitialized = true;
+                Debug.Log("DungeonUI: Initialization completed successfully");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"DungeonUI: Initialization failed: {ex.Message}\n{ex.StackTrace}");
+            }
         }
         
         private void ValidateReferences()
@@ -441,33 +579,71 @@ namespace MonoChrome
         {
             if (index < 0 || index >= roomButtons.Length || node == null)
             {
-                Debug.LogError("DungeonUI: Invalid parameters for SetupRoomButton");
+                Debug.LogError($"DungeonUI: Invalid parameters for SetupRoomButton - index: {index}, node: {node != null}");
                 return;
             }
             
-            // Set room icon based on type
-            if (roomTypeIcons != null && index < roomTypeIcons.Length && roomTypeIcons[index] != null)
+            if (roomButtons[index] == null)
             {
-                roomTypeIcons[index].sprite = GetRoomIcon(node.Type);
+                Debug.LogError($"DungeonUI: RoomButton[{index}] is null");
+                return;
             }
             
-            // Set room description
-            if (roomDescriptions != null && index < roomDescriptions.Length && roomDescriptions[index] != null)
+            Debug.Log($"DungeonUI: Setting up RoomButton[{index}] for node {node.ID} (Type: {node.Type})");
+            
+            try
             {
-                roomDescriptions[index].text = GetRoomDescription(node);
-                
-                // 한글 폰트 적용 시도
-                if (FontManager.Instance != null)
+                // Set room icon based on type
+                if (roomTypeIcons != null && index < roomTypeIcons.Length && roomTypeIcons[index] != null)
                 {
-                    FontManager.Instance.ApplyKoreanFont(roomDescriptions[index]);
+                    roomTypeIcons[index].sprite = GetRoomIcon(node.Type);
+                    Debug.Log($"DungeonUI: Set icon for button {index}");
                 }
+                else
+                {
+                    Debug.LogWarning($"DungeonUI: Cannot set icon for button {index} - roomTypeIcons issue");
+                }
+                
+                // Set room description
+                if (roomDescriptions != null && index < roomDescriptions.Length && roomDescriptions[index] != null)
+                {
+                    string description = GetRoomDescription(node);
+                    roomDescriptions[index].text = description;
+                    
+                    // 한글 폰트 적용 시도
+                    if (FontManager.Instance != null)
+                    {
+                        FontManager.Instance.ApplyKoreanFont(roomDescriptions[index]);
+                    }
+                    
+                    Debug.Log($"DungeonUI: Set description for button {index}: {description}");
+                }
+                else
+                {
+                    Debug.LogWarning($"DungeonUI: Cannot set description for button {index} - roomDescriptions issue");
+                }
+                
+                // Set button click handler (가장 중요!)
+                Button button = roomButtons[index];
+                button.onClick.RemoveAllListeners();
+                
+                // 클로저에서 node 값을 캡처하여 클릭 이벤트 등록
+                int nodeId = node.ID;
+                NodeType nodeType = node.Type;
+                
+                button.onClick.AddListener(() => {
+                    Debug.Log($"DungeonUI: Room button {index} clicked! Node ID: {nodeId}, Type: {nodeType}");
+                    OnRoomSelected(node);
+                });
+                
+                // 버튼 활성화 확인
+                button.interactable = true;
+                
+                Debug.Log($"DungeonUI: Successfully set up click handler for button {index}");
             }
-            
-            // Set button click handler
-            if (roomButtons[index] != null)
+            catch (System.Exception ex)
             {
-                roomButtons[index].onClick.RemoveAllListeners();
-                roomButtons[index].onClick.AddListener(() => OnRoomSelected(node));
+                Debug.LogError($"DungeonUI: Error setting up room button {index}: {ex.Message}");
             }
         }
         
@@ -517,18 +693,30 @@ namespace MonoChrome
         
         private void OnRoomSelected(DungeonNode node)
         {
-            // Hide the selection panel
-            if (roomSelectionPanel != null)
-                roomSelectionPanel.SetActive(false);
-            
-            // Notify the dungeon manager about the selection
-            if (dungeonManager != null && node != null)
+            if (node == null)
             {
-                dungeonManager.MoveToNode(node.ID);
+                Debug.LogError("DungeonUI: OnRoomSelected called with null node!");
+                return;
             }
-            else
+            
+            Debug.Log($"DungeonUI: OnRoomSelected called - Node ID: {node.ID}, Type: {node.Type}");
+            
+            try
             {
-                Debug.LogError("DungeonUI: Cannot process room selection due to missing references");
+                // Hide the selection panel
+                if (roomSelectionPanel != null)
+                {
+                    roomSelectionPanel.SetActive(false);
+                    Debug.Log("DungeonUI: Room selection panel hidden");
+                }
+                
+                // 새로운 이벤트 시스템 사용 - 직접 의존성 제거
+                Debug.Log($"DungeonUI: Requesting node move via event system - Node ID: {node.ID}");
+                DungeonEvents.RequestNodeMove(node.ID);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"DungeonUI: Error in OnRoomSelected: {ex.Message}\n{ex.StackTrace}");
             }
         }
         

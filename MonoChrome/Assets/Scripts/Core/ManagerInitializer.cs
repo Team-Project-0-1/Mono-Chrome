@@ -1,4 +1,5 @@
 using System.Collections;
+using MonoChrome.Combat;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -168,7 +169,7 @@ namespace MonoChrome
         /// <summary>
         /// CombatManager 의존성 확인 및 설정
         /// </summary>
-        private IEnumerator EnsureCombatManagerDependencies(MonoChrome.Combat.CombatManager combatManager)
+        private IEnumerator EnsureCombatManagerDependencies(CombatManager combatManager)
         {
             GameObject combatObject = combatManager.gameObject;
             
@@ -187,9 +188,9 @@ namespace MonoChrome
                     Debug.Log("ManagerInitializer: Added PatternManager to CombatManager");
             }
             
-            if (combatObject.GetComponent<MonoChrome.StatusEffects.StatusEffectManager>() == null)
+            if (combatObject.GetComponent<StatusEffects.StatusEffectManager>() == null)
             {
-                combatObject.AddComponent<MonoChrome.StatusEffects.StatusEffectManager>();
+                combatObject.AddComponent<StatusEffects.StatusEffectManager>();
                 if (_debugMode)
                     Debug.Log("ManagerInitializer: Added StatusEffectManager to CombatManager");
             }
@@ -200,7 +201,7 @@ namespace MonoChrome
         /// <summary>
         /// DungeonManager 의존성 확인 및 설정
         /// </summary>
-        private IEnumerator EnsureDungeonManagerDependencies(MonoChrome.Dungeon.DungeonManager dungeonManager)
+        private IEnumerator EnsureDungeonManagerDependencies(Dungeon.DungeonManager dungeonManager)
         {
             // DungeonManager 관련 의존성이 필요한 경우 여기에 추가
             yield return null;

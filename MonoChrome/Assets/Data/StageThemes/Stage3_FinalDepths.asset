@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a123456789abcdef, type: 3}
+  m_Name: Stage3_FinalDepths
+  stageDisplayName: "\uC2A4\uD14C\uC774\uC9C0 3: \uCD5C\uC885 \uC2EC\uCE35"
+  stageDescription: "\uBE5B\uC758 \uADFC\uC6D0\uC5D0 \uAC00\uAE4C\uC6CC\uC9C8\uC218\uB85D \uB354\uC6B1 \uAC15\uB825\uD55C \uC801\uB4E4\uC774 \uAE30\uB2E4\uB9B0\uB2E4."
+  stageIcon: {fileID: 0}
+  stageColor: {r: 0.6, g: 0.2, b: 0.2, a: 1}
+  totalTurns: 15
+  branchesPerTurn: 3
+  miniBossPosition: 8
+  combatChance: 0.7
+  eventChance: 0.15
+  shopChance: 0.1
+  restChance: 0.05
+  guaranteedShops: 1
+  guaranteedRests: 1
+  maxEvents: 1
+  minCombatRooms: 10
+  allowMultipleMiniBosses: 0
+  forceShopBeforeMiniBoss: 1
+  forceRestAfterMiniBoss: 1
+  senseFilters: []
+  enemyPool:
+  - enemyName: "\uAC80\uC740 \uC2EC\uC5F0"
+    enemyType: 5
+    spawnWeight: 1
+    spawnChance: 1
+    minStageLevel: 3
+    description: "\uBE5B\uC758 \uC885\uB9D0\uC744 \uAC00\uC838\uC628 \uCD5C\uC885 \uBCF4\uC2A4"
+  - enemyName: "\uC5B4\uB465\uC758 \uC218\uD638\uC790"
+    enemyType: 4
+    spawnWeight: 2
+    spawnChance: 0.8
+    minStageLevel: 3
+    description: "\uBE5B\uC744 \uC9C0\uD0A4\uB294 \uAC15\uB825\uD55C \uBCF4\uC870\uC790"
+  eventPool:
+  - eventName: "\uBE5B\uC758 \uACBD\uACC4"
+    eventID: 21
+    spawnWeight: 1
+    spawnChance: 1
+    requiredSenses: [-1]
+    eventDescription: "\uBE5B\uACFC \uC5B4\uB465\uC758 \uACBD\uACC4\uC5D0\uC11C \uC120\uD0DD\uC744 \uD574\uC57C \uD55C\uB2E4"
+  - eventName: "\uACE0\uB300\uC758 \uACE8\uC218\uD488"
+    eventID: 22
+    spawnWeight: 1
+    spawnChance: 1
+    requiredSenses: [3]
+    eventDescription: "\uC601\uD63C\uC758 \uC18D\uC0AD\uC784\uC774 \uB4E4\uB9B0\uB2E4"

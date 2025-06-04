@@ -220,38 +220,161 @@ namespace MonoChrome
         
         private void ValidateComponents()
         {
-            // 헬스바 검증
-            if (playerHealthBar == null)
+            Debug.Log("CombatUI: Starting component validation");
+            
+            // 체력바 자동 생성 및 설정
+            SetupHealthBars();
+            
+            // 기타 UI 요소 검증
+            ValidateOtherComponents();
+            
+            Debug.Log("CombatUI: Component validation completed");
+        }
+        
+        /// <summary>
+        /// 체력바 자동 설정
+        /// </summary>
+        private void SetupHealthBars()
+        {
+            // 플레이어 체력바 설정
+            GameObject playerHealthBarGO = transform.Find("PlayerHealthBar")?.gameObject;
+            if (playerHealthBarGO != null)
             {
-                playerHealthBar = transform.Find("PlayerHealthBar")?.GetComponent<Slider>();
+                playerHealthBar = playerHealthBarGO.GetComponent<Slider>();
                 if (playerHealthBar == null)
-                    Debug.LogError("CombatUI: playerHealthBar is missing!");
+                {
+                    Debug.Log("CombatUI: Creating Slider component for PlayerHealthBar");
+                    playerHealthBar = playerHealthBarGO.AddComponent<Slider>();
+                    SetupSliderComponents(playerHealthBar, "Player");
+                }
+                else
+                {
+                    // 기존 슬라이더의 텍스트 찾기
+                    playerHealthText = playerHealthBarGO.GetComponentInChildren<Text>();
+                }
             }
-                
-            if (enemyHealthBar == null)
+            else
             {
-                enemyHealthBar = transform.Find("EnemyHealthBar")?.GetComponent<Slider>();
+                Debug.LogError("CombatUI: PlayerHealthBar GameObject not found!");
+            }
+            
+            // 적 체력바 설정
+            GameObject enemyHealthBarGO = transform.Find("EnemyHealthBar")?.gameObject;
+            if (enemyHealthBarGO != null)
+            {
+                enemyHealthBar = enemyHealthBarGO.GetComponent<Slider>();
                 if (enemyHealthBar == null)
-                    Debug.LogError("CombatUI: enemyHealthBar is missing!");
+                {
+                    Debug.Log("CombatUI: Creating Slider component for EnemyHealthBar");
+                    enemyHealthBar = enemyHealthBarGO.AddComponent<Slider>();
+                    SetupSliderComponents(enemyHealthBar, "Enemy");
+                }
+                else
+                {
+                    // 기존 슬라이더의 텍스트 찾기
+                    enemyHealthText = enemyHealthBarGO.GetComponentInChildren<Text>();
+                }
             }
-                
-            // 헬스 텍스트 검증
-            if (playerHealthText == null)
+            else
             {
-                playerHealthText = playerHealthBar?.transform.Find("PlayerHealthText")?.GetComponent<Text>();
+                Debug.LogError("CombatUI: EnemyHealthBar GameObject not found!");
             }
+        }
+        
+        /// <summary>
+        /// 슬라이더 컴포넌트 자동 설정
+        /// </summary>
+        private void SetupSliderComponents(Slider slider, string prefix)
+        {
+            Debug.Log($"CombatUI: Setting up slider components for {prefix}");
+            
+            RectTransform sliderRT = slider.GetComponent<RectTransform>();
+            sliderRT.sizeDelta = new Vector2(200, 20);
+            
+            // Background 생성
+            GameObject background = new GameObject("Background");
+            background.transform.SetParent(slider.transform, false);
+            RectTransform bgRT = background.AddComponent<RectTransform>();
+            bgRT.anchorMin = Vector2.zero;
+            bgRT.anchorMax = Vector2.one;
+            bgRT.sizeDelta = Vector2.zero;
+            bgRT.offsetMin = Vector2.zero;
+            bgRT.offsetMax = Vector2.zero;
+            Image bgImage = background.AddComponent<Image>();
+            bgImage.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+            
+            // Fill Area 생성
+            GameObject fillArea = new GameObject("Fill Area");
+            fillArea.transform.SetParent(slider.transform, false);
+            RectTransform fillAreaRT = fillArea.AddComponent<RectTransform>();
+            fillAreaRT.anchorMin = Vector2.zero;
+            fillAreaRT.anchorMax = Vector2.one;
+            fillAreaRT.sizeDelta = Vector2.zero;
+            fillAreaRT.offsetMin = Vector2.zero;
+            fillAreaRT.offsetMax = Vector2.zero;
+            
+            // Fill 생성
+            GameObject fill = new GameObject("Fill");
+            fill.transform.SetParent(fillArea.transform, false);
+            RectTransform fillRT = fill.AddComponent<RectTransform>();
+            fillRT.anchorMin = Vector2.zero;
+            fillRT.anchorMax = Vector2.one;
+            fillRT.sizeDelta = Vector2.zero;
+            fillRT.offsetMin = Vector2.zero;
+            fillRT.offsetMax = Vector2.zero;
+            Image fillImage = fill.AddComponent<Image>();
+            fillImage.color = prefix == "Player" ? new Color(0.2f, 0.8f, 0.2f) : new Color(0.8f, 0.2f, 0.2f);
+            
+            // Slider 설정
+            slider.fillRect = fillRT;
+            slider.targetGraphic = fillImage;
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.minValue = 0;
+            slider.maxValue = 100;
+            slider.value = 100;
+            slider.interactable = false;
+            
+            // 체력 텍스트 생성
+            GameObject healthText = new GameObject($"{prefix}HealthText");
+            healthText.transform.SetParent(slider.transform, false);
+            RectTransform textRT = healthText.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.sizeDelta = Vector2.zero;
+            textRT.offsetMin = Vector2.zero;
+            textRT.offsetMax = Vector2.zero;
+            
+            Text text = healthText.AddComponent<Text>();
+            text.text = "100/100";
+            text.alignment = TextAnchor.MiddleCenter;
+            text.color = Color.white;
+            text.fontSize = 14;
+            text.fontStyle = FontStyle.Bold;
+            
+            // 폰트 설정 (기본 폰트 사용)
+            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            
+            if (prefix == "Player")
+                playerHealthText = text;
+            else
+                enemyHealthText = text;
                 
-            if (enemyHealthText == null)
-            {
-                enemyHealthText = enemyHealthBar?.transform.Find("EnemyHealthText")?.GetComponent<Text>();
-            }
-                
+            Debug.Log($"CombatUI: {prefix} health bar setup completed");
+        }
+        
+        /// <summary>
+        /// 기타 UI 컴포넌트 검증
+        /// </summary>
+        private void ValidateOtherComponents()
+        {
             // 코인 컨테이너 검증
             if (coinContainer == null)
             {
                 coinContainer = transform.Find("CoinArea");
                 if (coinContainer == null)
                     Debug.LogError("CombatUI: coinContainer is missing!");
+                else
+                    Debug.Log("CombatUI: CoinArea found and assigned");
             }
                 
             // 패턴 컨테이너 검증
@@ -260,6 +383,8 @@ namespace MonoChrome
                 patternContainer = transform.Find("PatternArea");
                 if (patternContainer == null)
                     Debug.LogError("CombatUI: patternContainer is missing!");
+                else
+                    Debug.Log("CombatUI: PatternArea found and assigned");
             }
                 
             // 버튼 검증
@@ -268,6 +393,8 @@ namespace MonoChrome
                 activeSkillButton = transform.Find("ActiveSkillButton")?.GetComponent<Button>();
                 if (activeSkillButton == null)
                     Debug.LogError("CombatUI: activeSkillButton is missing!");
+                else
+                    Debug.Log("CombatUI: ActiveSkillButton found and assigned");
             }
                 
             if (endTurnButton == null)
@@ -275,6 +402,8 @@ namespace MonoChrome
                 endTurnButton = transform.Find("EndTurnButton")?.GetComponent<Button>();
                 if (endTurnButton == null)
                     Debug.LogError("CombatUI: endTurnButton is missing!");
+                else
+                    Debug.Log("CombatUI: EndTurnButton found and assigned");
             }
                 
             // 텍스트 검증
@@ -283,13 +412,108 @@ namespace MonoChrome
                 turnInfoText = transform.Find("TurnInfoText")?.GetComponent<Text>();
                 if (turnInfoText == null)
                     Debug.LogError("CombatUI: turnInfoText is missing!");
+                else
+                    Debug.Log("CombatUI: TurnInfoText found and assigned");
             }
                 
             if (enemyIntentionText == null)
             {
                 enemyIntentionText = transform.Find("EnemyIntentionText")?.GetComponent<Text>();
                 if (enemyIntentionText == null)
-                    Debug.LogWarning("CombatUI: enemyIntentionText is missing!");
+                {
+                    Debug.LogWarning("CombatUI: EnemyIntentionText not found, creating one");
+                    CreateEnemyIntentionText();
+                }
+                else
+                {
+                    Debug.Log("CombatUI: EnemyIntentionText found and assigned");
+                }
+            }
+            
+            // 상태 효과 컨테이너 검증
+            ValidateStatusEffectContainers();
+        }
+        
+        /// <summary>
+        /// 적 의도 텍스트 생성
+        /// </summary>
+        private void CreateEnemyIntentionText()
+        {
+            GameObject intentionTextGO = new GameObject("EnemyIntentionText");
+            intentionTextGO.transform.SetParent(transform, false);
+            
+            RectTransform textRT = intentionTextGO.AddComponent<RectTransform>();
+            textRT.anchorMin = new Vector2(0.5f, 0.7f);
+            textRT.anchorMax = new Vector2(0.5f, 0.7f);
+            textRT.sizeDelta = new Vector2(300, 30);
+            textRT.anchoredPosition = Vector2.zero;
+            
+            enemyIntentionText = intentionTextGO.AddComponent<Text>();
+            enemyIntentionText.text = "Enemy is preparing...";
+            enemyIntentionText.alignment = TextAnchor.MiddleCenter;
+            enemyIntentionText.color = Color.yellow;
+            enemyIntentionText.fontSize = 16;
+            enemyIntentionText.fontStyle = FontStyle.Bold;
+            enemyIntentionText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            
+            Debug.Log("CombatUI: EnemyIntentionText created");
+        }
+        
+        /// <summary>
+        /// 상태 효과 컨테이너 검증 및 생성
+        /// </summary>
+        private void ValidateStatusEffectContainers()
+        {
+            // 플레이어 상태 효과 컨테이너
+            if (playerStatusEffectContainer == null)
+            {
+                playerStatusEffectContainer = transform.Find("PlayerStatusEffectContainer");
+                if (playerStatusEffectContainer == null)
+                {
+                    Debug.Log("CombatUI: Creating PlayerStatusEffectContainer");
+                    GameObject playerContainer = new GameObject("PlayerStatusEffectContainer");
+                    playerContainer.transform.SetParent(transform, false);
+                    
+                    RectTransform playerRT = playerContainer.AddComponent<RectTransform>();
+                    playerRT.anchorMin = new Vector2(0.15f, 0.85f);
+                    playerRT.anchorMax = new Vector2(0.45f, 0.95f);
+                    playerRT.sizeDelta = Vector2.zero;
+                    playerRT.offsetMin = Vector2.zero;
+                    playerRT.offsetMax = Vector2.zero;
+                    
+                    playerStatusEffectContainer = playerContainer.transform;
+                    Debug.Log("CombatUI: PlayerStatusEffectContainer created");
+                }
+                else
+                {
+                    Debug.Log("CombatUI: PlayerStatusEffectContainer found and assigned");
+                }
+            }
+            
+            // 적 상태 효과 컨테이너
+            if (enemyStatusEffectContainer == null)
+            {
+                enemyStatusEffectContainer = transform.Find("EnemyStatusEffectContainer");
+                if (enemyStatusEffectContainer == null)
+                {
+                    Debug.Log("CombatUI: Creating EnemyStatusEffectContainer");
+                    GameObject enemyContainer = new GameObject("EnemyStatusEffectContainer");
+                    enemyContainer.transform.SetParent(transform, false);
+                    
+                    RectTransform enemyRT = enemyContainer.AddComponent<RectTransform>();
+                    enemyRT.anchorMin = new Vector2(0.55f, 0.85f);
+                    enemyRT.anchorMax = new Vector2(0.85f, 0.95f);
+                    enemyRT.sizeDelta = Vector2.zero;
+                    enemyRT.offsetMin = Vector2.zero;
+                    enemyRT.offsetMax = Vector2.zero;
+                    
+                    enemyStatusEffectContainer = enemyContainer.transform;
+                    Debug.Log("CombatUI: EnemyStatusEffectContainer created");
+                }
+                else
+                {
+                    Debug.Log("CombatUI: EnemyStatusEffectContainer found and assigned");
+                }
             }
         }
         
@@ -373,24 +597,10 @@ namespace MonoChrome
             }
             coinObjects.Clear();
             
-            // 동전 프리팹이 없는 경우 임시 프리팹 생성
+            // 동전 프리팹이 없는 경우 개선된 프리팹 생성
             if (coinPrefab == null)
             {
-                // 임시 동전 프리팹 생성
-                coinPrefab = new GameObject("CoinPrefab");
-                coinPrefab.AddComponent<RectTransform>();
-                coinPrefab.AddComponent<Image>();
-                
-                // 텍스트 추가
-                GameObject textObj = new GameObject("CoinText");
-                textObj.transform.SetParent(coinPrefab.transform);
-                textObj.AddComponent<RectTransform>();
-                Text text = textObj.AddComponent<Text>();
-                text.alignment = TextAnchor.MiddleCenter;
-                text.fontSize = 12;
-                text.color = Color.white;
-                
-                Debug.LogWarning("CombatUI: Created temporary coin prefab");
+                CreateImprovedCoinPrefab();
             }
             
             // 새 동전 UI 생성
@@ -398,19 +608,23 @@ namespace MonoChrome
             {
                 GameObject coinObj = Instantiate(coinPrefab, coinContainer);
                 
-                // 동전 이미지 설정
+                // 동전 이미지 및 텍스트 설정
                 Image coinImage = coinObj.GetComponent<Image>();
-                if (coinImage != null)
-                {
-                    // 앞면/뒷면에 따라 이미지 설정
-                    coinImage.color = coinResults[i] ? new Color(0.8f, 0.3f, 0.3f) : new Color(0.3f, 0.3f, 0.8f);
-                }
-                
-                // 동전 텍스트 설정
                 Text coinText = coinObj.GetComponentInChildren<Text>();
-                if (coinText != null)
+                
+                if (coinResults[i]) // 공격면
                 {
-                    coinText.text = coinResults[i] ? "A" : "D"; // Attack/Defense
+                    if (coinImage != null)
+                        coinImage.color = new Color(0.8f, 0.3f, 0.3f, 0.9f);
+                    if (coinText != null)
+                        coinText.text = "공격";
+                }
+                else // 방어면
+                {
+                    if (coinImage != null)
+                        coinImage.color = new Color(0.3f, 0.3f, 0.8f, 0.9f);
+                    if (coinText != null)
+                        coinText.text = "방어";
                 }
                 
                 // 위치 설정
@@ -420,15 +634,48 @@ namespace MonoChrome
                     float horizontalSpacing = 80f;
                     float xPos = (i - (coinResults.Count - 1) / 2.0f) * horizontalSpacing;
                     rectTransform.anchoredPosition = new Vector2(xPos, 0);
-                    
-                    // 크기 설정
-                    rectTransform.sizeDelta = new Vector2(60, 60);
                 }
                 
                 coinObjects.Add(coinObj);
             }
             
             Debug.Log($"CombatUI: Updated coin UI with {coinResults.Count} coins");
+        }
+        
+        /// <summary>
+        /// 개선된 동전 프리팹 생성
+        /// </summary>
+        private void CreateImprovedCoinPrefab()
+        {
+            Debug.Log("CombatUI: Creating improved coin prefab");
+            
+            // 동전 프리팹 생성
+            coinPrefab = new GameObject("CoinPrefab");
+            RectTransform rectTransform = coinPrefab.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(60, 60);
+            
+            // 동전 이미지
+            Image coinImage = coinPrefab.AddComponent<Image>();
+            coinImage.color = new Color(0.5f, 0.5f, 0.5f, 0.9f);
+            
+            // 동전 텍스트
+            GameObject textObj = new GameObject("CoinText");
+            textObj.transform.SetParent(coinPrefab.transform, false);
+            RectTransform textRT = textObj.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.sizeDelta = Vector2.zero;
+            textRT.offsetMin = Vector2.zero;
+            textRT.offsetMax = Vector2.zero;
+            
+            Text text = textObj.AddComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.alignment = TextAnchor.MiddleCenter;
+            text.fontSize = 18;
+            text.color = Color.white;
+            text.fontStyle = FontStyle.Bold;
+            
+            Debug.Log("CombatUI: Improved coin prefab created");
         }
         
         /// <summary>
@@ -449,25 +696,10 @@ namespace MonoChrome
             }
             patternObjects.Clear();
             
-            // 패턴 버튼 프리팹이 없는 경우 임시 프리팹 생성
+            // 개선된 프리팹 확인
             if (patternButtonPrefab == null)
             {
-                // 임시 패턴 버튼 프리팹 생성
-                patternButtonPrefab = new GameObject("PatternButtonPrefab");
-                patternButtonPrefab.AddComponent<RectTransform>();
-                patternButtonPrefab.AddComponent<Image>();
-                patternButtonPrefab.AddComponent<Button>();
-                
-                // 텍스트 추가
-                GameObject textObj = new GameObject("PatternText");
-                textObj.transform.SetParent(patternButtonPrefab.transform);
-                textObj.AddComponent<RectTransform>();
-                Text text = textObj.AddComponent<Text>();
-                text.alignment = TextAnchor.MiddleCenter;
-                text.fontSize = 14;
-                text.color = Color.white;
-                
-                Debug.LogWarning("CombatUI: Created temporary pattern button prefab");
+                CreateImprovedPatternPrefab();
             }
             
             // 패턴 버튼 생성
@@ -476,43 +708,132 @@ namespace MonoChrome
                 Pattern pattern = availablePatterns[i];
                 GameObject patternObj = Instantiate(patternButtonPrefab, patternContainer);
                 
-                // 패턴 이름 텍스트 설정
-                Text patternText = patternObj.GetComponentInChildren<Text>();
-                if (patternText != null)
+                // 패턴 이름 설정
+                Text nameText = patternObj.transform.Find("PatternName")?.GetComponent<Text>();
+                if (nameText != null)
                 {
-                    patternText.text = pattern.Name;
+                    nameText.text = pattern.Name;
+                }
+                
+                // 패턴 효과 설명 설정
+                Text effectText = patternObj.transform.Find("PatternEffect")?.GetComponent<Text>();
+                if (effectText != null)
+                {
+                    effectText.text = pattern.Description;
+                }
+                
+                // 공격력/방어력 표시
+                Text powerText = patternObj.transform.Find("PowerText")?.GetComponent<Text>();
+                if (powerText != null)
+                {
+                    if (pattern.IsAttack)
+                    {
+                        powerText.text = $"공격\n+{pattern.AttackBonus}";
+                        powerText.color = new Color(1f, 0.3f, 0.3f);
+                    }
+                    else
+                    {
+                        powerText.text = $"방어\n+{pattern.DefenseBonus}";
+                        powerText.color = new Color(0.3f, 0.3f, 1f);
+                    }
+                }
+                
+                // 버튼 색상 설정
+                Image buttonImage = patternObj.GetComponent<Image>();
+                if (buttonImage != null)
+                {
+                    buttonImage.color = pattern.IsAttack ? 
+                        new Color(0.8f, 0.3f, 0.3f, 0.8f) : 
+                        new Color(0.3f, 0.3f, 0.8f, 0.8f);
                 }
                 
                 // 버튼 이벤트 설정
                 Button patternButton = patternObj.GetComponent<Button>();
                 if (patternButton != null)
                 {
-                    // 클로저를 위한 로컬 변수
                     Pattern localPattern = pattern;
                     patternButton.onClick.AddListener(() => OnPatternButtonClicked(localPattern));
-                    
-                    // 공격/방어 색상 구분
-                    ColorBlock colors = patternButton.colors;
-                    colors.normalColor = pattern.IsAttack ? new Color(0.8f, 0.5f, 0.5f) : new Color(0.5f, 0.5f, 0.8f);
-                    patternButton.colors = colors;
                 }
                 
-                // 위치 설정
+                // 위치 설정 (세로 배열)
                 RectTransform rectTransform = patternObj.GetComponent<RectTransform>();
                 if (rectTransform != null)
                 {
-                    float verticalSpacing = 70f;
-                    float yPos = -i * verticalSpacing;
+                    float yPos = -i * 60f;
                     rectTransform.anchoredPosition = new Vector2(0, yPos);
-                    
-                    // 크기 설정
-                    rectTransform.sizeDelta = new Vector2(200, 60);
                 }
                 
                 patternObjects.Add(patternObj);
             }
             
-            Debug.Log($"CombatUI: Updated pattern UI with {availablePatterns.Count} patterns");
+            Debug.Log($"CombatUI: Updated pattern UI with {availablePatterns.Count} patterns with detailed info");
+        }
+        
+        /// <summary>
+        /// 개선된 패턴 버튼 프리팹 생성
+        /// </summary>
+        private void CreateImprovedPatternPrefab()
+        {
+            Debug.Log("CombatUI: Creating improved pattern button prefab");
+            
+            // 패턴 버튼 프리팹 생성
+            patternButtonPrefab = new GameObject("PatternButtonPrefab");
+            RectTransform rectTransform = patternButtonPrefab.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(250, 55);
+            
+            // 버튼 컴포넌트
+            Image buttonImage = patternButtonPrefab.AddComponent<Image>();
+            buttonImage.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+            Button button = patternButtonPrefab.AddComponent<Button>();
+            
+            // 패턴 이름 텍스트
+            GameObject nameTextObj = new GameObject("PatternName");
+            nameTextObj.transform.SetParent(patternButtonPrefab.transform, false);
+            RectTransform nameRT = nameTextObj.AddComponent<RectTransform>();
+            nameRT.anchorMin = new Vector2(0, 0.5f);
+            nameRT.anchorMax = new Vector2(0.65f, 1);
+            nameRT.offsetMin = new Vector2(10, -15);
+            nameRT.offsetMax = new Vector2(0, 15);
+            
+            Text nameText = nameTextObj.AddComponent<Text>();
+            nameText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            nameText.fontSize = 16;
+            nameText.color = Color.white;
+            nameText.fontStyle = FontStyle.Bold;
+            nameText.alignment = TextAnchor.MiddleLeft;
+            
+            // 패턴 효과 텍스트
+            GameObject effectTextObj = new GameObject("PatternEffect");
+            effectTextObj.transform.SetParent(patternButtonPrefab.transform, false);
+            RectTransform effectRT = effectTextObj.AddComponent<RectTransform>();
+            effectRT.anchorMin = new Vector2(0, 0);
+            effectRT.anchorMax = new Vector2(0.65f, 0.5f);
+            effectRT.offsetMin = new Vector2(10, -15);
+            effectRT.offsetMax = new Vector2(0, 15);
+            
+            Text effectText = effectTextObj.AddComponent<Text>();
+            effectText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            effectText.fontSize = 11;
+            effectText.color = new Color(0.8f, 0.8f, 0.8f);
+            effectText.alignment = TextAnchor.MiddleLeft;
+            
+            // 공격력/방어력 표시
+            GameObject powerTextObj = new GameObject("PowerText");
+            powerTextObj.transform.SetParent(patternButtonPrefab.transform, false);
+            RectTransform powerRT = powerTextObj.AddComponent<RectTransform>();
+            powerRT.anchorMin = new Vector2(0.65f, 0);
+            powerRT.anchorMax = new Vector2(1, 1);
+            powerRT.offsetMin = Vector2.zero;
+            powerRT.offsetMax = new Vector2(-10, 0);
+            
+            Text powerText = powerTextObj.AddComponent<Text>();
+            powerText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            powerText.fontSize = 12;
+            powerText.color = Color.yellow;
+            powerText.alignment = TextAnchor.MiddleCenter;
+            powerText.fontStyle = FontStyle.Bold;
+            
+            Debug.Log("CombatUI: Improved pattern button prefab created");
         }
         
         /// <summary>
@@ -609,20 +930,28 @@ namespace MonoChrome
                 if (text != null && text.text == selectedPattern.Name)
                 {
                     // 선택된 패턴 강조
-                    ColorBlock colors = button.colors;
-                    colors.normalColor = selectedPattern.IsAttack ? new Color(1.0f, 0.3f, 0.3f) : new Color(0.3f, 0.3f, 1.0f);
-                    button.colors = colors;
+                    Image buttonImage = button.GetComponent<Image>();
+                    if (buttonImage != null)
+                    {
+                    buttonImage.color = selectedPattern.IsAttack ? 
+                        new Color(1.0f, 0.2f, 0.2f, 1.0f) : 
+                        new Color(0.2f, 0.2f, 1.0f, 1.0f);
+                }
                     
                     // 선택 효과 (옵션)
                     button.transform.localScale = new Vector3(1.1f, 1.1f, 1.1f);
                 }
                 else
                 {
-                    // 다른 패턴 기본 색상
-                    ColorBlock colors = button.colors;
-                    bool isAttack = button.colors.normalColor.r > button.colors.normalColor.b;
-                    colors.normalColor = isAttack ? new Color(0.8f, 0.5f, 0.5f) : new Color(0.5f, 0.5f, 0.8f);
-                    button.colors = colors;
+                    // 다른 패턴 기본 색상으로 복원
+                    Image buttonImage = button.GetComponent<Image>();
+                    if (buttonImage != null)
+                    {
+                        bool isAttack = buttonImage.color.r > buttonImage.color.b;
+                        buttonImage.color = isAttack ? 
+                            new Color(0.8f, 0.3f, 0.3f, 0.8f) : 
+                            new Color(0.3f, 0.3f, 0.8f, 0.8f);
+                    }
                     
                     // 기본 크기
                     button.transform.localScale = Vector3.one;
@@ -694,21 +1023,7 @@ namespace MonoChrome
             // 상태 효과 프리팹 확인
             if (statusEffectPrefab == null)
             {
-                // 임시 상태 효과 프리팹 생성
-                statusEffectPrefab = new GameObject("StatusEffectPrefab");
-                statusEffectPrefab.AddComponent<RectTransform>();
-                statusEffectPrefab.AddComponent<Image>();
-                
-                // 텍스트 추가
-                GameObject textObj = new GameObject("EffectText");
-                textObj.transform.SetParent(statusEffectPrefab.transform);
-                textObj.AddComponent<RectTransform>();
-                Text text = textObj.AddComponent<Text>();
-                text.alignment = TextAnchor.MiddleCenter;
-                text.fontSize = 10;
-                text.color = Color.white;
-                
-                Debug.LogWarning("CombatUI: Created temporary status effect prefab");
+                CreateImprovedStatusEffectPrefab();
             }
             
             // 플레이어 상태 효과 UI 생성
@@ -725,65 +1040,123 @@ namespace MonoChrome
         }
     }
     
-    /// <summary>
-    /// 상태 효과 아이콘 생성 헬퍼 메서드
-    /// </summary>
-    private void CreateStatusEffectIcons(List<StatusEffect> effects, Transform container, List<GameObject> objectsList)
-    {
-        float spacing = 40f;
+        /// <summary>
+        /// 개선된 상태 효과 프리팹 생성
+        /// </summary>
+        private void CreateImprovedStatusEffectPrefab()
+        {
+            Debug.Log("CombatUI: Creating improved status effect prefab");
+            
+            // 상태 효과 프리팹 생성
+            statusEffectPrefab = new GameObject("StatusEffectPrefab");
+            RectTransform rectTransform = statusEffectPrefab.AddComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(40, 40);
+            
+            // 배경 이미지
+            Image effectImage = statusEffectPrefab.AddComponent<Image>();
+            effectImage.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+            
+            // 효과 텍스트
+            GameObject textObj = new GameObject("EffectText");
+            textObj.transform.SetParent(statusEffectPrefab.transform, false);
+            RectTransform textRT = textObj.AddComponent<RectTransform>();
+            textRT.anchorMin = Vector2.zero;
+            textRT.anchorMax = Vector2.one;
+            textRT.sizeDelta = Vector2.zero;
+            textRT.offsetMin = Vector2.zero;
+            textRT.offsetMax = Vector2.zero;
+            
+            Text text = textObj.AddComponent<Text>();
+            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.alignment = TextAnchor.MiddleCenter;
+            text.fontSize = 8;
+            text.color = Color.white;
+            text.fontStyle = FontStyle.Bold;
+            
+            Debug.Log("CombatUI: Improved status effect prefab created");
+        }
         
-        for (int i = 0; i < effects.Count; i++)
+        /// <summary>
+        /// 상태 효과 아이콘 생성 헬퍼 메서드
+        /// </summary>
+        private void CreateStatusEffectIcons(List<StatusEffect> effects, Transform container, List<GameObject> objectsList)
         {
-            StatusEffect effect = effects[i];
-            GameObject effectObj = Instantiate(statusEffectPrefab, container);
+            float spacing = 45f;
             
-            // 효과 텍스트 설정
-            Text effectText = effectObj.GetComponentInChildren<Text>();
-            if (effectText != null)
+            for (int i = 0; i < effects.Count; i++)
             {
-                effectText.text = $"{effect.EffectType}\n{effect.Magnitude} ({effect.RemainingDuration}턴)";
+                StatusEffect effect = effects[i];
+                GameObject effectObj = Instantiate(statusEffectPrefab, container);
+                
+                // 효과 텍스트 설정
+                Text effectText = effectObj.GetComponentInChildren<Text>();
+                if (effectText != null)
+                {
+                    // 상태 효과 이름의 한글 줄임말 사용
+                    string shortName = GetShortNameForStatusEffect(effect.EffectType);
+                    effectText.text = $"{shortName}\n{effect.Magnitude}\n({effect.RemainingDuration})";
+                }
+                
+                // 효과 색상 설정
+                Image effectImage = effectObj.GetComponent<Image>();
+                if (effectImage != null)
+                {
+                    // 효과 유형에 따른 색상 설정
+                    effectImage.color = GetColorForStatusEffect(effect.EffectType);
+                }
+                
+                // 위치 설정
+                RectTransform rectTransform = effectObj.GetComponent<RectTransform>();
+                if (rectTransform != null)
+                {
+                    rectTransform.anchoredPosition = new Vector2(i * spacing, 0);
+                }
+                
+                objectsList.Add(effectObj);
             }
-            
-            // 효과 색상 설정
-            Image effectImage = effectObj.GetComponent<Image>();
-            if (effectImage != null)
-            {
-                // 효과 유형에 따른 색상 설정
-                effectImage.color = GetColorForStatusEffect(effect.EffectType);
-            }
-            
-            // 위치 설정
-            RectTransform rectTransform = effectObj.GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                rectTransform.anchoredPosition = new Vector2(i * spacing, 0);
-                rectTransform.sizeDelta = new Vector2(35, 35);
-            }
-            
-            objectsList.Add(effectObj);
         }
-    }
     
-    /// <summary>
-    /// 상태 효과 유형에 따른 색상 반환
-    /// </summary>
-    private Color GetColorForStatusEffect(StatusEffectType effectType)
-    {
-        switch (effectType)
+        /// <summary>
+        /// 상태 효과 유형에 따른 색상 반환
+        /// </summary>
+        private Color GetColorForStatusEffect(StatusEffectType effectType)
         {
-            case StatusEffectType.Amplify:   return new Color(0.8f, 0.5f, 0.0f); // 황색
-            case StatusEffectType.Resonance: return new Color(0.8f, 0.8f, 0.2f); // 금색
-            case StatusEffectType.Mark:      return new Color(0.5f, 0.8f, 0.5f); // 연두색
-            case StatusEffectType.Bleed:     return new Color(0.8f, 0.0f, 0.0f); // 적색
-            case StatusEffectType.Counter:   return new Color(0.5f, 0.5f, 0.8f); // 청색
-            case StatusEffectType.Crush:     return new Color(0.5f, 0.2f, 0.0f); // 갈색
-            case StatusEffectType.Curse:     return new Color(0.5f, 0.0f, 0.5f); // 보라색
-            case StatusEffectType.Seal:      return new Color(0.2f, 0.2f, 0.2f); // 회색
-            case StatusEffectType.Poison:    return new Color(0.0f, 0.5f, 0.0f); // 녹색
-            case StatusEffectType.Burn:      return new Color(0.8f, 0.4f, 0.0f); // 주황색
-            default:                   return new Color(0.3f, 0.3f, 0.3f); // 회색
+            switch (effectType)
+            {
+                case StatusEffectType.Amplify:   return new Color(0.8f, 0.5f, 0.0f, 0.9f); // 황색
+                case StatusEffectType.Resonance: return new Color(0.8f, 0.8f, 0.2f, 0.9f); // 금색
+                case StatusEffectType.Mark:      return new Color(0.5f, 0.8f, 0.5f, 0.9f); // 연두색
+                case StatusEffectType.Bleed:     return new Color(0.8f, 0.0f, 0.0f, 0.9f); // 적색
+                case StatusEffectType.Counter:   return new Color(0.5f, 0.5f, 0.8f, 0.9f); // 청색
+                case StatusEffectType.Crush:     return new Color(0.5f, 0.2f, 0.0f, 0.9f); // 갈색
+                case StatusEffectType.Curse:     return new Color(0.5f, 0.0f, 0.5f, 0.9f); // 보라색
+                case StatusEffectType.Seal:      return new Color(0.2f, 0.2f, 0.2f, 0.9f); // 회색
+                case StatusEffectType.Poison:    return new Color(0.0f, 0.5f, 0.0f, 0.9f); // 녹색
+                case StatusEffectType.Burn:      return new Color(0.8f, 0.4f, 0.0f, 0.9f); // 주황색
+                default:                   return new Color(0.3f, 0.3f, 0.3f, 0.9f); // 회색
+            }
         }
+    
+        /// <summary>
+        /// 상태 효과 유형에 따른 줄임말 반환
+        /// </summary>
+        private string GetShortNameForStatusEffect(StatusEffectType effectType)
+        {
+            switch (effectType)
+            {
+                case StatusEffectType.Amplify:   return "증폭";
+                case StatusEffectType.Resonance: return "공명";
+                case StatusEffectType.Mark:      return "표식";
+                case StatusEffectType.Bleed:     return "출혈";
+                case StatusEffectType.Counter:   return "반격";
+                case StatusEffectType.Crush:     return "분쇄";
+                case StatusEffectType.Curse:     return "저주";
+                case StatusEffectType.Seal:      return "봉인";
+                case StatusEffectType.Poison:    return "독";
+                case StatusEffectType.Burn:      return "화상";
+                default:                   return "효과";
+            }
+        }
+        #endregion
     }
-    #endregion
-}
 }
