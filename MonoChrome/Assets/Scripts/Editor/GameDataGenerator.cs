@@ -12,11 +12,11 @@ namespace MonoChrome.Editor
     public class GameDataGenerator : EditorWindow
     {
         #region Window Setup
-        [MenuItem("MonoChrome/Game Data Generator")]
+        [MenuItem("MonoChrome/Game Data Utility")]
         public static void ShowWindow()
         {
             GameDataGenerator window = GetWindow<GameDataGenerator>();
-            window.titleContent = new GUIContent("Game Data Generator");
+            window.titleContent = new GUIContent("Game Data Utility");
             window.minSize = new Vector2(500, 600);
             window.Show();
         }
@@ -70,7 +70,7 @@ namespace MonoChrome.Editor
         {
             GUILayout.Space(10);
             EditorGUILayout.LabelField("MONOCHROME: the Eclipse", _headerStyle);
-            EditorGUILayout.LabelField("포트폴리오 품질 게임 데이터 생성기", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.LabelField("MonoChrome 게임 데이터 유틸리티", EditorStyles.centeredGreyMiniLabel);
             GUILayout.Space(20);
             
             EditorGUILayout.HelpBox(
@@ -202,6 +202,7 @@ namespace MonoChrome.Editor
                 "Assets/ScriptableObjects/Patterns/Olfactory",
                 "Assets/ScriptableObjects/Patterns/Tactile",
                 "Assets/ScriptableObjects/Patterns/Spiritual",
+                "Assets/ScriptableObjects/Patterns/Enemy",
                 "Assets/ScriptableObjects/Managers",
                 "Assets/Resources",
                 "Assets/Prefabs",
