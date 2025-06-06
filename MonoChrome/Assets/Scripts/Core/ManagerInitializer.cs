@@ -1,7 +1,9 @@
 using System.Collections;
-using MonoChrome.Combat;
+using MonoChrome.Core;
+using MonoChrome.Systems.UI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+
 
 namespace MonoChrome
 {
@@ -125,9 +127,9 @@ namespace MonoChrome
         {
             var managerNames = new[]
             {
-                "CombatManager",
-                "CoinManager", 
-                "PatternManager",
+                "UIController",
+                "DungeonController", 
+                "CharacterManager",
                 "StatusEffectManager"
             };
             
@@ -151,59 +153,39 @@ namespace MonoChrome
         /// </summary>
         private IEnumerator InitializeManagerDependencies()
         {
-            // CombatManager 의존성 확인
-            var combatManager = FindObjectOfType<MonoChrome.Combat.CombatManager>();
-            if (combatManager != null)
+            // 현재 시스템에서는 MasterGameManager가 모든 의존성을 관리하므로
+            // 개별 매니저 의존성 체크 대신 통합 시스템 확인
+            var masterGameManager = FindObjectOfType<MasterGameManager>();
+            if (masterGameManager != null)
             {
-                yield return StartCoroutine(EnsureCombatManagerDependencies(combatManager));
-            }
-            
-            // DungeonManager 의존성 확인
-            var dungeonManager = FindObjectOfType<MonoChrome.Dungeon.DungeonManager>();
-            if (dungeonManager != null)
-            {
-                yield return StartCoroutine(EnsureDungeonManagerDependencies(dungeonManager));
+                yield return StartCoroutine(EnsureMasterGameManagerDependencies(masterGameManager));
             }
         }
         
         /// <summary>
-        /// CombatManager 의존성 확인 및 설정
+        /// MasterGameManager 의존성 확인 및 설정
         /// </summary>
-        private IEnumerator EnsureCombatManagerDependencies(CombatManager combatManager)
+        private IEnumerator EnsureMasterGameManagerDependencies(MasterGameManager masterGameManager)
         {
-            GameObject combatObject = combatManager.gameObject;
+            if (_debugMode)
+                Debug.Log("ManagerInitializer: Checking MasterGameManager dependencies");
             
-            // 필요한 컴포넌트들 확인 및 추가
-            if (combatObject.GetComponent<CoinManager>() == null)
+            // MasterGameManager가 자체적으로 모든 의존성을 관리하므로
+            // 초기화 완료 여부만 확인
+            if (masterGameManager.IsInitialized)
             {
-                combatObject.AddComponent<CoinManager>();
                 if (_debugMode)
-                    Debug.Log("ManagerInitializer: Added CoinManager to CombatManager");
+                    Debug.Log("ManagerInitializer: MasterGameManager already initialized");
+            }
+            else
+            {
+                if (_debugMode)
+                    Debug.Log("ManagerInitializer: Waiting for MasterGameManager initialization");
+                
+                // MasterGameManager 초기화 대기
+                yield return new WaitUntil(() => masterGameManager.IsInitialized);
             }
             
-            if (combatObject.GetComponent<PatternManager>() == null)
-            {
-                combatObject.AddComponent<PatternManager>();
-                if (_debugMode)
-                    Debug.Log("ManagerInitializer: Added PatternManager to CombatManager");
-            }
-            
-            if (combatObject.GetComponent<StatusEffects.StatusEffectManager>() == null)
-            {
-                combatObject.AddComponent<StatusEffects.StatusEffectManager>();
-                if (_debugMode)
-                    Debug.Log("ManagerInitializer: Added StatusEffectManager to CombatManager");
-            }
-            
-            yield return null;
-        }
-        
-        /// <summary>
-        /// DungeonManager 의존성 확인 및 설정
-        /// </summary>
-        private IEnumerator EnsureDungeonManagerDependencies(Dungeon.DungeonManager dungeonManager)
-        {
-            // DungeonManager 관련 의존성이 필요한 경우 여기에 추가
             yield return null;
         }
         
@@ -212,13 +194,20 @@ namespace MonoChrome
         /// </summary>
         private IEnumerator UpdateUIManagerReferences()
         {
-            var uiManager = FindObjectOfType<UIManager>();
-            if (uiManager != null)
+            // 새로운 UI 시스템 확인
+            var uiController = FindObjectOfType<UIController>();
+            if (uiController != null)
             {
-                // UIManager가 GameManager 이벤트를 올바르게 구독했는지 확인
-                // 필요시 강제로 재구독
                 if (_debugMode)
-                    Debug.Log("ManagerInitializer: UIManager references updated");
+                    Debug.Log("ManagerInitializer: UIController found and active");
+            }
+            
+            // CoreUIManager 확인
+            var coreUIManager = FindObjectOfType<CoreUIManager>();
+            if (coreUIManager != null)
+            {
+                if (_debugMode)
+                    Debug.Log("ManagerInitializer: CoreUIManager found and active");
             }
             
             yield return null;
@@ -232,22 +221,27 @@ namespace MonoChrome
         {
             Debug.Log("=== Manager State Diagnosis ===");
             
-            // GameManager 상태
-            var gameManager = GameManager.Instance;
-            Debug.Log($"GameManager: {(gameManager != null ? "Active" : "Missing")}");
-            if (gameManager != null)
+            // MasterGameManager 상태
+            var masterGameManager = FindObjectOfType<MasterGameManager>();
+            Debug.Log($"MasterGameManager: {(masterGameManager != null ? "Active" : "Missing")}");
+            if (masterGameManager != null)
             {
-                Debug.Log($"  Current State: {gameManager.CurrentState}");
-                Debug.Log($"  UIManager Reference: {(gameManager.UIManager != null ? "Valid" : "Null")}");
-                Debug.Log($"  DungeonManager Reference: {(gameManager.DungeonManager != null ? "Valid" : "Null")}");
-                Debug.Log($"  CombatManager Reference: {(gameManager.CombatManager != null ? "Valid" : "Null")}");
+                Debug.Log($"  Initialization Status: {(masterGameManager.IsInitialized ? "Initialized" : "Not Initialized")}");
             }
             
-            // 씬의 매니저들 상태
+            // GameStateMachine 상태
+            var gameStateMachine = MonoChrome.Core.GameStateMachine.Instance;
+            Debug.Log($"GameStateMachine: {(gameStateMachine != null ? "Active" : "Missing")}");
+            if (gameStateMachine != null)
+            {
+                Debug.Log($"  Current State: {gameStateMachine.CurrentState}");
+            }
+            
+            // 씬의 시스템들 상태
             var sceneManagers = new[]
             {
-                "UIManager", "DungeonManager", "CombatManager", 
-                "CoinManager", "PatternManager", "StatusEffectManager"
+                "UIController", "DungeonController", "CharacterManager", 
+                "PlayerManager", "ShopManager", "StatusEffectManager"
             };
             
             foreach (string managerName in sceneManagers)

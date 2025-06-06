@@ -21,10 +21,10 @@ namespace MonoChrome
     /// </summary>
     public static class TypeConverter
     {
-        // CharacterType -> CombatManager
-        public static Combat.CombatManager ToCombatManager(this CharacterType type)
+        // CharacterType -> CombatSystem (updated to use new architecture)
+        public static Systems.Combat.CombatSystem ToCombatSystem(this CharacterType type)
         {
-            return new Combat.CombatManager();
+            return UnityEngine.Object.FindObjectOfType<Systems.Combat.CombatSystem>();
         }
         
         // CharacterType -> StatusEffect

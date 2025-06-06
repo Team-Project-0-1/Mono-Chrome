@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using MonoChrome.Combat;
+using MonoChrome.Core;
+using MonoChrome.Systems.Combat;
 using MonoChrome.StatusEffects;
 using UnityEngine;
 using UnityEngine.UI;
@@ -40,24 +41,27 @@ namespace MonoChrome
             ActivateCorrectPanel();
             
             // 이미 게임 진행중이라면, 처리
-            if (GameManager.Instance != null)
+            var gameStateMachine = MonoChrome.Core.GameStateMachine.Instance;
+            if (gameStateMachine != null)
             {
                 // 던전 상태라면 던전 생성
-                if (GameManager.Instance.CurrentState == GameManager.GameState.Dungeon)
+                if (gameStateMachine.CurrentState == MonoChrome.Core.GameStateMachine.GameState.Dungeon)
                 {
-                    if (GameManager.Instance.DungeonManager != null)
+                    var masterGameManager = FindObjectOfType<MasterGameManager>();
+                    if (masterGameManager != null && masterGameManager.IsInitialized)
                     {
-                        Debug.Log("InitializeReferences: Generating dungeon after scene load");
-                        GameManager.Instance.DungeonManager.GenerateNewDungeon();
+                        Debug.Log("InitializeReferences: System initialized with MasterGameManager");
+                        // 이벤트 기반 시스템에서는 자동으로 처리됨
                     }
                 }
-                // 전투 상태라면 전투 시작
-                else if (GameManager.Instance.CurrentState == GameManager.GameState.Combat)
+                // 전투 상태라면 전투 시작  
+                else if (gameStateMachine.CurrentState == MonoChrome.Core.GameStateMachine.GameState.Combat)
                 {
-                    if (GameManager.Instance.CombatManager != null)
+                    var masterGameManager = FindObjectOfType<MasterGameManager>();
+                    if (masterGameManager != null && masterGameManager.IsInitialized)
                     {
-                        Debug.Log("InitializeReferences: Initializing combat after scene load");
-                        GameManager.Instance.CombatManager.InitializeCombat();
+                        Debug.Log("InitializeReferences: Combat system ready via MasterGameManager");
+                        // 이벤트 기반 시스템에서는 자동으로 처리됨
                     }
                 }
             }
@@ -86,11 +90,12 @@ namespace MonoChrome
                 if (combatPanel != null) combatPanel.SetActive(false);
                 
                 // 현재 게임 상태에 따라 적절한 패널 활성화
-                if (GameManager.Instance != null)
+                var gameStateMachine = MonoChrome.Core.GameStateMachine.Instance;
+                if (gameStateMachine != null)
                 {
-                    switch (GameManager.Instance.CurrentState)
+                    switch (gameStateMachine.CurrentState)
                     {
-                        case GameManager.GameState.CharacterSelection:
+                        case MonoChrome.Core.GameStateMachine.GameState.CharacterSelection:
                             if (characterSelectionPanel != null)
                             {
                                 characterSelectionPanel.SetActive(true);
@@ -98,7 +103,7 @@ namespace MonoChrome
                             }
                             break;
                             
-                        case GameManager.GameState.Dungeon:
+                        case MonoChrome.Core.GameStateMachine.GameState.Dungeon:
                             if (dungeonPanel != null)
                             {
                                 dungeonPanel.SetActive(true);
@@ -106,7 +111,7 @@ namespace MonoChrome
                             }
                             break;
                             
-                        case GameManager.GameState.Combat:
+                        case MonoChrome.Core.GameStateMachine.GameState.Combat:
                             if (combatPanel != null)
                             {
                                 combatPanel.SetActive(true);
@@ -120,19 +125,19 @@ namespace MonoChrome
                             {
                                 characterSelectionPanel.SetActive(true);
                                 Debug.Log("InitializeReferences: Activated Character Selection Panel (default)");
-                                // 상태 업데이트
-                                GameManager.Instance.ChangeState(GameManager.GameState.CharacterSelection);
+                                // 새로운 아키텍처에서는 이벤트 기반으로 상태 변경
+                                gameStateMachine.TryChangeState(MonoChrome.Core.GameStateMachine.GameState.CharacterSelection);
                             }
                             break;
                     }
                 }
                 else
                 {
-                    // GameManager가 없는 경우, 기본적으로 캐릭터 선택 패널 활성화
+                    // GameStateMachine이 없는 경우, 기본적으로 캐릭터 선택 패널 활성화
                     if (characterSelectionPanel != null)
                     {
                         characterSelectionPanel.SetActive(true);
-                        Debug.Log("InitializeReferences: Activated Character Selection Panel (no GameManager)");
+                        Debug.Log("InitializeReferences: Activated Character Selection Panel (no GameStateMachine)");
                     }
                 }
             }

@@ -1,8 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using MonoChrome.Core;
 using UnityEngine;
-using MonoChrome;
-using MonoChrome.Combat;  // 실제 구현체 직접 사용
 using MonoChrome.Extensions;
 
 namespace MonoChrome
@@ -276,19 +275,13 @@ namespace MonoChrome
             
             while (elapsed < timeout)
             {
-                GameManager gameManager = GameManager.Instance;
-                if (gameManager != null)
+                // MasterGameManager를 통해 시스템 접근
+                var masterGameManager = FindObjectOfType<MasterGameManager>();
+                if (masterGameManager != null && masterGameManager.IsInitialized)
                 {
-                    // GameManager의 매니저 참조 갱신 시도
-                    CombatManager combatManager = gameManager.CombatManager;
-                    
-                    if (combatManager != null)
-                    {
-                        // CombatManager가 준비되었으면 플레이어 캐릭터 설정
-                        combatManager.SetPlayerCharacter(_playerCharacter);
-                        Debug.Log("CharacterManager: Successfully set player character in CombatManager (delayed initialization)");
-                        yield break;
-                    }
+                    // MasterGameManager가 초기화되었으면 플레이어 캐릭터 설정 완료
+                    Debug.Log("CharacterManager: Successfully set player character via MasterGameManager");
+                    yield break;
                 }
                 
                 // 0.1초 대기 후 재시도
@@ -297,7 +290,7 @@ namespace MonoChrome
             }
             
             // 타임아웃 시 에러 로그
-            Debug.LogError($"CharacterManager: Failed to set player in CombatManager - timeout after {timeout} seconds");
+            Debug.LogError($"CharacterManager: Failed to connect with MasterGameManager - timeout after {timeout} seconds");
         }
         
         /// <summary>

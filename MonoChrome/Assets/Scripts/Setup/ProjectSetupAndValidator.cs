@@ -3,8 +3,7 @@ using UnityEditor;
 using System.Collections;
 using MonoChrome.Events;
 using MonoChrome.Core;
-using MonoChrome.Dungeon;
-using MonoChrome.UI;
+using MonoChrome.Systems.UI;
 using MonoChrome.Compatibility;
 
 namespace MonoChrome.Setup

@@ -238,14 +238,14 @@ namespace MonoChrome.Core
             }
             
             // 기존 DungeonManager와 CombatManager 활성화 (호환성을 위해)
-            MonoChrome.Dungeon.DungeonManager dungeonManager = FindObjectOfType<MonoChrome.Dungeon.DungeonManager>();
+            DungeonManager dungeonManager = FindObjectOfType<DungeonManager>();
             if (dungeonManager != null && !dungeonManager.gameObject.activeInHierarchy)
             {
                 dungeonManager.gameObject.SetActive(true);
                 LogMessage("  ✓ DungeonManager 활성화됨 (호환성)");
             }
             
-            MonoChrome.Combat.CombatManager combatManager = FindObjectOfType<MonoChrome.Combat.CombatManager>();
+            CombatManager combatManager = FindObjectOfType<CombatManager>();
             if (combatManager != null && !combatManager.gameObject.activeInHierarchy)
             {
                 combatManager.gameObject.SetActive(true);

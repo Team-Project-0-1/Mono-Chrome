@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using MonoChrome.Combat;
+using MonoChrome.Systems.Combat;
 using MonoChrome.StatusEffects;
 
 namespace MonoChrome
