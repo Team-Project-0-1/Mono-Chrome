@@ -7,7 +7,7 @@
 2. **게임 상태 머신** (`GameStateMachine.cs`) 
 3. **던전 컨트롤러** (`DungeonController.cs`) - 단일 책임 원칙 적용
 4. **UI 컨트롤러** (`UIController.cs`) - 뷰 레이어 분리
-5. **개선된 게임 매니저** (`ImprovedGameManager.cs`) - 조정자 역할만
+5. **마스터 게임 매니저** (`MasterGameManager.cs`) - 중앙 조정자 역할
 6. **기존 DungeonUI 개선** - 이벤트 시스템 연동
 7. **테스트 스크립트** (`ImprovedArchitectureTest.cs`)
 
@@ -18,7 +18,7 @@
 #### A. 씬에 핵심 시스템 배치
 ```
 Hierarchy:
-├── [ImprovedGameManager] (DontDestroyOnLoad)
+├── [MasterGameManager] (DontDestroyOnLoad)
 ├── [GameStateMachine] (DontDestroyOnLoad) 
 ├── [EventBus] (DontDestroyOnLoad)
 ├── DungeonController
@@ -28,7 +28,7 @@ Hierarchy:
 ```
 
 #### B. 스크립트 연결
-1. **빈 GameObject 생성** → `ImprovedGameManager` 스크립트 추가
+1. **빈 GameObject 생성** → `MasterGameManager` 스크립트 추가
 2. **빈 GameObject 생성** → `DungeonController` 스크립트 추가  
 3. **빈 GameObject 생성** → `UIController` 스크립트 추가
 4. **Canvas에 UI 패널들 배치** (기존 방식과 동일)
@@ -71,10 +71,10 @@ GameStateMachine.Instance.StartCombat();
 - 게임 로직 모름 (이벤트 수신만)
 - 사용자 입력을 이벤트로 변환
 
-#### ImprovedGameManager (조정자만)
-- 시스템 생성과 초기화만 담당
-- 구체적인 구현 모름
-- 단순한 중개 역할만
+#### MasterGameManager (중앙 조정자)
+- 모든 시스템의 생성과 초기화 담당
+- 구체적인 구현은 각 컨트롤러에 위임
+- 이벤트 기반으로 시스템 흐름을 조율
 
 ## 🚀 마이그레이션 가이드
 
@@ -86,7 +86,7 @@ GameStateMachine.Instance.StartCombat();
 GameManager.Instance.EnterDungeon();
 
 // 새 방식  
-ImprovedGameManager.Instance.EnterDungeon();
+MasterGameManager.Instance.EnterDungeon();
 // 또는 직접 상태 변경
 GameStateMachine.Instance.EnterDungeon();
 ```
@@ -124,7 +124,7 @@ UIEvents.RequestDungeonMapUpdate(nodes, currentIndex);
 3. 기존 GameManager의 복잡한 메서드들을 단순화
 
 #### 단계 3: 완전 교체
-1. 기존 GameManager → ImprovedGameManager
+1. 기존 GameManager → MasterGameManager
 2. 기존 DungeonManager → DungeonController  
 3. 기존 UIManager → UIController
 

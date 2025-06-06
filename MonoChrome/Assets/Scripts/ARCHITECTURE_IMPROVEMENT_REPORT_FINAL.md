@@ -50,7 +50,7 @@ CombatEvents.RequestCombatStart(enemyType, characterType);
 
 ### 🟡 WARNING: 시스템 아키텍처 개선
 #### 1. 통합 GameManager 구현
-**새로운 UnifiedGameManager**:
+**새로운 MasterGameManager**:
 - Thread-Safe 싱글톤 패턴
 - 이벤트 기반 시스템 조정
 - 레거시 시스템과의 호환성 유지
@@ -59,7 +59,7 @@ CombatEvents.RequestCombatStart(enemyType, characterType);
 ```csharp
 namespace MonoChrome.Core
 {
-    public class UnifiedGameManager : MonoBehaviour
+    public class MasterGameManager : MonoBehaviour
     {
         // 단일 책임: 시스템 생명주기 관리만 담당
         // 이벤트 기반 통신으로 결합도 최소화
@@ -89,8 +89,8 @@ namespace MonoChrome.Combat
 
 ## 🔧 새로 추가된 시스템
 
-### 1. UnifiedGameManager
-- **위치**: `Assets/Scripts/Core/UnifiedGameManager.cs`
+### 1. MasterGameManager
+- **위치**: `Assets/Scripts/Core/MasterGameManager.cs`
 - **기능**: 시스템 통합 관리, 생명주기 관리
 - **특징**: Thread-Safe, 이벤트 기반, 낮은 결합도
 
@@ -127,7 +127,7 @@ namespace MonoChrome.Combat
 - ❌ CombatManager (기존)
 
 ### 새로 추가된 시스템
-- ✅ UnifiedGameManager
+- ✅ MasterGameManager
 - ✅ CombatSystem
 - ✅ CombatUIBridge
 

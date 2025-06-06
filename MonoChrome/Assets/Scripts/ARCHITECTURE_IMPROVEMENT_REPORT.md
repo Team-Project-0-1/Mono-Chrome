@@ -9,7 +9,7 @@
 4. **일관성 없는 시스템 통신**: 직접 참조와 이벤트 방식 혼재
 
 ### ✅ 개선 결과
-1. **통합 아키텍처**: 단일 UnifiedGameManager로 통합
+1. **통합 아키텍처**: 단일 MasterGameManager로 통합
 2. **책임 분리**: CombatSystem + CombatUIBridge로 분리
 3. **이벤트 기반 통신**: 낮은 결합도, 높은 응집도 달성
 4. **성능 최적화**: 불필요한 매니저들 비활성화
@@ -20,7 +20,7 @@
 
 ### Core System
 ```
-UnifiedGameManager (통합 매니저)
+MasterGameManager (중앙 매니저)
 ├── 시스템 생명주기 관리
 ├── 이벤트 기반 조정
 ├── 씬 전환 처리
