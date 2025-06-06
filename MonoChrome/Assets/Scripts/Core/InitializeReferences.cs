@@ -25,7 +25,7 @@ namespace MonoChrome
         
         private void Start()
         {
-            // GameManager와 다른 매니저들이 먼저 초기화되도록 대기
+            // MasterGameManager와 다른 매니저들이 먼저 초기화되도록 대기
             StartCoroutine(InitializeWithDelay());
         }
         
@@ -436,7 +436,7 @@ namespace MonoChrome
             }
             
             // 기타 매니저 참조
-            GameManager gameManager = GameManager.Instance; // 싱글톤 생성 보장
+            MasterGameManager gameManager = MasterGameManager.Instance; // 싱글톤 생성 보장
             CharacterManager characterManager = CharacterManager.Instance; // 싱글톤 생성 보장
             AIManager aiManager = AIManager.Instance; // 싱글톤 생성 보장
             
