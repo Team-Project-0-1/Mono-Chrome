@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using MonoChrome.Combat;
 
 namespace MonoChrome
 {

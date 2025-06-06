@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**MONOCHROME: the Eclipse** is a Unity 6 C# turn-based roguelike game with a coin-based combat system. This is a portfolio project demonstrating enterprise-level game development practices and clean architecture patterns.
+**MONOCHROME: the Eclipse** is a Unity 6 C# turn-based roguelike game with a coin-based combat system and Korean localization support. This is a portfolio project demonstrating enterprise-level game development practices, clean architecture patterns, and sophisticated dependency injection systems.
 
 ## Build & Development Commands
 
@@ -60,27 +60,31 @@ DungeonEvents.NotifyNodeMoveCompleted(node);
 ### System Controllers
 Each major system has a dedicated controller following single responsibility:
 
-- **MasterGameManager**: Central coordinator (200 lines, reduced from 500+)
-- **DungeonController**: Dungeon generation and node management only
-- **UIController**: UI panel display and transitions only  
-- **CombatSystem**: Turn-based combat logic only
+- **MasterGameManager**: Central coordinator (717 lines) with enterprise-level architecture
+- **DungeonController**: Located in `Assets/Scripts/Systems/Dungeon/` for generation and node management
+- **UIController**: Located in `Assets/Scripts/Systems/UI/` for panel display and transitions
+- **ServiceLocator**: Dependency injection system for loose coupling between systems
 
 ### Data Architecture
-ScriptableObject-based data system:
-- **CharacterDataManager**: Player and enemy character definitions
+ScriptableObject-based data system with Korean localization:
+- **CharacterDataManager**: Player and enemy character definitions with Korean names
 - **PatternDataManager**: Combat patterns organized by sensory types (Auditory, Olfactory, Tactile, Spiritual)
 - **StageThemeDataAsset**: Stage-specific theming and configuration
+- **DataConnector**: Centralized ScriptableObject management and loading system
+- **EventBus**: Centralized event dispatching and subscription management
 
 ## Key Namespaces
 
 ```csharp
-MonoChrome.Core          // Central managers and game state
-MonoChrome.Events        // Event system and messaging
-MonoChrome.Dungeon       // Dungeon generation and navigation
-MonoChrome.Combat        // Turn-based combat and patterns
-MonoChrome.Characters    // Player and enemy character systems
-MonoChrome.UI            // User interface controllers
-MonoChrome.StatusEffects // Buff/debuff system
+MonoChrome                    // Base namespace for characters and core types
+MonoChrome.Core              // Central managers, data systems, and game state
+MonoChrome.Core.Data         // Data management and ScriptableObject systems
+MonoChrome.Core.Architecture // Architecture patterns and dependency injection
+MonoChrome.Events            // Event system and messaging (DungeonEvents, UIEvents, CombatEvents)
+MonoChrome.Systems.Dungeon   // Dungeon generation and navigation systems
+MonoChrome.Systems.Combat    // Turn-based combat and pattern systems
+MonoChrome.Systems.UI        // User interface controllers and management
+MonoChrome.StatusEffects     // Buff/debuff system and effect management
 ```
 
 ## Critical Implementation Notes
@@ -91,28 +95,34 @@ MonoChrome.StatusEffects // Buff/debuff system
 - DontDestroyOnLoad objects for persistent managers
 
 ### Legacy System Integration
-- `LegacySystemBridge` provides compatibility with older code
+- `LegacySystemBridge` provides compatibility with older code during major refactoring
 - `UnifiedUIBridge` handles transition between old and new UI systems
-- Gradual migration approach allows incremental refactoring
+- `SystemMigrator` assists with gradual migration approach for incremental refactoring
+- Extensive cleanup completed: 50+ legacy files removed from Combat/, UI/, Controllers/ folders
 
 ### Pattern-Based Combat
 - Combat uses sensory-based patterns (Auditory, Olfactory, Tactile, Spiritual)
-- Coin flip mechanics determine success/failure
-- Status effects system with 14+ different effect types
+- Korean-localized pattern names: 각성, 앞면/뒷면 연계 시스템
+- Coin flip mechanics determine success/failure with obverse/verso mechanics
+- Status effects system with 14+ different effect types and DungeonStatusEffect extensions
 
 ## File Structure Guidance
 
 ### Core Systems Location
-- `Assets/Scripts/Core/`: Central managers and coordinators
-- `Assets/Scripts/Events/`: Event definitions and bus system
-- `Assets/Scripts/Combat/`: Combat mechanics and pattern system
-- `Assets/Scripts/Dungeon/`: Procedural dungeon generation
-- `Assets/Scripts/UI/`: User interface controllers
+- `Assets/Scripts/Core/`: Central managers, coordinators, and architecture patterns
+- `Assets/Scripts/Core/Architecture/`: Dependency injection and design patterns
+- `Assets/Scripts/Core/Data/`: Data management systems
+- `Assets/Scripts/Core/Events/`: Event definitions and bus system
+- `Assets/Scripts/Systems/Combat/`: Combat mechanics and pattern system
+- `Assets/Scripts/Systems/Dungeon/`: Procedural dungeon generation
+- `Assets/Scripts/Systems/UI/`: User interface controllers
 
 ### Data Assets Location
-- `Assets/Data/`: ScriptableObject data files
-- `Assets/Resources/`: Runtime-loadable assets
-- `Assets/ScriptableObjects/`: SO class definitions
+- `Assets/Data/`: ScriptableObject data files including StageThemes
+- `Assets/Resources/`: Runtime-loadable assets including CharacterDataManager and PatternDataManager
+- `Assets/ScriptableObjects/`: SO class definitions and instance files
+- `Assets/ScriptableObjects/Characters/`: Korean-named character definitions (검은 심연, 곽장환, etc.)
+- `Assets/ScriptableObjects/Patterns/`: Korean-named pattern definitions (각성, 앞면/뒷면 연계)
 
 ### Documentation Location
 - `Assets/Scripts/ARCHITECTURE_GUIDE.md`: Complete usage guide
@@ -122,20 +132,26 @@ MonoChrome.StatusEffects // Buff/debuff system
 ## Development Patterns
 
 ### Adding New Systems
-1. Create controller class in appropriate namespace
-2. Define events in GameEvents.cs
-3. Subscribe to relevant events in Awake()
-4. Unsubscribe in OnDestroy()
-5. Add system reference to MasterGameManager if needed
+1. Create controller class in appropriate namespace under `Assets/Scripts/Systems/`
+2. Define events in the relevant event category (DungeonEvents, UIEvents, CombatEvents)
+3. Subscribe to relevant events in Awake() using EventBus
+4. Unsubscribe in OnDestroy() to prevent memory leaks
+5. Register with ServiceLocator for dependency injection
+6. Add system reference to MasterGameManager if needed for lifecycle management
 
 ### Event-Driven Communication
 Always prefer events over direct references:
 ```csharp
-// Good - decoupled
+// Good - decoupled using event system
 UIEvents.RequestPanelTransition(PanelType.Combat);
+DungeonEvents.RequestDungeonGeneration(stageIndex);
+
+// Good - dependency injection through ServiceLocator
+var uiController = ServiceLocator.Get<UIController>();
 
 // Avoid - creates tight coupling  
 uiManager.ShowCombatPanel();
+FindObjectOfType<SomeManager>().DoSomething();
 ```
 
 ### Testing Integration
@@ -146,8 +162,27 @@ uiManager.ShowCombatPanel();
 ## Quality Standards
 
 This project follows enterprise-level standards:
-- **SOLID principles** applied throughout
-- **60% code reduction** achieved through refactoring
-- **Thread-safe singleton** implementations
-- **Memory leak prevention** with proper event cleanup
-- **Modular architecture** supporting team collaboration
+- **SOLID principles** applied throughout with dependency injection
+- **Significant code consolidation** achieved through major refactoring (50+ files removed)
+- **Thread-safe singleton** implementations with application quit handling
+- **Memory leak prevention** with proper event cleanup and lifecycle management
+- **Modular architecture** supporting team collaboration through ServiceLocator pattern
+- **Korean localization support** for international game development
+- **Legacy compatibility** maintained during incremental migration process
+
+## Advanced Architecture Features
+
+### Dependency Injection
+- `ServiceLocator` pattern provides loose coupling between systems
+- Thread-safe service registration and retrieval
+- Lifecycle management integration with Unity's MonoBehaviour system
+
+### Korean Asset Management
+- Unicode filename support for Korean character and pattern names
+- Proper encoding handling for asset pipeline
+- Localization-ready ScriptableObject architecture
+
+### Migration Strategy
+- `SystemMigrator` handles incremental refactoring
+- Legacy bridges maintain backward compatibility
+- Gradual transition approach minimizes development disruption

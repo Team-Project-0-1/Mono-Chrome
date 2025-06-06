@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using MonoChrome.Combat;
+using MonoChrome.Systems.Combat;
 using MonoChrome.StatusEffects;
 using UnityEngine;
 
