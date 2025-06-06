@@ -67,10 +67,8 @@ namespace MonoChrome.Compatibility
             DungeonEvents.OnNodeMoveRequested += OnNewSystemNodeMoveRequested;
             
             // 기존 시스템 이벤트 구독 (있다면)
-            if (_legacyGameManager != null)
-            {
-                _legacyGameManager.OnGameStateChanged += OnLegacyGameStateChanged;
-            }
+            // 구버전 GameManager에 상태 변경 이벤트가 존재했던 시절을 위한 코드
+            // 현재 GameManager에는 해당 이벤트가 없으므로 더 이상 구독하지 않음
         }
 
         private void UnsubscribeFromEvents()
@@ -80,10 +78,7 @@ namespace MonoChrome.Compatibility
             DungeonEvents.OnNodeMoveRequested -= OnNewSystemNodeMoveRequested;
             
             // 기존 시스템 이벤트 구독 해제
-            if (_legacyGameManager != null)
-            {
-                _legacyGameManager.OnGameStateChanged -= OnLegacyGameStateChanged;
-            }
+            // 구버전 GameManager의 상태 변경 이벤트가 제거되어 더 이상 필요하지 않음
         }
 
         #region 새 시스템 -> 기존 시스템 브릿지
@@ -197,9 +192,11 @@ namespace MonoChrome.Compatibility
                 DungeonEvents.RequestDungeonGeneration(0);
             }
             // 기존 시스템 폴백
-            else if (_legacyGameManager != null)
+            else if (MasterGameManager.Instance != null)
             {
-                _legacyGameManager.EnterDungeon();
+                // 이전 GameManager의 EnterDungeon 메서드는 제거되어
+                // MasterGameManager를 통해 처리합니다.
+                MasterGameManager.Instance.EnterDungeon();
             }
             else
             {
@@ -220,9 +217,9 @@ namespace MonoChrome.Compatibility
                 _newStateMachine.StartNewGame();
             }
             // 기존 시스템 폴백
-            else if (_legacyGameManager != null)
+            else if (MasterGameManager.Instance != null)
             {
-                _legacyGameManager.StartNewGame();
+                MasterGameManager.Instance.StartNewGame();
             }
             else
             {
@@ -243,9 +240,9 @@ namespace MonoChrome.Compatibility
                 _newStateMachine.StartCombat();
             }
             // 기존 시스템 폴백
-            else if (_legacyGameManager != null)
+            else if (MasterGameManager.Instance != null)
             {
-                _legacyGameManager.StartCombat();
+                MasterGameManager.Instance.StartCombat();
             }
             else
             {

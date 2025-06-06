@@ -800,7 +800,7 @@ namespace MonoChrome
         {
             if (combatManager != null)
             {
-                combatManager.SelectPattern(pattern);
+                combatManager.ExecutePlayerPattern(pattern);
                 Debug.Log($"ImprovedCombatUI: Pattern selected - {pattern.Name}");
             }
         }
@@ -824,8 +824,7 @@ namespace MonoChrome
         {
             if (combatManager != null)
             {
-                combatManager.FinishPlayerTurn();
-                Debug.Log("ImprovedCombatUI: End turn button clicked");
+                Debug.Log("ImprovedCombatUI: End turn button clicked - not implemented");
             }
         }
         #endregion

@@ -5,6 +5,7 @@ using MonoChrome.Events;
 using MonoChrome.Core;
 using MonoChrome.Systems.UI;
 using MonoChrome.Compatibility;
+using MonoChrome.Systems.Dungeon;
 
 namespace MonoChrome.Setup
 {
@@ -107,12 +108,12 @@ namespace MonoChrome.Setup
         {
             Debug.Log("1. 핵심 컴포넌트 생성 중...");
 
-            // ImprovedGameManager
-            if (ImprovedGameManager.Instance == null)
+            // CoreGameManager
+            if (CoreGameManager.Instance == null)
             {
-                GameObject gameManagerGO = new GameObject("[ImprovedGameManager]");
-                gameManagerGO.AddComponent<ImprovedGameManager>();
-                Debug.Log("✓ ImprovedGameManager 생성됨");
+                GameObject gameManagerGO = new GameObject("[CoreGameManager]");
+                gameManagerGO.AddComponent<CoreGameManager>();
+                Debug.Log("✓ CoreGameManager 생성됨");
             }
 
             // GameStateMachine
@@ -184,7 +185,7 @@ namespace MonoChrome.Setup
         {
             Debug.Log("1. 핵심 시스템 존재 검증 중...");
 
-            CheckComponent<ImprovedGameManager>("ImprovedGameManager");
+            CheckComponent<CoreGameManager>("CoreGameManager");
             CheckComponent<GameStateMachine>("GameStateMachine");
             CheckComponent<EventBus>("EventBus");
             CheckComponent<DungeonController>("DungeonController");
