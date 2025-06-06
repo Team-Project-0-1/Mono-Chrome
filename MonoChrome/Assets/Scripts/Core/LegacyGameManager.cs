@@ -34,8 +34,12 @@ namespace MonoChrome
             CharacterSelection,
             Dungeon,
             Combat,
+            Event,
+            Shop,
+            Rest,
             GameOver,
-            Victory
+            Victory,
+            Paused
         }
         
         // 호환성 프로퍼티들
