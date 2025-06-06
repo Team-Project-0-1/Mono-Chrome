@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Reflection;
 using MonoChrome.Systems.Dungeon;
+using MonoChrome.Core;
 
 namespace MonoChrome.Systems.UI
 {
@@ -133,10 +134,10 @@ namespace MonoChrome.Systems.UI
         {
             LogDebug("DirectGameStarter: Starting improved game sequence...");
             
-            // 1. GameManager 확인
-            if (GameManager.Instance == null)
+            // 1. MasterGameManager 확인
+            if (MasterGameManager.Instance == null)
             {
-                LogError("DirectGameStarter: GameManager.Instance is null!");
+                LogError("DirectGameStarter: MasterGameManager.Instance is null!");
                 yield break;
             }
             
@@ -144,11 +145,9 @@ namespace MonoChrome.Systems.UI
             LogDebug("DirectGameStarter: Ensuring all managers are active...");
             yield return StartCoroutine(EnsureManagersAreActive());
             
-            // 3. 매니저 참조 강제 갱신
+            // 3. 매니저 참조 강제 갱신 (레거시 메서드 제거됨)
             LogDebug("DirectGameStarter: Forcing manager reference refresh...");
-            GameManager.Instance.GetType().GetMethod("RefreshManagerReferences", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                ?.Invoke(GameManager.Instance, null);
+            // MasterGameManager는 별도의 참조 갱신이 필요하지 않음
             
             // 4. 캐릭터 생성 (기본 청각 타입)
             LogDebug("DirectGameStarter: Creating player character...");
@@ -171,7 +170,7 @@ namespace MonoChrome.Systems.UI
             
             // 6. 게임 상태 변경
             LogDebug("DirectGameStarter: Changing game state to Dungeon...");
-            GameManager.Instance.ChangeState(GameManager.GameState.Dungeon);
+            MasterGameManager.Instance.EnterDungeon();
             
             // 7. 던전 생성 강제 실행
             LogDebug("DirectGameStarter: Forcing dungeon generation...");
@@ -246,9 +245,10 @@ namespace MonoChrome.Systems.UI
                 }
                 
                 // UIManager를 통한 패널 전환도 시도
-                if (GameManager.Instance?.UIManager != null)
+                var uiManager = FindObjectOfType<CoreUIManager>();
+                if (uiManager != null)
                 {
-                    GameManager.Instance.UIManager.OnPanelSwitched("DungeonPanel");
+                    uiManager.OnPanelSwitched("DungeonPanel");
                     LogDebug("DirectGameStarter: UIManager panel switch executed");
                 }
             }

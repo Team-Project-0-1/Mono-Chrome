@@ -3,9 +3,10 @@ using UnityEngine;
 namespace MonoChrome.Core
 {
     /// <summary>
-    /// Lightweight bridge for legacy references.
+    /// Deprecated lightweight bridge for legacy references.
     /// Forwards calls to <see cref="MasterGameManager"/> and <see cref="GameStateMachine"/>.
     /// </summary>
+    [System.Obsolete("CoreGameManager has been deprecated. Use MasterGameManager.Instance instead.")]
     public class CoreGameManager : MonoBehaviour
     {
         private static CoreGameManager _instance;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using MonoChrome.Core;
 
 namespace MonoChrome
 {
@@ -20,11 +21,11 @@ namespace MonoChrome
             Debug.Log("MainMenuController: Start() called!");
             InitializeUI();
             
-            // GameManager가 없으면 생성
-            if (GameManager.Instance == null)
+            // MasterGameManager가 없으면 생성
+            if (MasterGameManager.Instance == null)
             {
-                Debug.LogWarning("GameManager not found, creating one...");
-                _ = GameManager.Instance;
+                Debug.LogWarning("MasterGameManager not found, creating one...");
+                _ = MasterGameManager.Instance;
             }
         }
         
@@ -69,7 +70,7 @@ namespace MonoChrome
             Debug.Log("MainMenuController: Start button clicked, loading GameScene");
             
             // 시작 버튼 클릭시 바로 GameScene으로 이동
-            // 이때 GameManager의 상태는 업데이트하지 않음 - 씬 로드 후 처리
+            // 이때 MasterGameManager의 상태는 업데이트하지 않음 - 씬 로드 후 처리
             SceneManager.LoadScene("GameScene");
         }
         

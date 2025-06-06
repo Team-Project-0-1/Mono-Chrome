@@ -415,14 +415,14 @@ namespace MonoChrome.Core
             
             // 캐릭터 선택 버튼
             CreateDebugButton(debugPanel.transform, "Character", new Vector2(0.5f, 0.5f), () => {
-                if (CoreGameManager.Instance != null)
-                    CoreGameManager.Instance.ChangeState(CoreGameManager.GameState.CharacterSelection);
+                if (MasterGameManager.Instance != null)
+                    GameStateMachine.Instance?.TryChangeState(GameStateMachine.GameState.CharacterSelection);
             });
             
             // 던전 버튼
             CreateDebugButton(debugPanel.transform, "Dungeon", new Vector2(0.5f, 0.3f), () => {
-                if (CoreGameManager.Instance != null)
-                    CoreGameManager.Instance.ChangeState(CoreGameManager.GameState.Dungeon);
+                if (MasterGameManager.Instance != null)
+                    GameStateMachine.Instance?.TryChangeState(GameStateMachine.GameState.Dungeon);
             });
             
             Debug.Log("QuickUIBuilder: Debug buttons created");

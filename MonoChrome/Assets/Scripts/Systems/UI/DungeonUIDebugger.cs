@@ -1,5 +1,6 @@
 using UnityEngine;
 using MonoChrome.Systems.Dungeon;
+using MonoChrome.Core;
 
 namespace MonoChrome
 {
@@ -39,10 +40,10 @@ namespace MonoChrome
                 Debug.Log("DungeonUIDebugger: DungeonPanel activated");
             }
             
-            // 3. GameManager 상태 변경
-            if (GameManager.Instance != null)
+            // 3. 게임 상태 변경
+            if (MasterGameManager.Instance != null)
             {
-                GameManager.Instance.ChangeState(GameManager.GameState.Dungeon);
+                MasterGameManager.Instance.EnterDungeon();
             }
             
             // 4. 던전 생성

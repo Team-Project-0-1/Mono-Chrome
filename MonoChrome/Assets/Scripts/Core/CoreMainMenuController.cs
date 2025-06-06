@@ -235,14 +235,14 @@ namespace MonoChrome.Core
             if (_startButton != null)
                 _startButton.interactable = false;
             
-            // CoreGameManager를 통한 게임 시작
-            if (CoreGameManager.Instance != null)
+            // MasterGameManager를 통한 게임 시작
+            if (MasterGameManager.Instance != null)
             {
-                CoreGameManager.Instance.StartNewGame();
+                MasterGameManager.Instance.StartNewGame();
             }
             else
             {
-                Debug.LogWarning("CoreMainMenuController: CoreGameManager not found, loading scene directly");
+                Debug.LogWarning("CoreMainMenuController: MasterGameManager not found, loading scene directly");
                 SceneManager.LoadScene("GameScene");
             }
         }
@@ -322,7 +322,7 @@ MONOCHROME: the Eclipse
             // 디버그 정보 표시
             GUI.Box(new Rect(10, 10, 250, 100), "Main Menu Debug");
             GUI.Label(new Rect(15, 30, 240, 20), $"Initialized: {_isInitialized}");
-            GUI.Label(new Rect(15, 50, 240, 20), $"CoreGameManager: {(CoreGameManager.Instance != null ? "✓" : "✗")}");
+            GUI.Label(new Rect(15, 50, 240, 20), $"MasterGameManager: {(MasterGameManager.Instance != null ? "✓" : "✗")}");
             GUI.Label(new Rect(15, 70, 240, 20), "Space: Start Game, Esc: Quit");
             GUI.Label(new Rect(15, 90, 240, 20), "F1: Direct to GameScene");
         }
