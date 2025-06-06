@@ -86,5 +86,10 @@ namespace MonoChrome.Core
         {
             MasterGameManager.Instance?.StartCombat(enemyType, characterType);
         }
+
+        /// <summary>
+        /// Indicates whether the underlying <see cref="MasterGameManager"/> has finished initialization.
+        /// </summary>
+        public bool IsInitialized => MasterGameManager.Instance?.IsInitialized ?? false;
     }
 }
