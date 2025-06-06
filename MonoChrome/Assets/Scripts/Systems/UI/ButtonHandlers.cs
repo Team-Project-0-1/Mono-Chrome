@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using MonoChrome.Core;
 
 namespace MonoChrome
 {
@@ -107,10 +108,10 @@ namespace MonoChrome
             
             try
             {
-                // GameManager 참조 확인
-                if (GameManager.Instance == null)
+                // MasterGameManager 참조 확인
+                if (MasterGameManager.Instance == null)
                 {
-                    Debug.LogError("ButtonHandlers: GameManager.Instance is null!");
+                    Debug.LogError("ButtonHandlers: MasterGameManager.Instance is null!");
                     return;
                 }
                 
@@ -131,9 +132,10 @@ namespace MonoChrome
                     }
                     
                     // UI Manager를 통한 패널 비활성화 시도
-                    if (GameManager.Instance.UIManager != null)
+                    var uiManager = FindObjectOfType<CoreUIManager>();
+                    if (uiManager != null)
                     {
-                        GameManager.Instance.UIManager.OnPanelSwitched("DungeonPanel");
+                        uiManager.OnPanelSwitched("DungeonPanel");
                         Debug.Log("ButtonHandlers: Switched to DungeonPanel via UIManager");
                     }
                 }
@@ -144,7 +146,7 @@ namespace MonoChrome
                 
                 // 던전 진입 - 브릿지 패턴을 통한 게임 시작
                 Debug.Log("ButtonHandlers: Starting game by entering dungeon (using bridge pattern)");
-                GameManager.Instance.EnterDungeon();
+                MasterGameManager.Instance.EnterDungeon();
             }
             catch (System.Exception ex)
             {
