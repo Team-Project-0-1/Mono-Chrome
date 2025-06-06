@@ -17,6 +17,7 @@ namespace MonoChrome.Compatibility
 
         // 기존 시스템 참조 (호환성용)
         private GameManager _legacyGameManager;
+        private DungeonManager _legacyDungeonManager;
 
         // 새 시스템 참조
         private GameStateMachine _newStateMachine;
