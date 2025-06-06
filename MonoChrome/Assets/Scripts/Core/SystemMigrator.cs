@@ -175,18 +175,16 @@ namespace MonoChrome.Core
                 }
             }
             
-            
-            // QuickUIBuilder 생성 (GameScene에서만)
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "GameScene")
+            // MainMenuController 생성 (MainMenu 씬에서만)
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
             {
-                if (FindObjectOfType<QuickUIBuilder>() == null)
+                if (FindObjectOfType<MonoChrome.MainMenuController>() == null)
                 {
-                    GameObject quickUIBuilderObj = new GameObject("QuickUIBuilder");
-                    quickUIBuilderObj.AddComponent<QuickUIBuilder>();
-                    LogMessage("  ✓ QuickUIBuilder 생성됨");
+                    GameObject coreMainMenuObj = new GameObject("MainMenuController");
+                    coreMainMenuObj.AddComponent<MonoChrome.MainMenuController>();
+                    LogMessage("  ✓ MainMenuController 생성됨");
                 }
             }
-        }
         
         /// <summary>
         /// 참조 자동 수정

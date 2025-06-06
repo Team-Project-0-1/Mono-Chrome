@@ -197,13 +197,14 @@ namespace MonoChrome
         private void OnQuitButtonClicked()
         {
             Debug.Log("MainMenuController: Quit button clicked");
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-            Debug.Log("MainMenuController: Stopping play mode in editor");
-#else
-            Application.Quit();
-            Debug.Log("MainMenuController: Quitting application");
-#endif
+            #if UNITY_EDITOR
+                        UnityEditor.EditorApplication.isPlaying = false;
+                        Debug.Log("MainMenuController: Stopping play mode in editor");
+            #else
+                        Application.Quit();
+                        Debug.Log("MainMenuController: Quitting application");
+            #endif
+
         }
 
         private void OnCreditsButtonClicked()

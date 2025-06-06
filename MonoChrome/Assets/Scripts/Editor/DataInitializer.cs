@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
+using MonoChrome.Setup;
 
 namespace MonoChrome.Editor
 {
@@ -12,20 +13,26 @@ namespace MonoChrome.Editor
         [MenuItem("MonoChrome/Initialize Game Data")]
         public static void InitializeGameData()
         {
+            // Unified entry point
+            GameInitializer.Initialize(createMasterGameManager: false, initializeGameData: true);
+        }
+
+        public static void GenerateGameData()
+        {
             Debug.Log("Starting game data initialization...");
-            
+
             // 폴더 생성
             CreateDirectories();
-            
+
             // 캐릭터 데이터 생성
             CreateCharacterData();
-            
+
             // 패턴 데이터 생성
             CreatePatternData();
-            
+
             // 데이터 매니저 생성
             CreateDataManagers();
-            
+
             AssetDatabase.Refresh();
             Debug.Log("Game data initialization completed!");
         }

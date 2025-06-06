@@ -8,11 +8,18 @@ namespace MonoChrome.Systems.Dungeon
     /// 개선된 절차적 던전 생성기 v2.0
     /// StageThemeDataAsset과 연동하여 완전한 문서 요구사항 구현
     /// - 스테이지별 테마 시스템
-    /// - 감각 기반 조건부 필터링  
+    /// - 감각 기반 조건부 필터링
     /// - 매 턴 3개 선택지 생성
     /// - 이벤트 연동 시스템
     /// - 디자이너 친화적 데이터 관리
     /// </summary>
+    /// <remarks>
+    /// This is the primary, fully featured generator used for production.
+    /// The lighter <see cref="ImprovedDungeonGenerator"/> and
+    /// <see cref="AdvancedDungeonGenerator"/> classes offer experimental
+    /// layout algorithms and can be selected through
+    /// <see cref="ConfigurableDungeonGenerator"/>.
+    /// </remarks>
     public class ProceduralDungeonGenerator : MonoBehaviour
     {
         #region Configuration

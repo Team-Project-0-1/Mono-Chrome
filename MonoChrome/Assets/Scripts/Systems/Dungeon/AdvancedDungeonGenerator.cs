@@ -8,6 +8,11 @@ namespace MonoChrome.Systems.Dungeon
     /// 고급 던전 생성기 - 완전한 노드 겹침 방지 및 최적화
     /// 포트폴리오 품질을 위한 전문적인 던전 레이아웃 알고리즘
     /// </summary>
+    /// <remarks>
+    /// Experimental generator featuring a force-based layout system. Use this
+    /// for advanced prototypes or select it in
+    /// <see cref="ConfigurableDungeonGenerator"/>.
+    /// </remarks>
     public class AdvancedDungeonGenerator : MonoBehaviour
     {
         #region Configuration

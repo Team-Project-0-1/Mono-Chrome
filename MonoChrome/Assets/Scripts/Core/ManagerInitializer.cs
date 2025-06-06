@@ -268,8 +268,16 @@ namespace MonoChrome
         {
             if (_debugMode)
                 Debug.Log("ManagerInitializer: Force reinitializing managers");
-                
+
             StartCoroutine(InitializeManagersForScene(SceneManager.GetActiveScene().name));
+        }
+
+        /// <summary>
+        /// Static helper to run initialization using the singleton instance.
+        /// </summary>
+        public static void Initialize()
+        {
+            Instance.ForceReinitializeManagers();
         }
     }
 }

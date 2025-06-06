@@ -11,7 +11,7 @@ namespace MonoChrome
     /// 완전히 개선된 전투 UI 시스템
     /// 포트폴리오 품질을 위한 완전한 UI 관리
     /// </summary>
-    public class ImprovedCombatUI : MonoBehaviour
+    public class ImprovedCombatUI : MonoChrome.Systems.UI.CombatUIBase
     {
         #region UI References
         [Header("체력바 시스템")]
@@ -41,8 +41,8 @@ namespace MonoChrome
         [SerializeField] private Text enemyIntentionText;
         
         [Header("상태 효과 UI")]
-        [SerializeField] private Transform playerStatusContainer;
-        [SerializeField] private Transform enemyStatusContainer;
+        [SerializeField] private Transform playerStatusEffectContainer;
+        [SerializeField] private Transform enemyStatusEffectContainer;
         [SerializeField] private GameObject statusEffectPrefab;
         
         // 동적 생성된 UI 요소들
@@ -378,11 +378,11 @@ namespace MonoChrome
         {
             // 플레이어 상태 효과
             GameObject playerStatusArea = CreateUIPanel("PlayerStatusArea", new Vector2(300, 60), new Vector2(-400, 280));
-            playerStatusContainer = playerStatusArea.transform;
+            playerStatusEffectContainer = playerStatusArea.transform;
             
             // 적 상태 효과
             GameObject enemyStatusArea = CreateUIPanel("EnemyStatusArea", new Vector2(300, 60), new Vector2(400, 280));
-            enemyStatusContainer = enemyStatusArea.transform;
+            enemyStatusEffectContainer = enemyStatusArea.transform;
             
             Debug.Log("ImprovedCombatUI: Status effect area created");
         }
@@ -523,25 +523,7 @@ namespace MonoChrome
         /// </summary>
         public void UpdateHealthBars(float playerHealth, float playerMaxHealth, float enemyHealth, float enemyMaxHealth)
         {
-            if (playerHealthBar != null)
-            {
-                playerHealthBar.maxValue = playerMaxHealth;
-                playerHealthBar.value = playerHealth;
-                
-                if (playerHealthText != null)
-                    playerHealthText.text = $"{Mathf.RoundToInt(playerHealth)}/{Mathf.RoundToInt(playerMaxHealth)}";
-            }
-            
-            if (enemyHealthBar != null)
-            {
-                enemyHealthBar.maxValue = enemyMaxHealth;
-                enemyHealthBar.value = enemyHealth;
-                
-                if (enemyHealthText != null)
-                    enemyHealthText.text = $"{Mathf.RoundToInt(enemyHealth)}/{Mathf.RoundToInt(enemyMaxHealth)}";
-            }
-            
-            Debug.Log($"ImprovedCombatUI: Health bars updated - Player: {playerHealth}/{playerMaxHealth}, Enemy: {enemyHealth}/{enemyMaxHealth}");
+            base.UpdateHealthBars(playerHealth, playerMaxHealth, enemyHealth, enemyMaxHealth);
         }
         
         /// <summary>
@@ -549,21 +531,8 @@ namespace MonoChrome
         /// </summary>
         public void UpdateCoinUI(List<bool> coinResults)
         {
-            if (coinContainer == null) return;
-            
-            // 기존 동전 정리
-            ClearDynamicObjects(dynamicCoinObjects);
-            
-            // 새 동전 생성
-            for (int i = 0; i < coinResults.Count; i++)
-            {
-                GameObject coinObj = CreateCoinObject(coinResults[i], i);
-                dynamicCoinObjects.Add(coinObj);
-            }
-            
-            Debug.Log($"ImprovedCombatUI: Updated {coinResults.Count} coins");
+            base.UpdateCoinUI(coinResults);
         }
-        
         /// <summary>
         /// 동전 오브젝트 생성
         /// </summary>
@@ -605,28 +574,8 @@ namespace MonoChrome
         /// </summary>
         public void UpdatePatternUI(List<Pattern> availablePatterns)
         {
-            if (patternContainer == null) return;
-            
-            // 기존 패턴 정리
-            ClearDynamicObjects(dynamicPatternObjects);
-            
-            // 새 패턴 버튼 생성
-            for (int i = 0; i < availablePatterns.Count; i++)
-            {
-                Pattern pattern = availablePatterns[i];
-                GameObject patternObj = CreatePatternButton(pattern, i);
-                dynamicPatternObjects.Add(patternObj);
-            }
-            
-            Debug.Log($"ImprovedCombatUI: Updated {availablePatterns.Count} patterns");
+            base.UpdatePatternUI(availablePatterns);
         }
-        
-        /// <summary>
-        /// 패턴 버튼 생성
-        /// </summary>
-        private GameObject CreatePatternButton(Pattern pattern, int index)
-        {
-            GameObject buttonObj = new GameObject($"Pattern_{index}");
             buttonObj.transform.SetParent(patternContainer, false);
             
             // 크기 설정
@@ -668,10 +617,7 @@ namespace MonoChrome
         /// </summary>
         public void UpdateTurnCounter(int turnCount)
         {
-            if (turnInfoText != null)
-            {
-                turnInfoText.text = $"Turn: {turnCount}";
-            }
+            base.UpdateTurnCounter(turnCount);
         }
         
         /// <summary>
@@ -679,15 +625,7 @@ namespace MonoChrome
         /// </summary>
         public void UpdateActiveSkillButton(bool isAvailable)
         {
-            if (activeSkillButton != null)
-            {
-                activeSkillButton.interactable = isAvailable;
-                
-                if (activeSkillText != null)
-                {
-                    activeSkillText.color = isAvailable ? Color.white : Color.gray;
-                }
-            }
+            base.UpdateActiveSkillButton(isAvailable);
         }
         
         /// <summary>
@@ -695,36 +633,16 @@ namespace MonoChrome
         /// </summary>
         public void ShowEnemyIntention(Pattern pattern)
         {
-            if (enemyIntentionText != null && pattern != null)
-            {
-                string colorTag = pattern.IsAttack ? "red" : "blue";
-                enemyIntentionText.text = $"<color={colorTag}>{pattern.Name}: {pattern.Description}</color>";
-            }
+            if (pattern != null)
+                base.ShowEnemyIntention(pattern.IsAttack ? $"<color=red>{pattern.Name}: {pattern.Description}</color>" : $"<color=blue>{pattern.Name}: {pattern.Description}</color>");
         }
-        
         /// <summary>
         /// 상태 효과 UI 업데이트
         /// </summary>
         public void UpdateStatusEffectsUI(List<StatusEffect> playerEffects, List<StatusEffect> enemyEffects)
         {
-            // 기존 상태 효과 정리
-            ClearDynamicObjects(dynamicPlayerStatusObjects);
-            ClearDynamicObjects(dynamicEnemyStatusObjects);
-            
-            // 플레이어 상태 효과 생성
-            if (playerStatusContainer != null)
-            {
-                CreateStatusEffectIcons(playerEffects, playerStatusContainer, dynamicPlayerStatusObjects);
-            }
-            
-            // 적 상태 효과 생성
-            if (enemyStatusContainer != null)
-            {
-                CreateStatusEffectIcons(enemyEffects, enemyStatusContainer, dynamicEnemyStatusObjects);
-            }
+            base.UpdateStatusEffectsUI(playerEffects, enemyEffects);
         }
-        
-        /// <summary>
         /// 상태 효과 아이콘 생성
         /// </summary>
         private void CreateStatusEffectIcons(List<StatusEffect> effects, Transform container, List<GameObject> objectsList)
