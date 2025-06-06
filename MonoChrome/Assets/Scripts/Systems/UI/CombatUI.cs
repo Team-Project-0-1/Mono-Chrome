@@ -10,7 +10,7 @@ namespace MonoChrome
     /// <summary>
     /// 전투 UI를 관리하는 클래스
     /// </summary>
-    public class CombatUI : MonoBehaviour
+    public class CombatUI : MonoChrome.Systems.UI.CombatUIBase
     {
         #region UI References
         [Header("Health Bars")]
