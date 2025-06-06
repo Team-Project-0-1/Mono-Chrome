@@ -175,16 +175,6 @@ namespace MonoChrome.Core
                 }
             }
             
-            // CoreMainMenuController 생성 (MainMenu 씬에서만)
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
-            {
-                if (FindObjectOfType<CoreMainMenuController>() == null)
-                {
-                    GameObject coreMainMenuObj = new GameObject("CoreMainMenuController");
-                    coreMainMenuObj.AddComponent<CoreMainMenuController>();
-                    LogMessage("  ✓ CoreMainMenuController 생성됨");
-                }
-            }
             
             // QuickUIBuilder 생성 (GameScene에서만)
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "GameScene")
@@ -292,7 +282,6 @@ namespace MonoChrome.Core
             LogMessage("Core 매니저들:");
             LogMessage($"  MasterGameManager: {(FindObjectOfType<MasterGameManager>() != null ? "있음" : "없음")}");
             LogMessage($"  CoreUIManager: {(FindObjectOfType<CoreUIManager>() != null ? "있음" : "없음")}");
-            LogMessage($"  CoreMainMenuController: {(FindObjectOfType<CoreMainMenuController>() != null ? "있음" : "없음")}");
             
             // UI 구조 확인
             Canvas canvas = FindObjectOfType<Canvas>();
