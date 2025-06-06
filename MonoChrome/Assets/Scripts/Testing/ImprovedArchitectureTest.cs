@@ -127,7 +127,7 @@ namespace MonoChrome.Testing
             Debug.Log("=== 새 게임 플로우 테스트 ===");
             
             // 1. 게임 매니저 통해 새 게임 시작
-            var gameManager = ImprovedGameManager.Instance;
+            var gameManager = CoreGameManager.Instance;
             if (gameManager != null)
             {
                 gameManager.StartNewGame();
@@ -167,12 +167,12 @@ namespace MonoChrome.Testing
             // 시스템 존재 여부 확인
             var dungeonController = FindObjectOfType<DungeonController>();
             var uiController = FindObjectOfType<UIController>();
-            var gameManager = ImprovedGameManager.Instance;
+            var gameManager = CoreGameManager.Instance;
             var eventBus = EventBus.Instance;
             
             Debug.Log($"DungeonController: {(dungeonController != null ? "존재" : "없음")}");
             Debug.Log($"UIController: {(uiController != null ? "존재" : "없음")}");
-            Debug.Log($"ImprovedGameManager: {(gameManager != null ? "존재" : "없음")}");
+            Debug.Log($"CoreGameManager: {(gameManager != null ? "존재" : "없음")}");
             Debug.Log($"EventBus: {(eventBus != null ? "존재" : "없음")}");
             
             if (gameManager != null)

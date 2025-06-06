@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using MonoChrome.Systems.Dungeon;
+using MonoChrome.Events;
 using UnityEngine;
 
 namespace MonoChrome
@@ -37,11 +38,8 @@ namespace MonoChrome
             Debug.Log($"Opening shop. Node type: {node.Type}");
             // 실제 구현은 추후에 진행
             
-            // 테스트를 위해 바로 상점 종료
-            if (dungeonManager != null)
-            {
-                dungeonManager.OnRoomCompleted();
-            }
+            // 테스트를 위해 바로 상점 종료 처리
+            DungeonEvents.NotifyRoomActivityCompleted();
         }
     }
 }

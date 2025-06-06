@@ -887,9 +887,9 @@ namespace MonoChrome
         {
             if (combatManager != null)
             {
-                combatManager.SelectPattern(pattern);
+                combatManager.ExecutePlayerPattern(pattern);
                 Debug.Log($"CombatUI: Pattern selected: {pattern.Name}");
-                
+
                 // 선택된 패턴 시각적 강조 처리
                 HighlightSelectedPattern(pattern);
             }
@@ -964,8 +964,9 @@ namespace MonoChrome
         {
             if (combatManager != null)
             {
-                combatManager.FinishPlayerTurn();
-                Debug.Log("CombatUI: End turn button clicked");
+                // CombatSystem에서는 턴 종료를 외부에서 직접 호출하지 않음
+                // 향후 필요 시 CombatSystem에 공개 메서드를 추가하세요
+                Debug.Log("CombatUI: End turn button clicked - no direct method available");
             }
             else
             {

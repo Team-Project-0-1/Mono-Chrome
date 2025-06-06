@@ -453,7 +453,7 @@ namespace MonoChrome.Systems.UI
         {
             if (_combatManager != null)
             {
-                _combatManager.SelectPattern(pattern);
+                _combatManager.ExecutePlayerPattern(pattern);
             }
         }
         
@@ -475,7 +475,8 @@ namespace MonoChrome.Systems.UI
         {
             if (_combatManager != null)
             {
-                _combatManager.FinishPlayerTurn();
+                // CombatSystem에 턴 종료 메서드가 존재하지 않습니다.
+                Debug.Log("CombatUIController: End turn requested - not implemented");
             }
         }
         #endregion
