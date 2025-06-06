@@ -4,7 +4,7 @@
 이 가이드는 GameManager 충돌 및 의존성 문제를 해결하고, 통합된 아키텍처를 설정하는 방법을 설명합니다.
 
 ## 🔧 해결된 문제들
-1. **여러 GameManager 클래스 충돌** - 4개의 서로 다른 GameManager가 존재
+1. **여러 GameManager 클래스 충돌** - 과거에는 4개의 GameManager가 존재했으나 이제 `MasterGameManager`로 통합
 2. **네임스페이스 충돌** - MonoChrome vs MonoChrome.Core
 3. **UI 시스템 중복** - UIManager와 UIController 동시 존재
 4. **복잡한 의존성** - 순환 참조 및 불명확한 초기화 순서
@@ -67,11 +67,9 @@ MasterGameManager (Core)
    - ✅ Enable Debug Logs
 
 ### 3단계: 기존 GameManager 비활성화
-**중요**: 기존 GameManager들을 찾아서 비활성화하거나 제거하세요:
-- `GameManager` (이미 백업됨)
-- `CoreGameManager` (이미 백업됨)
-- `ImprovedGameManager` (이미 백업됨)
-- `UnifiedGameManager` (이미 백업됨)
+**중요**: 남아 있는 레거시 GameManager 스크립트를 비활성화하거나 제거하세요. `MasterGameManager`가 모든 기능을 대체합니다:
+- `GameManager` (Legacy)
+- `CoreGameManager` (Obsolete)
 
 ### 4단계: 테스트 및 검증
 1. Unity에서 Play 버튼을 누릅니다
@@ -162,11 +160,11 @@ Scripts/
 ### 백업된 파일들
 ```
 Scripts/Core/
-├── GameManager_OLD.cs                # 백업
-├── CoreGameManager_BACKUP.cs         # 백업
-├── ImprovedGameManager_BACKUP.cs     # 백업
-├── UnifiedGameManager_BACKUP.cs      # 백업
-└── UIManager_LEGACY.cs               # 백업
+├── GameManager_OLD.cs                # 백업 (더 이상 사용되지 않음)
+├── CoreGameManager_BACKUP.cs         # 백업 (더 이상 사용되지 않음)
+├── ImprovedGameManager_BACKUP.cs     # 백업 (MasterGameManager로 대체)
+├── UnifiedGameManager_BACKUP.cs      # 백업 (MasterGameManager로 대체)
+└── UIManager_LEGACY.cs               # 백업 (UnifiedUIBridge로 대체)
 ```
 
 ## 🎖️ 포트폴리오 품질 특징
