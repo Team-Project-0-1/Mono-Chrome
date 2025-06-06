@@ -4,9 +4,10 @@ using MonoChrome.Core;
 namespace MonoChrome
 {
     /// <summary>
-    /// 레거시 GameManager 호환성 클래스
-    /// 기존 코드와의 호환성을 위해 GameManager 패턴을 MasterGameManager로 포워딩
+    /// Deprecated legacy GameManager bridge.
+    /// 포워딩 로직을 통해 <see cref="MasterGameManager"/>와 <see cref="GameStateMachine"/>에 연결합니다.
     /// </summary>
+    [System.Obsolete("GameManager is deprecated. Use MasterGameManager.Instance instead.")]
     public class GameManager : MonoBehaviour
     {
         private static GameManager _instance;
