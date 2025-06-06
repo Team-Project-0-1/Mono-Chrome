@@ -20,7 +20,7 @@ namespace MonoChrome
         {
             Debug.Log("MainMenuController: Start() called!");
             InitializeUI();
-            
+
             // MasterGameManager가 없으면 생성
             if (MasterGameManager.Instance == null)
             {
@@ -67,11 +67,18 @@ namespace MonoChrome
         /// </summary>
         private void OnStartButtonClicked()
         {
-            Debug.Log("MainMenuController: Start button clicked, loading GameScene");
-            
-            // 시작 버튼 클릭시 바로 GameScene으로 이동
-            // 이때 MasterGameManager의 상태는 업데이트하지 않음 - 씬 로드 후 처리
-            SceneManager.LoadScene("GameScene");
+            Debug.Log("MainMenuController: Start button clicked");
+
+            // MasterGameManager가 존재하면 정식 플로우로 게임 시작
+            if (MasterGameManager.Instance != null)
+            {
+                MasterGameManager.Instance.StartNewGame();
+            }
+            else
+            {
+                Debug.LogWarning("MasterGameManager instance missing - loading GameScene directly");
+                SceneManager.LoadScene("GameScene");
+            }
         }
         
         /// <summary>
