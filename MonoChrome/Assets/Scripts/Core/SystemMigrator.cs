@@ -59,11 +59,9 @@ namespace MonoChrome.Core
         {
             LogMessage("1단계: 기존 매니저들 비활성화...");
             
+            // 비활성화할 레거시 매니저 목록
             string[] legacyManagerNames = {
                 "GameManager",
-                "ImprovedGameManager", 
-                "UnifiedGameManager",
-                "UIManager",
                 "ManagerInitializer"
             };
             
@@ -261,7 +259,7 @@ namespace MonoChrome.Core
             LogMessage("=== 현재 시스템 분석 ===");
             
             // 기존 매니저들 확인
-            string[] legacyManagers = { "GameManager", "ImprovedGameManager", "UnifiedGameManager", "UIManager" };
+            string[] legacyManagers = { "GameManager", "ManagerInitializer" };
             LogMessage("기존 매니저들:");
             foreach (string manager in legacyManagers)
             {
