@@ -1,7 +1,7 @@
 using UnityEngine;
 using MonoChrome.Events;
 using MonoChrome.Core;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome.Dungeon;
 
 namespace MonoChrome.Compatibility
 {
@@ -15,8 +15,9 @@ namespace MonoChrome.Compatibility
         [SerializeField] private bool _enableLegacySupport = true;
         [SerializeField] private bool _showBridgeLog = true;
 
-        // 기존 시스템 참조 (호환성용)
+        // 기존 시스템 참조
         private GameManager _legacyGameManager;
+        private DungeonManager _legacyDungeonManager;
 
         // 새 시스템 참조
         private GameStateMachine _newStateMachine;

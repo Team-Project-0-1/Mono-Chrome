@@ -9,28 +9,50 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 72c91d61aa7c9ef4b81b94fe9d9c1ffc, type: 3}
+  m_Script: {fileID: 11500000, guid: 0a123456789abcdef, type: 3}
   m_Name: Stage1_BunkerOutskirts
-  m_EditorClassIdentifier: 
-  stageDisplayName: "\uC2A4\uD14C\uC774\uC9C0 1"
-  stageDescription: "\uBC99\uCEE4 \uC678\uACFD - \uB3CC\uC5F0\uBCC0\uC774\uB4E4\uACFC
-    \uC790\uC5F0\uC7AC\uD574\uAC00 \uAE30\uB2E4\uB9AC\uB294 \uACF3"
+  stageDisplayName: "\uC2A4\uD14C\uC774\uC9C0 1: \uBC99\uCEE4 \uC678\uACFD"
+  stageDescription: "\uBC99\uCEE4 \uBC16\uC758 \uC704\uD5D8\uD55C \uC678\uACFD \uC9C0\uC5ED. \uB3CC\uC5F0\uBCC0\uC774\uC640 \uD3D0\uD5C8\uAC00 \uAE30\uB2E4\uB9AC\uACE0 \uC788\uB2E4."
   stageIcon: {fileID: 0}
-  stageColor: {r: 1, g: 1, b: 1, a: 1}
+  stageColor: {r: 0.7, g: 0.4, b: 0.2, a: 1}
   totalTurns: 15
   branchesPerTurn: 3
   miniBossPosition: 6
-  combatChance: 0.4
-  eventChance: 0.3
+  combatChance: 0.5
+  eventChance: 0.25
   shopChance: 0.15
-  restChance: 0.15
-  guaranteedShops: 1
-  guaranteedRests: 1
+  restChance: 0.1
+  guaranteedShops: 2
+  guaranteedRests: 2
   maxEvents: 3
-  minCombatRooms: 5
+  minCombatRooms: 6
   allowMultipleMiniBosses: 0
   forceShopBeforeMiniBoss: 1
   forceRestAfterMiniBoss: 1
   senseFilters: []
-  enemyPool: []
-  eventPool: []
+  enemyPool:
+  - enemyName: "\uB4E4\uAC1C"
+    enemyType: 2
+    spawnWeight: 3
+    spawnChance: 0.8
+    minStageLevel: 1
+    description: "\uAD76\uC8FC\uB9B0 \uC57C\uC0DD\uAC1C"
+  - enemyName: "\uC57D\uD0C8\uC790"
+    enemyType: 2
+    spawnWeight: 2
+    spawnChance: 0.6
+    minStageLevel: 1
+    description: "\uD3D0\uD5C8\uB97C \uBC30\uD68C\uD558\uB294 \uC0DD\uC874\uC790"
+  eventPool:
+  - eventName: "\uD3D0\uD5C8 \uD0D0\uC0C9"
+    eventID: 1
+    spawnWeight: 2
+    spawnChance: 1
+    requiredSenses: [-1]
+    eventDescription: "\uBC84\uB824\uC9C4 \uAC74\uBB3C\uC744 \uC870\uC0AC\uD55C\uB2E4"
+  - eventName: "\uC218\uC0C1\uD55C \uC18C\uB9AC"
+    eventID: 2
+    spawnWeight: 1
+    spawnChance: 1
+    requiredSenses: [0]
+    eventDescription: "\uC774\uC0C1\uD55C \uC18C\uB9AC\uAC00 \uB4E4\uB9B0\uB2E4"

@@ -1,8 +1,9 @@
 using UnityEngine;
-using MonoChrome.Systems.UI;
+using MonoChrome.Core;
+using MonoChrome.UI;
 using MonoChrome.Events;
+using MonoChrome.Dungeon;
 using System.Collections.Generic;
-using MonoChrome.Systems.Dungeon;
 
 namespace MonoChrome.Core
 {
@@ -18,8 +19,9 @@ namespace MonoChrome.Core
         [SerializeField] private bool _maintainLegacySupport = true;
 
         // UI 시스템 참조들
-        private Systems.UI.UIController _modernUIController;
-        private CoreUIManager _coreUIManager;
+        private UIController _newUIController;
+        private CoreUIManager _coreUIManager;  // CoreUIManager로 수정
+        private ImprovedUIManager _improvedUIManager;
         
         // 현재 활성 UI 시스템 상태
         private bool _isInitialized = false;
@@ -61,11 +63,11 @@ namespace MonoChrome.Core
         /// </summary>
         private void FindUIControllers()
         {
-            // 현대적 UIController 찾기
-            _modernUIController = FindFirstObjectByType<Systems.UI.UIController>();
-            if (_modernUIController != null)
+            // 새로운 UIController 찾기
+            _newUIController = FindFirstObjectByType<UIController>();
+            if (_newUIController != null)
             {
-                LogDebug("ModernUIController 발견");
+                LogDebug("새로운 UIController 발견");
             }
 
             // CoreUIManager 찾기
@@ -75,11 +77,11 @@ namespace MonoChrome.Core
                 LogDebug("CoreUIManager 발견");
             }
 
-            // 현대적 UIController 찾기
-            _modernUIController = FindFirstObjectByType<Systems.UI.UIController>();
-            if (_modernUIController != null)
+            // ImprovedUIManager 찾기
+            _improvedUIManager = FindFirstObjectByType<ImprovedUIManager>();
+            if (_improvedUIManager != null)
             {
-                LogDebug("ModernUIController 발견");
+                LogDebug("ImprovedUIManager 발견");
             }
         }
 
@@ -88,13 +90,17 @@ namespace MonoChrome.Core
         /// </summary>
         private void SetupUISystemPriority()
         {
-            if (_modernUIController != null)
+            if (_useNewUIController && _newUIController != null)
             {
-                LogDebug("ModernUIController를 기본 UI 시스템으로 사용");
+                LogDebug("새로운 UIController를 기본 UI 시스템으로 사용");
             }
             else if (_coreUIManager != null)
             {
                 LogDebug("CoreUIManager를 기본 UI 시스템으로 사용");
+            }
+            else if (_improvedUIManager != null)
+            {
+                LogDebug("ImprovedUIManager를 기본 UI 시스템으로 사용");
             }
             else
             {
@@ -145,10 +151,9 @@ namespace MonoChrome.Core
             LogDebug($"패널 표시 요청: {panelName}");
 
             // 우선순위에 따라 UI 시스템 선택
-            if (_modernUIController != null)
+            if (_useNewUIController && _newUIController != null)
             {
-                // 현대적 UI 시스템에서는 이벤트 기반 패널 표시
-                LogDebug($"ModernUIController로 패널 표시: {panelName}");
+                _newUIController.ShowPanel(panelName);
             }
             else
             {
@@ -197,11 +202,10 @@ namespace MonoChrome.Core
         {
             LogDebug($"던전 맵 업데이트 요청: {nodes.Count}개 노드, 현재 인덱스 {currentIndex}");
 
-            // ModernUIController가 있다면 사용
-            if (_modernUIController != null)
+            // ImprovedUIManager가 있다면 사용
+            if (_improvedUIManager != null)
             {
-                // 현대적 UI 시스템을 통해 던전 맵 업데이트
-                LogDebug("던전 맵 업데이트: ModernUIController 사용");
+                _improvedUIManager.UpdateDungeonMap(nodes, currentIndex);
             }
             else
             {
@@ -232,10 +236,9 @@ namespace MonoChrome.Core
             {
                 _coreUIManager.UpdateDungeonUI();
             }
-            else if (_modernUIController != null)
+            else if (_improvedUIManager != null)
             {
-                // 현대적 UI 시스템 초기화
-                LogDebug("던전 UI 초기화: ModernUIController 사용");
+                _improvedUIManager.InitializeDungeonUI();
             }
             else
             {
@@ -293,11 +296,11 @@ namespace MonoChrome.Core
         /// <summary>
         /// UI 시스템 전환 (런타임에서 변경 가능)
         /// </summary>
-        public void SwitchUISystem(bool useModernController)
+        public void SwitchUISystem(bool useNewController)
         {
-            // 현재는 ModernUIController 우선순위로 간소화
+            _useNewUIController = useNewController;
             SetupUISystemPriority();
-            LogDebug($"UI 시스템 우선순위 재설정: {GetActiveUISystem()}");
+            LogDebug($"UI 시스템 전환됨: {(useNewController ? "새로운 UIController" : "CoreUIManager")}");
         }
         #endregion
 
@@ -307,10 +310,12 @@ namespace MonoChrome.Core
         /// </summary>
         public string GetActiveUISystem()
         {
-            if (_modernUIController != null)
-                return "ModernUIController";
+            if (_useNewUIController && _newUIController != null)
+                return "새로운 UIController";
             else if (_coreUIManager != null)
                 return "CoreUIManager";
+            else if (_improvedUIManager != null)
+                return "ImprovedUIManager";
             else
                 return "없음";
         }
@@ -323,8 +328,9 @@ namespace MonoChrome.Core
         {
             LogDebug("=== UI 브릿지 상태 리포트 ===");
             LogDebug($"초기화됨: {_isInitialized}");
-            LogDebug($"ModernUIController: {(_modernUIController != null ? "존재" : "없음")}");
+            LogDebug($"새로운 UIController: {(_newUIController != null ? "존재" : "없음")}");
             LogDebug($"CoreUIManager: {(_coreUIManager != null ? "존재" : "없음")}");
+            LogDebug($"ImprovedUIManager: {(_improvedUIManager != null ? "존재" : "없음")}");
             LogDebug($"현재 활성 UI 시스템: {GetActiveUISystem()}");
             LogDebug($"레거시 지원: {_maintainLegacySupport}");
             LogDebug("===========================");
