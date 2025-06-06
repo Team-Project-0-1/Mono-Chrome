@@ -183,13 +183,13 @@ namespace MonoChrome
             if (_startButton != null)
                 _startButton.interactable = false;
 
-            if (CoreGameManager.Instance != null)
+            if (MasterGameManager.Instance != null)
             {
-                CoreGameManager.Instance.StartNewGame();
+                MasterGameManager.Instance.StartNewGame();
             }
             else
             {
-                Debug.LogWarning("MainMenuController: CoreGameManager not found, loading scene directly");
+                Debug.LogWarning("MainMenuController: MasterGameManager not found, loading scene directly");
                 SceneManager.LoadScene("GameScene");
             }
         }
@@ -197,14 +197,14 @@ namespace MonoChrome
         private void OnQuitButtonClicked()
         {
             Debug.Log("MainMenuController: Quit button clicked");
+            #if UNITY_EDITOR
+                        UnityEditor.EditorApplication.isPlaying = false;
+                        Debug.Log("MainMenuController: Stopping play mode in editor");
+            #else
+                        Application.Quit();
+                        Debug.Log("MainMenuController: Quitting application");
+            #endif
 
-    #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-            Debug.Log("MainMenuController: Stopping play mode in editor");
-    #else
-            Application.Quit();
-            Debug.Log("MainMenuController: Quitting application");
-    #endif
         }
 
         private void OnCreditsButtonClicked()
@@ -242,7 +242,7 @@ namespace MonoChrome
 
             GUI.Box(new Rect(10, 10, 250, 100), "Main Menu Debug");
             GUI.Label(new Rect(15, 30, 240, 20), $"Initialized: {_isInitialized}");
-            GUI.Label(new Rect(15, 50, 240, 20), $"CoreGameManager: {(CoreGameManager.Instance != null ? "✓" : "✗")}");
+            GUI.Label(new Rect(15, 50, 240, 20), $"MasterGameManager: {(MasterGameManager.Instance != null ? "✓" : "✗")}");
             GUI.Label(new Rect(15, 70, 240, 20), "Space: Start Game, Esc: Quit");
             GUI.Label(new Rect(15, 90, 240, 20), "F1: Direct to GameScene");
         }

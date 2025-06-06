@@ -104,23 +104,23 @@ namespace MonoChrome.Core
         {
             LogMessage("2단계: Core 매니저들 활성화...");
             
-            // CoreGameManager 찾기 및 활성화
-            CoreGameManager coreGameManager = FindObjectOfType<CoreGameManager>();
+            // MasterGameManager 찾기 및 활성화
+            MasterGameManager coreGameManager = FindObjectOfType<MasterGameManager>();
             if (coreGameManager != null)
             {
                 if (!coreGameManager.gameObject.activeInHierarchy)
                 {
                     coreGameManager.gameObject.SetActive(true);
-                    LogMessage("  ✓ CoreGameManager 활성화됨");
+                    LogMessage("  ✓ MasterGameManager 활성화됨");
                 }
                 else
                 {
-                    LogMessage("  ✓ CoreGameManager 이미 활성화됨");
+                    LogMessage("  ✓ MasterGameManager 이미 활성화됨");
                 }
             }
             else
             {
-                LogMessage("  ⚠ CoreGameManager를 찾을 수 없음 - 3단계에서 생성됩니다");
+                LogMessage("  ⚠ MasterGameManager를 찾을 수 없음 - 3단계에서 생성됩니다");
             }
             
             // CoreUIManager 찾기 및 활성화
@@ -150,12 +150,12 @@ namespace MonoChrome.Core
         {
             LogMessage("3단계: 누락된 Core 컴포넌트 생성...");
             
-            // CoreGameManager 생성
-            if (FindObjectOfType<CoreGameManager>() == null)
+            // MasterGameManager 생성
+            if (FindObjectOfType<MasterGameManager>() == null)
             {
-                GameObject coreGameManagerObj = new GameObject("CoreGameManager");
-                coreGameManagerObj.AddComponent<CoreGameManager>();
-                LogMessage("  ✓ CoreGameManager 생성됨");
+                GameObject coreGameManagerObj = new GameObject("MasterGameManager");
+                coreGameManagerObj.AddComponent<MasterGameManager>();
+                LogMessage("  ✓ MasterGameManager 생성됨");
             }
             
             // CoreUIManager 생성 (Canvas 하위에)
@@ -185,18 +185,6 @@ namespace MonoChrome.Core
                     LogMessage("  ✓ MainMenuController 생성됨");
                 }
             }
-            
-            // QuickUIBuilder 생성 (GameScene에서만)
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "GameScene")
-            {
-                if (FindObjectOfType<QuickUIBuilder>() == null)
-                {
-                    GameObject quickUIBuilderObj = new GameObject("QuickUIBuilder");
-                    quickUIBuilderObj.AddComponent<QuickUIBuilder>();
-                    LogMessage("  ✓ QuickUIBuilder 생성됨");
-                }
-            }
-        }
         
         /// <summary>
         /// 참조 자동 수정
@@ -290,9 +278,8 @@ namespace MonoChrome.Core
             
             // Core 매니저들 확인
             LogMessage("Core 매니저들:");
-            LogMessage($"  CoreGameManager: {(FindObjectOfType<CoreGameManager>() != null ? "있음" : "없음")}");
+            LogMessage($"  MasterGameManager: {(FindObjectOfType<MasterGameManager>() != null ? "있음" : "없음")}");
             LogMessage($"  CoreUIManager: {(FindObjectOfType<CoreUIManager>() != null ? "있음" : "없음")}");
-            LogMessage($"  MainMenuController: {(FindObjectOfType<MonoChrome.MainMenuController>() != null ? "있음" : "없음")}");
             
             // UI 구조 확인
             Canvas canvas = FindObjectOfType<Canvas>();

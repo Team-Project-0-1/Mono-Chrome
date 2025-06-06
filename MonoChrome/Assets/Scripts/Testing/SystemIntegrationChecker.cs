@@ -75,7 +75,7 @@ namespace MonoChrome.Testing
 
             // 6. 게임 매니저 테스트
             LogInfo("6. 게임 매니저 테스트");
-            TestCoreGameManager();
+            TestMasterGameManager();
             yield return new WaitForSeconds(0.5f);
 
             // 7. 통합 플로우 테스트
@@ -94,13 +94,13 @@ namespace MonoChrome.Testing
             var stateMachine = FindObjectOfType<GameStateMachine>();
             var dungeonController = FindObjectOfType<DungeonController>();
             var uiController = FindObjectOfType<UIController>();
-            var gameManager = FindObjectOfType<CoreGameManager>();
+            var gameManager = FindObjectOfType<MasterGameManager>();
 
             LogInfo($"EventBus: {(eventBus != null ? "✓ 존재" : "✗ 없음")}");
             LogInfo($"GameStateMachine: {(stateMachine != null ? "✓ 존재" : "✗ 없음")}");
             LogInfo($"DungeonController: {(dungeonController != null ? "✓ 존재" : "✗ 없음")}");
             LogInfo($"UIController: {(uiController != null ? "✓ 존재" : "✗ 없음")}");
-            LogInfo($"CoreGameManager: {(gameManager != null ? "✓ 존재" : "✗ 없음")}");
+            LogInfo($"MasterGameManager: {(gameManager != null ? "✓ 존재" : "✗ 없음")}");
 
             // 자동 수정 시도
             if (_enableAutoFix)
@@ -129,12 +129,12 @@ namespace MonoChrome.Testing
                 LogInfo("GameStateMachine 자동 생성됨");
             }
 
-            // CoreGameManager 생성
-            if (CoreGameManager.Instance == null)
+            // MasterGameManager 생성
+            if (MasterGameManager.Instance == null)
             {
-                GameObject gameManagerGO = new GameObject("[CoreGameManager]");
-                gameManagerGO.AddComponent<CoreGameManager>();
-                LogInfo("CoreGameManager 자동 생성됨");
+                GameObject gameManagerGO = new GameObject("[MasterGameManager]");
+                gameManagerGO.AddComponent<MasterGameManager>();
+                LogInfo("MasterGameManager 자동 생성됨");
             }
 
             // DungeonController 생성 (씬에 없을 경우)
@@ -275,11 +275,11 @@ namespace MonoChrome.Testing
             _totalTests++;
         }
 
-        private void TestCoreGameManager()
+        private void TestMasterGameManager()
         {
             LogInfo("개선된 게임 매니저 테스트 중...");
-            
-            var gameManager = CoreGameManager.Instance;
+
+            var gameManager = MasterGameManager.Instance;
             if (gameManager != null)
             {
                 if (gameManager.IsInitialized)
@@ -296,7 +296,7 @@ namespace MonoChrome.Testing
             }
             else
             {
-                LogError("✗ CoreGameManager 인스턴스 없음");
+                LogError("✗ MasterGameManager 인스턴스 없음");
             }
             
             _totalTests++;
