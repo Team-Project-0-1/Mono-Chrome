@@ -140,14 +140,14 @@ namespace MonoChrome.Core
                 LogMessage("  ⚠ CoreUIManager를 찾을 수 없음 - 3단계에서 생성됩니다");
             }
         }
-        
+
         /// <summary>
         /// 누락된 Core 컴포넌트 생성
         /// </summary>
         private void CreateMissingCoreComponents()
         {
             LogMessage("3단계: 누락된 Core 컴포넌트 생성...");
-            
+
             // MasterGameManager 생성
             if (FindObjectOfType<MasterGameManager>() == null)
             {
@@ -155,7 +155,7 @@ namespace MonoChrome.Core
                 coreGameManagerObj.AddComponent<MasterGameManager>();
                 LogMessage("  ✓ MasterGameManager 생성됨");
             }
-            
+
             // CoreUIManager 생성 (Canvas 하위에)
             if (FindObjectOfType<CoreUIManager>() == null)
             {
@@ -172,18 +172,19 @@ namespace MonoChrome.Core
                     LogMessage("  ⚠ Canvas를 찾을 수 없어 CoreUIManager를 생성할 수 없음");
                 }
             }
-            
+
             // MainMenuController 생성 (MainMenu 씬에서만)
             if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "MainMenu")
             {
-                if (FindObjectOfType<MonoChrome.MainMenuController>() == null)
+                if (FindObjectOfType<MainMenuController>() == null)
                 {
                     GameObject coreMainMenuObj = new GameObject("MainMenuController");
-                    coreMainMenuObj.AddComponent<MonoChrome.MainMenuController>();
+                    coreMainMenuObj.AddComponent<MainMenuController>();
                     LogMessage("  ✓ MainMenuController 생성됨");
                 }
             }
-        
+        }
+
         /// <summary>
         /// 참조 자동 수정
         /// </summary>

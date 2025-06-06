@@ -568,50 +568,59 @@ namespace MonoChrome
             
             return coinObj;
         }
-        
+
         /// <summary>
         /// 패턴 UI 업데이트
         /// </summary>
         public void UpdatePatternUI(List<Pattern> availablePatterns)
         {
             base.UpdatePatternUI(availablePatterns);
+
+            // 기존 패턴 버튼들 제거
+            ClearDynamicObjects(dynamicPatternObjects);
+
+            // 새로운 패턴 버튼들 생성
+            foreach (Pattern pattern in availablePatterns)
+            {
+                GameObject buttonObj = new GameObject($"PatternButton_{pattern.Name}");
+                buttonObj.transform.SetParent(patternContainer, false);
+                dynamicPatternObjects.Add(buttonObj);
+
+                // 크기 설정
+                RectTransform rectTransform = buttonObj.AddComponent<RectTransform>();
+                rectTransform.sizeDelta = new Vector2(250, 50);
+
+                // 버튼 이미지
+                Image buttonImage = buttonObj.AddComponent<Image>();
+                buttonImage.color = pattern.IsAttack ? new Color(0.8f, 0.5f, 0.5f) : new Color(0.5f, 0.5f, 0.8f);
+
+                // 버튼 컴포넌트
+                Button button = buttonObj.AddComponent<Button>();
+
+                // 버튼 텍스트
+                GameObject textObj = new GameObject("PatternText");
+                textObj.transform.SetParent(buttonObj.transform, false);
+
+                Text buttonText = textObj.AddComponent<Text>();
+                buttonText.text = $"{pattern.Name}\n{pattern.Description}";
+                buttonText.alignment = TextAnchor.MiddleCenter;
+                buttonText.color = Color.white;
+                buttonText.fontSize = 11;
+                buttonText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
+                RectTransform textRect = textObj.GetComponent<RectTransform>();
+                textRect.anchorMin = Vector2.zero;
+                textRect.anchorMax = Vector2.one;
+                textRect.offsetMin = new Vector2(5, 5);
+                textRect.offsetMax = new Vector2(-5, -5);
+
+                // 버튼 이벤트 설정
+                button.onClick.AddListener(() => OnPatternButtonClicked(pattern));
+
+                return;
+            }
         }
-            buttonObj.transform.SetParent(patternContainer, false);
-            
-            // 크기 설정
-            RectTransform rectTransform = buttonObj.AddComponent<RectTransform>();
-            rectTransform.sizeDelta = new Vector2(250, 50);
-            
-            // 버튼 이미지
-            Image buttonImage = buttonObj.AddComponent<Image>();
-            buttonImage.color = pattern.IsAttack ? new Color(0.8f, 0.5f, 0.5f) : new Color(0.5f, 0.5f, 0.8f);
-            
-            // 버튼 컴포넌트
-            Button button = buttonObj.AddComponent<Button>();
-            
-            // 버튼 텍스트
-            GameObject textObj = new GameObject("PatternText");
-            textObj.transform.SetParent(buttonObj.transform, false);
-            
-            Text buttonText = textObj.AddComponent<Text>();
-            buttonText.text = $"{pattern.Name}\n{pattern.Description}";
-            buttonText.alignment = TextAnchor.MiddleCenter;
-            buttonText.color = Color.white;
-            buttonText.fontSize = 11;
-            buttonText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = new Vector2(5, 5);
-            textRect.offsetMax = new Vector2(-5, -5);
-            
-            // 버튼 이벤트 설정
-            button.onClick.AddListener(() => OnPatternButtonClicked(pattern));
-            
-            return buttonObj;
-        }
-        
+
         /// <summary>
         /// 턴 카운터 업데이트
         /// </summary>

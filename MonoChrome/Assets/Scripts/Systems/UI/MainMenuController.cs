@@ -212,10 +212,10 @@ namespace MonoChrome
             Debug.Log("MainMenuController: Credits button clicked");
 
             string credits = @"MONOCHROME: the Eclipse
-개발자: [개발자명]
-음악: [음악가명]
-아트: [아티스트명]
-특별히 감사합니다: Unity Technologies";
+            개발자: [개발자명]
+            음악: [음악가명]
+            아트: [아티스트명]
+            특별히 감사합니다: Unity Technologies";
             Debug.Log($"Credits:\n{credits}");
         }
 
