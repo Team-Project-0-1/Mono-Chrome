@@ -137,7 +137,15 @@ namespace MonoChrome
                     return GameStateMachine.GameState.MainMenu;
             }
         }
-        
+
+        /// <summary>
+        /// Legacy entry point for starting the game by entering the first dungeon.
+        /// </summary>
+        public void EnterDungeon()
+        {
+            _masterGameManager?.EnterDungeon();
+        }
+
         public bool IsInitialized => _masterGameManager?.IsInitialized ?? false;
     }
 }

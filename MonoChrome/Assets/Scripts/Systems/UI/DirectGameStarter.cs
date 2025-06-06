@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Reflection;
+using MonoChrome.Systems.Dungeon;
 
 namespace MonoChrome.Systems.UI
 {
