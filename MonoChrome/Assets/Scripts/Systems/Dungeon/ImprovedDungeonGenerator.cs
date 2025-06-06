@@ -8,6 +8,11 @@ namespace MonoChrome.Systems.Dungeon
     /// 개선된 던전 생성기 - 노드 겹침 방지 및 최적화된 배치
     /// 포트폴리오 품질을 위한 체계적인 던전 구조 생성
     /// </summary>
+    /// <remarks>
+    /// Provides a lightweight layout algorithm focused on simple overlap
+    /// prevention. It remains for experimentation and can be chosen via
+    /// <see cref="ConfigurableDungeonGenerator"/>.
+    /// </remarks>
     public class ImprovedDungeonGenerator : MonoBehaviour
     {
         [Header("던전 설정")]

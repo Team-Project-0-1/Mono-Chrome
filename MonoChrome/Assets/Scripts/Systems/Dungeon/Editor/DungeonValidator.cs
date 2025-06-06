@@ -16,6 +16,7 @@ namespace MonoChrome.Dungeon.Editor
     {
         private DungeonController dungeonController;
         private ProceduralDungeonGenerator procGenerator;
+        private ConfigurableDungeonGenerator configGenerator;
         private Vector2 scrollPosition;
         private bool showDetailedStats = true;
         private bool showGenerationLog = true;
@@ -78,12 +79,14 @@ namespace MonoChrome.Dungeon.Editor
             procGenerator = dungeonController.GetComponent<ProceduralDungeonGenerator>();
             var improvedGen = dungeonController.GetComponent<ImprovedDungeonGenerator>();
             var advancedGen = dungeonController.GetComponent<AdvancedDungeonGenerator>();
+            configGenerator = dungeonController.GetComponent<ConfigurableDungeonGenerator>();
             
             EditorGUILayout.LabelField("생성기 컴포넌트 상태:", EditorStyles.miniLabel);
             EditorGUI.indentLevel++;
             EditorGUILayout.LabelField($"• ProceduralDungeonGenerator: {(procGenerator != null ? "✓" : "✗")}");
             EditorGUILayout.LabelField($"• ImprovedDungeonGenerator: {(improvedGen != null ? "✓" : "✗")}");
             EditorGUILayout.LabelField($"• AdvancedDungeonGenerator: {(advancedGen != null ? "✓" : "✗")}");
+            EditorGUILayout.LabelField($"• ConfigurableDungeonGenerator: {(configGenerator != null ? "✓" : "✗")}");
             EditorGUI.indentLevel--;
         }
         
@@ -223,8 +226,13 @@ namespace MonoChrome.Dungeon.Editor
             {
                 // 던전 생성
                 List<DungeonNode> nodes = null;
-                
-                if (procGenerator != null)
+
+                if (configGenerator != null)
+                {
+                    nodes = configGenerator.GenerateDungeon(0);
+                    generationLog.Add($"ConfigurableDungeonGenerator 사용 ({configGenerator.name})");
+                }
+                else if (procGenerator != null)
                 {
                     nodes = procGenerator.GenerateProceduralDungeon(0);
                     generationLog.Add("ProceduralDungeonGenerator 사용");
@@ -254,9 +262,9 @@ namespace MonoChrome.Dungeon.Editor
         
         private void ValidateAllStages()
         {
-            if (dungeonController == null || procGenerator == null)
+            if (dungeonController == null || (procGenerator == null && configGenerator == null))
             {
-                Debug.LogError("ProceduralDungeonGenerator가 설정되지 않았습니다.");
+                Debug.LogError("Dungeon generator가 설정되지 않았습니다.");
                 return;
             }
             
@@ -269,7 +277,9 @@ namespace MonoChrome.Dungeon.Editor
                 try
                 {
                     float startTime = Time.realtimeSinceStartup;
-                    var nodes = procGenerator.GenerateProceduralDungeon(stage);
+                    var nodes = configGenerator != null
+                        ? configGenerator.GenerateDungeon(stage)
+                        : procGenerator.GenerateProceduralDungeon(stage);
                     float generationTime = Time.realtimeSinceStartup - startTime;
                     
                     var validation = ValidateDungeonNodes(nodes, generationTime);
@@ -299,9 +309,9 @@ namespace MonoChrome.Dungeon.Editor
         
         private void RunRepeatedGenerationTest()
         {
-            if (procGenerator == null)
+            if (configGenerator == null && procGenerator == null)
             {
-                Debug.LogError("ProceduralDungeonGenerator가 설정되지 않았습니다.");
+                Debug.LogError("Dungeon generator가 설정되지 않았습니다.");
                 return;
             }
             
@@ -316,7 +326,9 @@ namespace MonoChrome.Dungeon.Editor
                 try
                 {
                     float startTime = Time.realtimeSinceStartup;
-                    var nodes = procGenerator.GenerateProceduralDungeon(0);
+                    var nodes = configGenerator != null
+                        ? configGenerator.GenerateDungeon(0)
+                        : procGenerator.GenerateProceduralDungeon(0);
                     float generationTime = Time.realtimeSinceStartup - startTime;
                     
                     var validation = ValidateDungeonNodes(nodes, generationTime);
@@ -438,10 +450,11 @@ namespace MonoChrome.Dungeon.Editor
         private void FindDungeonManager()
         {
             dungeonController = FindObjectOfType<DungeonController>();
-            
+
             if (dungeonController != null)
             {
                 procGenerator = dungeonController.GetComponent<ProceduralDungeonGenerator>();
+                configGenerator = dungeonController.GetComponent<ConfigurableDungeonGenerator>();
                 generationLog.Add($"[{System.DateTime.Now:HH:mm:ss}] DungeonController 발견: {dungeonController.name}");
             }
             else
