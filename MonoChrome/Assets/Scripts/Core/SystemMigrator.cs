@@ -1,5 +1,5 @@
 using UnityEngine;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 using MonoChrome.Systems.Combat;
 
 namespace MonoChrome.Core

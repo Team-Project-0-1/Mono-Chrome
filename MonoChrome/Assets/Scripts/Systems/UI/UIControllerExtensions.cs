@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using MonoChrome.Systems.Combat;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// UIController 확장 - 전투 UI 기능 추가

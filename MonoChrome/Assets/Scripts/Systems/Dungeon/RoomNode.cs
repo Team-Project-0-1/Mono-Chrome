@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MonoChrome.Systems.Dungeon
+namespace MonoChrome
 {
     /// <summary>
     /// 이 클래스는 이전 버전과의 호환성을 위한 클래스입니다.

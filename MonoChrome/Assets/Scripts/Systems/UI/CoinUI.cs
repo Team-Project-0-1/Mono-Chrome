@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// 개별 동전 UI 컴포넌트

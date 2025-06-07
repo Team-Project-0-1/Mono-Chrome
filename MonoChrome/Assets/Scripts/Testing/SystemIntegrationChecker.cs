@@ -2,8 +2,8 @@ using UnityEngine;
 using System.Collections;
 using MonoChrome.Events;
 using MonoChrome.Core;
-using MonoChrome.Systems.Dungeon;
-using MonoChrome.Systems.UI;
+using MonoChrome;
+using MonoChrome;
 
 namespace MonoChrome.Testing
 {

@@ -4,7 +4,7 @@ using MonoChrome.StatusEffects;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// Shared functionality for combat UI implementations.

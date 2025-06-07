@@ -3,7 +3,7 @@ using MonoChrome.Systems.Combat;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// 패턴 버튼 UI 컴포넌트

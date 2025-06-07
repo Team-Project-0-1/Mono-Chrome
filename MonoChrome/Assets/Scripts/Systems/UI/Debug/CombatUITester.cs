@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR
+
 namespace MonoChrome
 {
     public class CombatUITester : MonoBehaviour
@@ -49,19 +51,20 @@ namespace MonoChrome
             }
         }
         
-        public void TestCombatUI()
+    public void TestCombatUI()
+    {
+        GameObject combatPanel = GameObject.Find("CombatPanel");
+        if (combatPanel != null && combatPanel.activeSelf)
         {
-            GameObject combatPanel = GameObject.Find("CombatPanel");
-            if (combatPanel != null && combatPanel.activeSelf)
+            CombatUI combatUI = combatPanel.GetComponent<CombatUI>();
+            if (combatUI != null)
             {
-                CombatUI combatUI = combatPanel.GetComponent<CombatUI>();
-                if (combatUI != null)
-                {
-                    combatUI.UpdateHealthBars(80f, 100f, 60f, 80f);
-                    combatUI.UpdateTurnCounter(5);
-                    Debug.Log("CombatUITester: UI test completed!");
-                }
+                combatUI.UpdateHealthBars(80f, 100f, 60f, 80f);
+                combatUI.UpdateTurnCounter(5);
+                Debug.Log("CombatUITester: UI test completed!");
             }
         }
     }
 }
+#endif
+

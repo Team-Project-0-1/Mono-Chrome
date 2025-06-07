@@ -3,7 +3,7 @@ using UnityEngine;
 using MonoChrome.Events;
 using MonoChrome.Core;
 
-namespace MonoChrome.Systems.Dungeon
+namespace MonoChrome
 {
     /// <summary>
     /// 던전 컨트롤러 - 오직 던전 로직만 담당 (단일 책임 원칙)

@@ -1,7 +1,7 @@
 using UnityEngine;
 using MonoChrome.Events;
 using MonoChrome.Core;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 
 namespace MonoChrome.Compatibility
 {

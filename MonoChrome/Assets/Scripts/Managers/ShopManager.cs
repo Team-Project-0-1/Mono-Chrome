@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 using MonoChrome.Events;
 using UnityEngine;
 
@@ -10,7 +10,7 @@ namespace MonoChrome
     {
         [Header("References")]
         [SerializeField] private PlayerManager playerManager;
-        [SerializeField] private Systems.Dungeon.DungeonController dungeonController;
+        [SerializeField] private DungeonController dungeonController;
         
         private void Awake()
         {
@@ -18,7 +18,7 @@ namespace MonoChrome
                 playerManager = FindObjectOfType<PlayerManager>();
             
             if (dungeonController == null)
-                dungeonController = FindObjectOfType<Systems.Dungeon.DungeonController>();
+                dungeonController = FindObjectOfType<DungeonController>();
         }
         
         public void OpenShop(RoomData roomData)

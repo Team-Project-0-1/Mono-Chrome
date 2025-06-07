@@ -2,7 +2,7 @@ using MonoChrome.StatusEffects;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// 상태 효과 UI 컴포넌트

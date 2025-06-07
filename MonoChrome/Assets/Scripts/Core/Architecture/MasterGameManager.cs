@@ -3,10 +3,10 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using MonoChrome.Systems.Combat;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 using MonoChrome.Events;
 using MonoChrome.StatusEffects;
-using MonoChrome.Systems.UI;
+using MonoChrome;
 using MonoChrome.Core.Data;
 
 namespace MonoChrome.Core

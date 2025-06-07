@@ -4,7 +4,7 @@ using MonoChrome.StatusEffects;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// 정적 UI 기반의 전투 UI 컨트롤러

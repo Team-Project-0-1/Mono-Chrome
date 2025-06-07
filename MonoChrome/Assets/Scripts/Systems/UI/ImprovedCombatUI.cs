@@ -11,7 +11,7 @@ namespace MonoChrome
     /// 완전히 개선된 전투 UI 시스템
     /// 포트폴리오 품질을 위한 완전한 UI 관리
     /// </summary>
-    public class ImprovedCombatUI : MonoChrome.Systems.UI.CombatUIBase
+    public class ImprovedCombatUI : CombatUIBase
     {
         #region UI References
         [Header("체력바 시스템")]

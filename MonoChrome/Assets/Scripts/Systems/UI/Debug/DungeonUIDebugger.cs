@@ -1,7 +1,8 @@
 using UnityEngine;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 using MonoChrome.Core;
 
+#if UNITY_EDITOR
 namespace MonoChrome
 {
     /// <summary>
@@ -68,3 +69,6 @@ namespace MonoChrome
         }
     }
 }
+
+#endif
+

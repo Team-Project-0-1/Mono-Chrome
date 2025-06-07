@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace MonoChrome.Systems.Dungeon
+namespace MonoChrome
 {
     
     [System.Serializable]

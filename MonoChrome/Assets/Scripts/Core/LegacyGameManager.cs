@@ -62,7 +62,7 @@ namespace MonoChrome
         // 레거시 매니저 참조들 (호환성용)
         public CoreUIManager UIManager => FindObjectOfType<CoreUIManager>();
         public Systems.Combat.CombatSystem CombatManager => FindObjectOfType<Systems.Combat.CombatSystem>();
-        public Systems.Dungeon.DungeonController DungeonManager => FindObjectOfType<Systems.Dungeon.DungeonController>();
+        public DungeonController DungeonManager => FindObjectOfType<DungeonController>();
         
         private void Awake()
         {

@@ -1,6 +1,6 @@
 using System.Collections;
 using MonoChrome.Core;
-using MonoChrome.Systems.UI;
+using MonoChrome;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 

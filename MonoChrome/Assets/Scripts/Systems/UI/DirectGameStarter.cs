@@ -2,10 +2,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using System.Reflection;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 using MonoChrome.Core;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// 개선된 게임 시작 버튼 핸들러
