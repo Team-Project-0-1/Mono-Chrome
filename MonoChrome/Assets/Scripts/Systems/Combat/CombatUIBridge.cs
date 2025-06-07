@@ -21,14 +21,14 @@ namespace MonoChrome.Systems.Combat
     public class CombatUIBridge : MonoBehaviour
     {
         #region UI Controller Reference
-        private UI.UIController _uiController;
+        private UIController _uiController;
         #endregion
 
         #region Initialization
         private void Awake()
         {
             // UI 컨트롤러 찾기
-            _uiController = FindFirstObjectByType<UI.UIController>();
+            _uiController = FindFirstObjectByType<UIController>();
             if (_uiController == null)
             {
                 Debug.LogError("[CombatUIBridge] UIController를 찾을 수 없습니다");

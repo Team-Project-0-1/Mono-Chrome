@@ -13,13 +13,13 @@ namespace MonoChrome
             {
                 ActivateCombatPanel();
             }
-            
+
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 TestCombatUI();
             }
         }
-        
+
         public void ActivateCombatPanel()
         {
             GameObject combatPanel = GameObject.Find("CombatPanel");
@@ -36,12 +36,12 @@ namespace MonoChrome
                     }
                 }
             }
-            
+
             if (combatPanel != null)
             {
                 combatPanel.SetActive(true);
                 Debug.Log("CombatUITester: CombatPanel activated!");
-                
+
                 CombatUI combatUI = combatPanel.GetComponent<CombatUI>();
                 if (combatUI != null)
                 {
@@ -50,18 +50,19 @@ namespace MonoChrome
                 }
             }
         }
-        
-    public void TestCombatUI()
-    {
-        GameObject combatPanel = GameObject.Find("CombatPanel");
-        if (combatPanel != null && combatPanel.activeSelf)
+
+        public void TestCombatUI()
         {
-            CombatUI combatUI = combatPanel.GetComponent<CombatUI>();
-            if (combatUI != null)
+            GameObject combatPanel = GameObject.Find("CombatPanel");
+            if (combatPanel != null && combatPanel.activeSelf)
             {
-                combatUI.UpdateHealthBars(80f, 100f, 60f, 80f);
-                combatUI.UpdateTurnCounter(5);
-                Debug.Log("CombatUITester: UI test completed!");
+                CombatUI combatUI = combatPanel.GetComponent<CombatUI>();
+                if (combatUI != null)
+                {
+                    combatUI.UpdateHealthBars(80f, 100f, 60f, 80f);
+                    combatUI.UpdateTurnCounter(5);
+                    Debug.Log("CombatUITester: UI test completed!");
+                }
             }
         }
     }
