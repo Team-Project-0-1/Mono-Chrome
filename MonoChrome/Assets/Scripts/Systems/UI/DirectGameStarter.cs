@@ -186,7 +186,7 @@ namespace MonoChrome
         {
             var managersToActivate = new[]
             {
-                "CombatManager", "CoinManager", "PatternManager", "StatusEffectManager", "DungeonManager"
+                "StatusEffectManager"
             };
             
             int activatedCount = 0;
@@ -263,36 +263,35 @@ namespace MonoChrome
         /// </summary>
         private IEnumerator ForceDungeonGeneration()
         {
-            DungeonManager dungeonManager = null;
+            DungeonController dungeonController = null;
             float timeout = 5f;
             float elapsed = 0f;
 
-            while (dungeonManager == null && elapsed < timeout)
+            while (dungeonController == null && elapsed < timeout)
             {
-                dungeonManager = DungeonManager.Instance ?? 
-                                 FindObjectOfType<DungeonManager>();
+                dungeonController = FindObjectOfType<DungeonController>();
 
-                if (dungeonManager == null)
+                if (dungeonController == null)
                 {
                     yield return new WaitForSeconds(0.1f);
                     elapsed += 0.1f;
                 }
             }
 
-            if (dungeonManager == null)
+            if (dungeonController == null)
             {
-                LogError("DirectGameStarter: DungeonManager not found after timeout!");
+                LogError("DirectGameStarter: DungeonController not found after timeout!");
                 yield break;
             }
 
-            LogDebug("DirectGameStarter: DungeonManager found, generating dungeon...");
+            LogDebug("DirectGameStarter: DungeonController found, generating dungeon...");
 
             bool hasError = false;
             string errorMessage = null;
 
             try
             {
-                dungeonManager.GenerateNewDungeon(0);
+                dungeonController.GenerateNewDungeon(0);
                 LogDebug("DirectGameStarter: Dungeon generation requested successfully");
             }
             catch (System.Exception ex)

@@ -17,7 +17,7 @@ namespace MonoChrome.Compatibility
 
         // 기존 시스템 참조 (호환성용)
         private GameManager _legacyGameManager;
-        private DungeonManager _legacyDungeonManager;
+        // DungeonManager는 삭제되어 DungeonController로 교체됨
 
         // 새 시스템 참조
         private GameStateMachine _newStateMachine;
@@ -50,13 +50,13 @@ namespace MonoChrome.Compatibility
 
             // 기존 시스템 찾기
             _legacyGameManager = FindObjectOfType<GameManager>();
-            _legacyDungeonManager = FindObjectOfType<DungeonManager>();
+            // DungeonManager는 제거되어 더 이상 찾지 않음
 
             // 새 시스템 참조
             _newStateMachine = GameStateMachine.Instance;
             _newDungeonController = FindObjectOfType<DungeonController>();
 
-            LogBridge($"기존 시스템: GameManager={_legacyGameManager != null}, DungeonManager={_legacyDungeonManager != null}");
+            LogBridge($"기존 시스템: GameManager={_legacyGameManager != null}");
             LogBridge($"새 시스템: StateMachine={_newStateMachine != null}, DungeonController={_newDungeonController != null}");
         }
 
@@ -90,12 +90,7 @@ namespace MonoChrome.Compatibility
         {
             LogBridge($"새 시스템에서 던전 생성 요청됨 (스테이지 {stageIndex})");
 
-            if (_legacyDungeonManager != null)
-            {
-                LogBridge("기존 DungeonManager로 던전 생성 요청 전달");
-                _legacyDungeonManager.GenerateNewDungeon(stageIndex);
-            }
-            else if (_newDungeonController != null)
+            if (_newDungeonController != null)
             {
                 LogBridge("새 DungeonController가 처리할 예정");
                 // 새 DungeonController가 이미 처리했을 것임
@@ -113,12 +108,7 @@ namespace MonoChrome.Compatibility
         {
             LogBridge($"새 시스템에서 노드 이동 요청됨 (노드 {nodeIndex})");
 
-            if (_legacyDungeonManager != null)
-            {
-                LogBridge("기존 DungeonManager로 노드 이동 요청 전달");
-                _legacyDungeonManager.MoveToNode(nodeIndex);
-            }
-            else if (_newDungeonController != null)
+            if (_newDungeonController != null)
             {
                 LogBridge("새 DungeonController가 처리할 예정");
                 // 새 DungeonController가 이미 처리했을 것임
@@ -270,7 +260,7 @@ namespace MonoChrome.Compatibility
         {
             Debug.Log("=== 레거시 시스템 브릿지 상태 ===");
             Debug.Log($"기존 GameManager: {(_legacyGameManager != null ? "존재" : "없음")}");
-            Debug.Log($"기존 DungeonManager: {(_legacyDungeonManager != null ? "존재" : "없음")}");
+            Debug.Log("기존 DungeonManager: 삭제됨 (DungeonController로 교체)");
             Debug.Log($"새 GameStateMachine: {(_newStateMachine != null ? "존재" : "없음")}");
             Debug.Log($"새 DungeonController: {(_newDungeonController != null ? "존재" : "없음")}");
             Debug.Log($"브릿지 활성화: {_enableLegacySupport}");

@@ -6,7 +6,6 @@ using MonoChrome.Systems.Combat;
 using MonoChrome;
 using MonoChrome.Events;
 using MonoChrome.StatusEffects;
-using MonoChrome;
 using MonoChrome.Core.Data;
 
 namespace MonoChrome.Core
@@ -340,8 +339,7 @@ namespace MonoChrome.Core
             // 비활성화된 레거시 매니저들 찾아서 활성화
             var managerNames = new[]
             {
-                "CombatManager", "CoinManager", "PatternManager", 
-                "StatusEffectManager", "DungeonManager"
+                "StatusEffectManager"
             };
             
             int activatedCount = 0;
@@ -372,11 +370,7 @@ namespace MonoChrome.Core
             // 타입으로 찾기
             return managerName switch
             {
-                "CombatManager" => FindFirstObjectByType<CombatManager>(FindObjectsInactive.Include)?.gameObject,
-                "CoinManager" => FindFirstObjectByType<CoinManager>(FindObjectsInactive.Include)?.gameObject,
-                "PatternManager" => FindFirstObjectByType<PatternManager>(FindObjectsInactive.Include)?.gameObject,
                 "StatusEffectManager" => FindFirstObjectByType<StatusEffectManager>(FindObjectsInactive.Include)?.gameObject,
-                "DungeonManager" => FindFirstObjectByType<DungeonManager>(FindObjectsInactive.Include)?.gameObject,
                 _ => null
             };
         }
@@ -522,7 +516,7 @@ namespace MonoChrome.Core
             
             _stateMachine?.TryChangeState(GameStateMachine.GameState.Combat);
             
-            // CombatManager에게 전투 시작 요청
+            // CombatSystem에게 전투 시작 요청
             StartCoroutine(InitializeCombatSafely(enemyType, characterType));
         }
 
@@ -545,18 +539,18 @@ namespace MonoChrome.Core
         /// </summary>
         private IEnumerator InitializeCombatSafely(string enemyType, CharacterType characterType)
         {
-            // CombatManager 준비 대기
-            var combatManager = FindFirstObjectByType<CombatManager>();
-            while (combatManager == null)
+            // CombatSystem 준비 대기
+            var combatSystem = FindFirstObjectByType<CombatSystem>();
+            while (combatSystem == null)
             {
                 yield return null;
-                combatManager = FindFirstObjectByType<CombatManager>();
+                combatSystem = FindFirstObjectByType<CombatSystem>();
             }
             
             try
             {
                 // 전투 초기화
-                combatManager.InitializeCombat();
+                combatSystem.InitializeCombat();
                 LogDebug("전투 초기화 완료");
             }
             catch (Exception ex)

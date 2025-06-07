@@ -222,8 +222,8 @@ namespace MonoChrome
         /// <summary>
         /// 액티브 스킬을 사용하여 동전을 조작한다
         /// </summary>
-        /// <param name="coinManager">동전 관리자</param>
-        public abstract void UseActiveSkill(CoinManager coinManager);
+        /// <param name="combatSystem">전투 시스템</param>
+        public abstract void UseActiveSkill(MonoChrome.Systems.Combat.CombatSystem combatSystem);
         
         /// <summary>
         /// 액티브 스킬 쿨다운을 업데이트한다

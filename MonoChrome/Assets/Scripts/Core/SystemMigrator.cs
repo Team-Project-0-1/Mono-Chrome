@@ -226,19 +226,19 @@ namespace MonoChrome.Core
                 LogMessage("  ✓ EventSystem 생성됨");
             }
             
-            // 기존 DungeonManager와 CombatManager 활성화 (호환성을 위해)
-            DungeonManager dungeonManager = FindObjectOfType<DungeonManager>();
-            if (dungeonManager != null && !dungeonManager.gameObject.activeInHierarchy)
+            // 새 시스템들 활성화 (호환성을 위해)
+            var dungeonController = FindObjectOfType<DungeonController>();
+            if (dungeonController != null && !dungeonController.gameObject.activeInHierarchy)
             {
-                dungeonManager.gameObject.SetActive(true);
-                LogMessage("  ✓ DungeonManager 활성화됨 (호환성)");
+                dungeonController.gameObject.SetActive(true);
+                LogMessage("  ✓ DungeonController 활성화됨 (호환성)");
             }
             
-            CombatManager combatManager = FindObjectOfType<CombatManager>();
-            if (combatManager != null && !combatManager.gameObject.activeInHierarchy)
+            var combatSystem = FindObjectOfType<CombatSystem>();
+            if (combatSystem != null && !combatSystem.gameObject.activeInHierarchy)
             {
-                combatManager.gameObject.SetActive(true);
-                LogMessage("  ✓ CombatManager 활성화됨 (호환성)");
+                combatSystem.gameObject.SetActive(true);
+                LogMessage("  ✓ CombatSystem 활성화됨 (호환성)");
             }
         }
         

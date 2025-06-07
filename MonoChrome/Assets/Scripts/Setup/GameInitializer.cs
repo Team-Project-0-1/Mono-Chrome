@@ -30,7 +30,8 @@ namespace MonoChrome.Setup
                 go.AddComponent<MasterGameManager>();
             }
 
-            ManagerInitializer.Initialize();
+            // MasterGameManager가 자체 초기화를 담당하므로 별도 초기화 불필요
+            Debug.Log("GameInitializer: MasterGameManager 생성 완료");
         }
 
 #if UNITY_EDITOR

@@ -145,9 +145,9 @@ namespace MonoChrome
                         "기합",
                         "모든 동전을 다시 던지고 증폭 스택을 1 증가시킵니다.",
                         ActiveSkillType.RethrowAll,
-                        (CoinManager coinManager) => 
+                        (MonoChrome.Systems.Combat.CombatSystem combatSystem) => 
                         {
-                            coinManager.RethrowAllCoins();
+                            combatSystem.RethrowAllCoins();
                             AddStatusEffect(new StatusEffect(_mainStatusEffectType, 1, 3, this));
                         });
                     break;
@@ -158,10 +158,10 @@ namespace MonoChrome
                         "속임수",
                         "동전 1개를 선택해 뒤집고 표식 스택을 3 증가시킵니다.",
                         ActiveSkillType.FlipOne,
-                        (CoinManager coinManager) => 
+                        (MonoChrome.Systems.Combat.CombatSystem combatSystem) => 
                         {
                             // 첫 번째 동전 뒤집기 (나중에 선택 로직 추가)
-                            coinManager.FlipCoin(0);
+                            combatSystem.FlipCoin(0);
                             AddStatusEffect(new StatusEffect(_mainStatusEffectType, 3, 2, this));
                         });
                     break;
@@ -172,10 +172,10 @@ namespace MonoChrome
                         "불괴",
                         "동전 1개를 선택해 고정하고 반격 스택을 3 증가시킵니다.",
                         ActiveSkillType.LockOne,
-                        (CoinManager coinManager) => 
+                        (MonoChrome.Systems.Combat.CombatSystem combatSystem) => 
                         {
                             // 첫 번째 동전 고정 (나중에 선택 로직 추가)
-                            coinManager.LockCoin(0);
+                            combatSystem.LockCoin(0);
                             AddStatusEffect(new StatusEffect(_mainStatusEffectType, 3, 2, this));
                         });
                     break;
@@ -186,10 +186,10 @@ namespace MonoChrome
                         "주문 배치",
                         "동전 2개의 위치를 교환하고 저주 스택을 2 증가시킵니다.",
                         ActiveSkillType.SwapTwo,
-                        (CoinManager coinManager) => 
+                        (MonoChrome.Systems.Combat.CombatSystem combatSystem) => 
                         {
                             // 첫 번째와 두 번째 동전 교환 (나중에 선택 로직 추가)
-                            coinManager.SwapCoins(0, 1);
+                            combatSystem.SwapCoins(0, 1);
                             AddStatusEffect(new StatusEffect(_mainStatusEffectType, 2, 2, this));
                         });
                     break;
@@ -200,9 +200,9 @@ namespace MonoChrome
                         "재시도",
                         "모든 동전을 다시 던집니다.",
                         ActiveSkillType.RethrowAll,
-                        (CoinManager coinManager) => 
+                        (MonoChrome.Systems.Combat.CombatSystem combatSystem) => 
                         {
-                            coinManager.RethrowAllCoins();
+                            combatSystem.RethrowAllCoins();
                         });
                     break;
             }
@@ -426,12 +426,12 @@ namespace MonoChrome
         /// <summary>
         /// 액티브 스킬 사용
         /// </summary>
-        public override void UseActiveSkill(CoinManager coinManager)
+        public override void UseActiveSkill(MonoChrome.Systems.Combat.CombatSystem combatSystem)
         {
             if (_activeSkill != null && IsActiveSkillAvailable())
             {
                 // 스킬 효과 적용
-                _activeSkill.Execute(coinManager);
+                _activeSkill.Execute(combatSystem);
                 
                 // 쿨다운 적용
                 ApplyActiveSkillCooldown();
@@ -495,9 +495,9 @@ namespace MonoChrome
         public ActiveSkillType Type { get; private set; }
         
         // 스킬 실행 동작
-        private Action<CoinManager> _skillAction;
+        private Action<MonoChrome.Systems.Combat.CombatSystem> _skillAction;
         
-        public ActiveSkill(string name, string description, ActiveSkillType type, Action<CoinManager> skillAction)
+        public ActiveSkill(string name, string description, ActiveSkillType type, Action<MonoChrome.Systems.Combat.CombatSystem> skillAction)
         {
             Name = name;
             Description = description;
@@ -505,15 +505,15 @@ namespace MonoChrome
             _skillAction = skillAction;
         }
         
-        public void Execute(CoinManager coinManager)
+        public void Execute(MonoChrome.Systems.Combat.CombatSystem combatSystem)
         {
-            if (_skillAction != null && coinManager != null)
+            if (_skillAction != null && combatSystem != null)
             {
-                _skillAction.Invoke(coinManager);
+                _skillAction.Invoke(combatSystem);
             }
             else
             {
-                Debug.LogError("Cannot execute skill: null action or coin manager");
+                Debug.LogError("Cannot execute skill: null action or combat system");
             }
         }
     }

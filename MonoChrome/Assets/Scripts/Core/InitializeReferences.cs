@@ -414,20 +414,6 @@ namespace MonoChrome
         {
             Debug.Log("Initializing manager references...");
             
-            // 코인 매니저 참조
-            CoinManager coinManager = FindObjectOfType<CoinManager>();
-            if (coinManager == null)
-            {
-                Debug.LogError("CoinManager not found!");
-            }
-            
-            // 패턴 매니저 참조
-            PatternManager patternManager = FindObjectOfType<PatternManager>();
-            if (patternManager == null)
-            {
-                Debug.LogError("PatternManager not found!");
-            }
-            
             // 상태효과 매니저 참조
             StatusEffectManager statusEffectManager = FindObjectOfType<StatusEffectManager>();
             if (statusEffectManager == null)

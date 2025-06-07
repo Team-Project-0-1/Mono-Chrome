@@ -5,6 +5,7 @@ using MonoChrome.Core.Data;
 using UnityEngine;
 using MonoChrome.Events;
 using MonoChrome.StatusEffects;
+using Random = UnityEngine.Random;
 
 namespace MonoChrome.Systems.Combat
 {
@@ -66,9 +67,14 @@ namespace MonoChrome.Systems.Combat
         private PlayerCharacter _player;
         private EnemyCharacter _enemy;
 
-        // 서브시스템들 (컴포넌트로 관리)
-        private CoinManager _coinManager;
-        private PatternManager _patternManager;
+        // 통합된 전투 시스템 - 직접 관리
+        [Header("Coin System")]
+        [SerializeField] private int _coinCount = 5;
+        private bool[] _coinStates;
+        private bool[] _lockedCoins;
+        
+        [Header("Pattern System")]
+        [SerializeField] private List<PatternSO> _availablePatterns;
         #endregion
 
         #region Events (UI와 분리를 위한 이벤트들)
@@ -84,13 +90,165 @@ namespace MonoChrome.Systems.Combat
         #region Initialization
         private void InitializeSubSystems()
         {
-            // 서브시스템들을 컴포넌트로 관리
-            _coinManager = GetComponent<CoinManager>() ?? gameObject.AddComponent<CoinManager>();
-            _patternManager = GetComponent<PatternManager>() ?? gameObject.AddComponent<PatternManager>();
+            // 코인 시스템 초기화
+            InitializeCoinSystem();
+            
+            // 패턴 시스템 초기화
+            InitializePatternSystem();
 
             // 이벤트 구독
             SubscribeToEvents();
         }
+        
+        /// <summary>
+        /// 전투 시스템 공개 초기화 (MasterGameManager용)
+        /// </summary>
+        public void InitializeCombat()
+        {
+            Debug.Log("CombatSystem: Public initialization called");
+            
+            // 서브시스템이 이미 초기화되었는지 확인
+            if (_coinStates == null || _lockedCoins == null)
+            {
+                InitializeSubSystems();
+            }
+            
+            // 전투 시스템이 준비되었음을 알림
+            Debug.Log("CombatSystem: Ready for combat");
+        }
+        
+        private void InitializeCoinSystem()
+        {
+            _coinStates = new bool[_coinCount];
+            _lockedCoins = new bool[_coinCount];
+            
+            for (int i = 0; i < _coinCount; i++)
+            {
+                _lockedCoins[i] = false;
+            }
+            
+            Debug.Log($"CombatSystem: Coin system initialized with {_coinCount} coins");
+        }
+        
+        private void InitializePatternSystem()
+        {
+            if (_availablePatterns == null)
+            {
+                _availablePatterns = new List<PatternSO>();
+            }
+            
+            Debug.Log("CombatSystem: Pattern system initialized");
+        }
+        
+        #region Coin Management
+        /// <summary>
+        /// 모든 동전 던지기
+        /// </summary>
+        public void FlipCoins()
+        {
+            Debug.Log("CombatSystem: Flipping coins");
+            
+            for (int i = 0; i < _coinCount; i++)
+            {
+                if (!_lockedCoins[i])
+                {
+                    _coinStates[i] = Random.Range(0, 2) == 0; // 50% 확률
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 현재 코인 결과 반환
+        /// </summary>
+        public List<bool> GetCoinResults()
+        {
+            var results = new List<bool>();
+            for (int i = 0; i < _coinCount; i++)
+            {
+                results.Add(_coinStates[i]);
+            }
+            return results;
+        }
+        
+        /// <summary>
+        /// 특정 코인 고정/해제
+        /// </summary>
+        public void SetCoinLocked(int index, bool locked)
+        {
+            if (index >= 0 && index < _coinCount)
+            {
+                _lockedCoins[index] = locked;
+            }
+        }
+        
+        /// <summary>
+        /// 특정 코인 상태 변경
+        /// </summary>
+        public void SetCoinState(int index, bool state)
+        {
+            if (index >= 0 && index < _coinCount)
+            {
+                _coinStates[index] = state;
+            }
+        }
+        
+        /// <summary>
+        /// 모든 코인 다시 던지기 (액티브 스킬용)
+        /// </summary>
+        public void RethrowAllCoins()
+        {
+            Debug.Log("CombatSystem: Rethrowing all coins");
+            
+            for (int i = 0; i < _coinCount; i++)
+            {
+                if (!_lockedCoins[i])
+                {
+                    _coinStates[i] = Random.Range(0, 2) == 0;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 특정 코인 뒤집기 (액티브 스킬용)
+        /// </summary>
+        public void FlipCoin(int index)
+        {
+            if (index >= 0 && index < _coinCount && !_lockedCoins[index])
+            {
+                _coinStates[index] = !_coinStates[index];
+                Debug.Log($"CombatSystem: Flipped coin {index} to {(_coinStates[index] ? "앞면" : "뒷면")}");
+            }
+        }
+        
+        /// <summary>
+        /// 특정 코인 고정 (액티브 스킬용)
+        /// </summary>
+        public void LockCoin(int index)
+        {
+            if (index >= 0 && index < _coinCount)
+            {
+                _lockedCoins[index] = true;
+                Debug.Log($"CombatSystem: Locked coin {index}");
+            }
+        }
+        
+        /// <summary>
+        /// 두 코인 위치 교체 (액티브 스킬용)
+        /// </summary>
+        public void SwapCoins(int index1, int index2)
+        {
+            if (index1 >= 0 && index1 < _coinCount && index2 >= 0 && index2 < _coinCount)
+            {
+                if (!_lockedCoins[index1] && !_lockedCoins[index2])
+                {
+                    bool temp = _coinStates[index1];
+                    _coinStates[index1] = _coinStates[index2];
+                    _coinStates[index2] = temp;
+                    Debug.Log($"CombatSystem: Swapped coins {index1} and {index2}");
+                }
+            }
+        }
+        #endregion
 
         private void SubscribeToEvents()
         {
@@ -166,8 +324,8 @@ namespace MonoChrome.Systems.Combat
             OnTurnChanged?.Invoke(_turnCount);
 
             // 동전 던지기
-            _coinManager.FlipCoins();
-            var coinResults = _coinManager.GetCoinResults();
+            FlipCoins();
+            var coinResults = GetCoinResults();
 
             if (_isPlayerTurn)
             {
@@ -349,11 +507,11 @@ namespace MonoChrome.Systems.Combat
                 return;
             }
 
-            // 스킬 사용
-            _player.UseActiveSkill(_coinManager);
+            // 스킬 사용 (CombatSystem 자체를 전달)
+            _player.UseActiveSkill(this);
 
             // 코인 상태 변경 후 새로운 패턴 계산
-            var coinResults = _coinManager.GetCoinResults();
+            var coinResults = GetCoinResults();
             var availablePatterns = DataConnector.Instance.GetAvailablePatterns(
                 _player.SenseType, 
                 coinResults.ToArray()

@@ -360,9 +360,9 @@ namespace MonoChrome
         
         #region Override Methods
         /// <summary>
-        /// 액티브 스킬 사용 (적은 코인 매니저를 직접 조작하지 않음)
+        /// 액티브 스킬 사용 (적은 전투 시스템을 직접 조작하지 않음)
         /// </summary>
-        public override void UseActiveSkill(CoinManager coinManager)
+        public override void UseActiveSkill(MonoChrome.Systems.Combat.CombatSystem combatSystem)
         {
             // 적 캐릭터의 액티브 스킬은 AI가 패턴 결정 시 자동으로 선택
             // 별도 구현 없음
