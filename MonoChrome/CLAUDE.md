@@ -60,10 +60,11 @@ DungeonEvents.NotifyNodeMoveCompleted(node);
 ### System Controllers
 Each major system has a dedicated controller following single responsibility:
 
-- **MasterGameManager**: Central coordinator (717 lines) with enterprise-level architecture
-- **DungeonController**: Located in `Assets/Scripts/Systems/Dungeon/` for generation and node management
-- **UIController**: Located in `Assets/Scripts/Systems/UI/` for panel display and transitions
+- **MasterGameManager**: Central coordinator (711 lines) with enterprise-level architecture
+- **DungeonController**: Located in `Assets/Scripts/Systems/Dungeon/` with multiple generation algorithms (Advanced, Improved, Procedural, Configurable)
+- **UIController**: Located in `Assets/Scripts/Systems/UI/` with comprehensive UI components (Combat, Dungeon, Tooltips, Debug tools)
 - **ServiceLocator**: Dependency injection system for loose coupling between systems
+- **PlayerManager & ShopManager**: Located in `Assets/Scripts/Managers/` for player and shop functionality
 
 ### Data Architecture
 ScriptableObject-based data system with Korean localization:
@@ -81,10 +82,12 @@ MonoChrome.Core              // Central managers, data systems, and game state
 MonoChrome.Core.Data         // Data management and ScriptableObject systems
 MonoChrome.Core.Architecture // Architecture patterns and dependency injection
 MonoChrome.Events            // Event system and messaging (DungeonEvents, UIEvents, CombatEvents)
-MonoChrome.Systems.Dungeon   // Dungeon generation and navigation systems
-MonoChrome.Systems.Combat    // Turn-based combat and pattern systems
-MonoChrome.Systems.UI        // User interface controllers and management
+MonoChrome.Systems.Dungeon   // Multiple dungeon generation algorithms and navigation systems
+MonoChrome.Systems.Combat    // Turn-based combat, pattern systems, and UI bridges
+MonoChrome.Systems.UI        // Comprehensive user interface controllers and management
 MonoChrome.StatusEffects     // Buff/debuff system and effect management
+MonoChrome.Testing           // System integration and architecture testing
+MonoChrome.Setup             // Project setup and initialization systems
 ```
 
 ## Critical Implementation Notes
@@ -110,12 +113,14 @@ MonoChrome.StatusEffects     // Buff/debuff system and effect management
 
 ### Core Systems Location
 - `Assets/Scripts/Core/`: Central managers, coordinators, and architecture patterns
-- `Assets/Scripts/Core/Architecture/`: Dependency injection and design patterns
-- `Assets/Scripts/Core/Data/`: Data management systems
-- `Assets/Scripts/Core/Events/`: Event definitions and bus system
-- `Assets/Scripts/Systems/Combat/`: Combat mechanics and pattern system
-- `Assets/Scripts/Systems/Dungeon/`: Procedural dungeon generation
-- `Assets/Scripts/Systems/UI/`: User interface controllers
+- `Assets/Scripts/Core/Architecture/`: Dependency injection and design patterns (MasterGameManager, GameStateMachine, ServiceLocator)
+- `Assets/Scripts/Core/Data/`: Data management systems (DataConnector)
+- `Assets/Scripts/Core/Events/`: Event definitions and bus system (GameEvents, EventBus)
+- `Assets/Scripts/Core/Interfaces/`: Interface definitions for all major systems
+- `Assets/Scripts/Systems/Combat/`: Combat mechanics, pattern system, and UI bridges
+- `Assets/Scripts/Systems/Dungeon/`: Multiple dungeon generation algorithms and node management
+- `Assets/Scripts/Systems/UI/`: Comprehensive user interface controllers and components
+- `Assets/Scripts/Managers/`: Player and shop management systems
 
 ### Data Assets Location
 - `Assets/Data/`: ScriptableObject data files including StageThemes
@@ -128,6 +133,8 @@ MonoChrome.StatusEffects     // Buff/debuff system and effect management
 - `Assets/Scripts/ARCHITECTURE_GUIDE.md`: Complete usage guide
 - `Assets/Scripts/README_PORTFOLIO.md`: Project overview and achievements
 - `Assets/Scripts/SYSTEM_SETUP_GUIDE.md`: Setup instructions
+- `Assets/Scripts/Systems/Dungeon/README.md`: Dungeon system documentation
+- `Assets/Scripts/Systems/UI/README.md`: UI system documentation
 
 ## Development Patterns
 
@@ -155,9 +162,9 @@ FindObjectOfType<SomeManager>().DoSomething();
 ```
 
 ### Testing Integration
-- Use SystemIntegrationChecker for full system tests
-- ImprovedArchitectureTest for architecture validation
-- ProjectSetupAndValidator for environment verification
+- **SystemIntegrationChecker**: Located in `Assets/Scripts/Testing/` - Run `RunCompleteSystemCheck()` for full system validation
+- **ImprovedArchitectureTest**: Located in `Assets/Scripts/Testing/` - Enable "Auto Test" checkbox for continuous architecture validation
+- **ProjectSetupAndValidator**: Located in `Assets/Scripts/Setup/` - Automatic project setup and environment verification
 
 ## Quality Standards
 

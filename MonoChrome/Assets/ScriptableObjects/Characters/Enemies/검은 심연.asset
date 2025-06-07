@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   characterName: "\uAC80\uC740 \uC2EC\uC5F0"
   description: "\uBAA8\uB4E0 \uBE5B\uC744 \uC0BC\uD0A4\uB294 \uCD5C\uC885 \uD3EC\uC2DD\uC790"
-  characterType: 5
+  characterType: 4
   senseType: 0
   portrait: {fileID: 0}
   maxHealth: 200

@@ -10,7 +10,7 @@ namespace MonoChrome
     /// 정적 UI 기반의 전투 UI 컨트롤러
     /// 포트폴리오 품질을 위한 올바른 UI 아키텍처 구현
     /// </summary>
-    public class CombatUIController : CombatUIBase
+    public class CombatUIController : MonoBehaviour
     {
         #region Static UI References (인스펙터에서 할당)
         [Header("체력바 UI")]
@@ -176,9 +176,27 @@ namespace MonoChrome
         /// <summary>
         /// 체력바 업데이트
         /// </summary>
-        public void UpdateHealthBars(float playerHealth, float playerMaxHealth, float enemyHealth, float enemyMaxHealth)
+        public void UpdateHealthBars(int playerHealth, int playerMaxHealth, int enemyHealth, int enemyMaxHealth)
         {
-            base.UpdateHealthBars(playerHealth, playerMaxHealth, enemyHealth, enemyMaxHealth);
+            if (playerHealthBar != null)
+            {
+                playerHealthBar.value = (float)playerHealth / playerMaxHealth;
+                
+                if (playerHealthText != null)
+                {
+                    playerHealthText.text = $"{playerHealth}/{playerMaxHealth}";
+                }
+            }
+            
+            if (enemyHealthBar != null)
+            {
+                enemyHealthBar.value = (float)enemyHealth / enemyMaxHealth;
+                
+                if (enemyHealthText != null)
+                {
+                    enemyHealthText.text = $"{enemyHealth}/{enemyMaxHealth}";
+                }
+            }
         }
         
         /// <summary>
@@ -186,7 +204,18 @@ namespace MonoChrome
         /// </summary>
         public void UpdateCoinUI(List<bool> coinResults)
         {
-            base.UpdateCoinUI(coinResults);
+            ClearCoinObjects();
+            
+            if (coinResults == null || coinContainer == null || coinPrefab == null)
+                return;
+                
+            foreach (bool isHeads in coinResults)
+            {
+                var coinObj = Instantiate(coinPrefab, coinContainer);
+                _activeCoinObjects.Add(coinObj);
+                
+                SetupCoinDisplay(coinObj, isHeads);
+            }
         }
         
         /// <summary>
@@ -194,7 +223,28 @@ namespace MonoChrome
         /// </summary>
         public void UpdatePatternUI(List<Pattern> availablePatterns)
         {
-            base.UpdatePatternUI(availablePatterns);
+            ClearPatternObjects();
+            
+            if (availablePatterns == null || patternContainer == null || patternButtonPrefab == null)
+                return;
+                
+            foreach (var pattern in availablePatterns)
+            {
+                var patternObj = Instantiate(patternButtonPrefab, patternContainer);
+                _activePatternObjects.Add(patternObj);
+                
+                var button = patternObj.GetComponent<Button>();
+                var text = patternObj.GetComponentInChildren<Text>();
+                
+                if (text != null)
+                    text.text = pattern.Name;
+                
+                if (button != null)
+                {
+                    button.onClick.RemoveAllListeners();
+                    button.onClick.AddListener(() => OnPatternSelected(pattern));
+                }
+            }
         }
         
         /// <summary>
@@ -202,7 +252,10 @@ namespace MonoChrome
         /// </summary>
         public void UpdateTurnCounter(int turnCount)
         {
-            base.UpdateTurnCounter(turnCount);
+            if (turnInfoText != null)
+            {
+                turnInfoText.text = $"Turn: {turnCount}";
+            }
         }
         
         /// <summary>
@@ -210,7 +263,15 @@ namespace MonoChrome
         /// </summary>
         public void UpdateActiveSkillButton(bool isAvailable, string skillName = "액티브 스킬")
         {
-            base.UpdateActiveSkillButton(isAvailable, skillName);
+            if (activeSkillButton != null)
+            {
+                activeSkillButton.interactable = isAvailable;
+            }
+            
+            if (activeSkillText != null)
+            {
+                activeSkillText.text = skillName;
+            }
         }
         
         /// <summary>
@@ -218,7 +279,10 @@ namespace MonoChrome
         /// </summary>
         public void ShowEnemyIntention(string intention)
         {
-            base.ShowEnemyIntention(intention);
+            if (enemyIntentionText != null)
+            {
+                enemyIntentionText.text = intention;
+            }
         }
         
         /// <summary>
@@ -226,7 +290,34 @@ namespace MonoChrome
         /// </summary>
         public void UpdateStatusEffectsUI(List<StatusEffect> playerEffects, List<StatusEffect> enemyEffects)
         {
-            base.UpdateStatusEffectsUI(playerEffects, enemyEffects);
+            ClearPlayerStatusObjects();
+            ClearEnemyStatusObjects();
+            
+            if (playerEffects != null && playerStatusEffectContainer != null && statusEffectPrefab != null)
+            {
+                foreach (var effect in playerEffects)
+                {
+                    var effectObj = Instantiate(statusEffectPrefab, playerStatusEffectContainer);
+                    _activePlayerStatusObjects.Add(effectObj);
+                    
+                    var text = effectObj.GetComponentInChildren<Text>();
+                    if (text != null)
+                        text.text = effect.EffectType.ToString();
+                }
+            }
+            
+            if (enemyEffects != null && enemyStatusEffectContainer != null && statusEffectPrefab != null)
+            {
+                foreach (var effect in enemyEffects)
+                {
+                    var effectObj = Instantiate(statusEffectPrefab, enemyStatusEffectContainer);
+                    _activeEnemyStatusObjects.Add(effectObj);
+                    
+                    var text = effectObj.GetComponentInChildren<Text>();
+                    if (text != null)
+                        text.text = effect.EffectType.ToString();
+                }
+            }
         }
         #endregion
         
@@ -272,13 +363,28 @@ namespace MonoChrome
         /// </summary>
         private void ClearStatusEffectObjects()
         {
+            ClearPlayerStatusObjects();
+            ClearEnemyStatusObjects();
+        }
+        
+        /// <summary>
+        /// 플레이어 상태 효과 오브젝트 정리
+        /// </summary>
+        private void ClearPlayerStatusObjects()
+        {
             foreach (GameObject effect in _activePlayerStatusObjects)
             {
                 if (effect != null)
                     DestroyImmediate(effect);
             }
             _activePlayerStatusObjects.Clear();
-            
+        }
+        
+        /// <summary>
+        /// 적 상태 효과 오브젝트 정리
+        /// </summary>
+        private void ClearEnemyStatusObjects()
+        {
             foreach (GameObject effect in _activeEnemyStatusObjects)
             {
                 if (effect != null)
