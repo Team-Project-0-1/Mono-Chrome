@@ -1,8 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 using MonoChrome.Core;
 
 namespace MonoChrome
@@ -13,13 +10,13 @@ namespace MonoChrome
     /// </summary>
     public class ButtonHandlers : MonoBehaviour
     {
-        [SerializeField] private Button _startGameButton;
+        [Header("캐릭터 선택 버튼들 (Inspector에서 할당)")]
         [SerializeField] private Button _auditoryCharButton;
         [SerializeField] private Button _olfactoryCharButton;
         [SerializeField] private Button _tactileCharButton;
         [SerializeField] private Button _spiritualCharButton;
-        
-        // 캐릭터 선택 패널 참조
+        [SerializeField] private Button _startGameButton;
+
         [SerializeField] private GameObject _characterSelectionPanel;
         
         // 명시적으로 Core 네임스페이스의 SenseType 사용
@@ -27,79 +24,17 @@ namespace MonoChrome
         
         private void Start()
         {
-            FindButtons();
-            SubscribeEvents();
-            Debug.Log("ButtonHandlers: Initialized successfully with bridge pattern support");
+            SetupButtonEvents();
+            Debug.Log("ButtonHandlers: Initialized and events wired");
         }
-        
-        private void FindButtons()
+
+        private void SetupButtonEvents()
         {
-            // 버튼 찾기
-            if (_startGameButton == null)
-                _startGameButton = transform.Find("StartGameButton")?.GetComponent<Button>();
-                
-            if (_auditoryCharButton == null)
-                _auditoryCharButton = transform.Find("AuditoryCharButton")?.GetComponent<Button>();
-                
-            if (_olfactoryCharButton == null)
-                _olfactoryCharButton = transform.Find("OlfactoryCharButton")?.GetComponent<Button>();
-                
-            if (_tactileCharButton == null)
-                _tactileCharButton = transform.Find("TactileCharButton")?.GetComponent<Button>();
-                
-            if (_spiritualCharButton == null)
-                _spiritualCharButton = transform.Find("SpiritualCharButton")?.GetComponent<Button>();
-                
-            // 캐릭터 선택 패널 찾기
-            if (_characterSelectionPanel == null)
-                _characterSelectionPanel = transform.Find("CharacterSelectionPanel")?.gameObject;
-            
-            // 버튼 찾기 결과 로그
-            Debug.Log($"ButtonHandlers: Start Game Button found: {_startGameButton != null}");
-            Debug.Log($"ButtonHandlers: Auditory Button found: {_auditoryCharButton != null}");
-            Debug.Log($"ButtonHandlers: Olfactory Button found: {_olfactoryCharButton != null}");
-            Debug.Log($"ButtonHandlers: Tactile Button found: {_tactileCharButton != null}");
-            Debug.Log($"ButtonHandlers: Spiritual Button found: {_spiritualCharButton != null}");
-            Debug.Log($"ButtonHandlers: Character Selection Panel found: {_characterSelectionPanel != null}");
-        }
-        
-        private void SubscribeEvents()
-        {
-            // 이벤트 구독
-            if (_startGameButton != null)
-            {
-                _startGameButton.onClick.RemoveAllListeners();
-                _startGameButton.onClick.AddListener(OnStartGameButtonClicked);
-                Debug.Log("ButtonHandlers: Start Game Button click event subscribed");
-            }
-                
-            if (_auditoryCharButton != null)
-            {
-                _auditoryCharButton.onClick.RemoveAllListeners();
-                _auditoryCharButton.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Auditory));
-                Debug.Log("ButtonHandlers: Auditory Character Button click event subscribed");
-            }
-                
-            if (_olfactoryCharButton != null)
-            {
-                _olfactoryCharButton.onClick.RemoveAllListeners();
-                _olfactoryCharButton.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Olfactory));
-                Debug.Log("ButtonHandlers: Olfactory Character Button click event subscribed");
-            }
-                
-            if (_tactileCharButton != null)
-            {
-                _tactileCharButton.onClick.RemoveAllListeners();
-                _tactileCharButton.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Tactile));
-                Debug.Log("ButtonHandlers: Tactile Character Button click event subscribed");
-            }
-                
-            if (_spiritualCharButton != null)
-            {
-                _spiritualCharButton.onClick.RemoveAllListeners();
-                _spiritualCharButton.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Spiritual));
-                Debug.Log("ButtonHandlers: Spiritual Character Button click event subscribed");
-            }
+            _auditoryCharButton?.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Auditory));
+            _olfactoryCharButton?.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Olfactory));
+            _tactileCharButton?.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Tactile));
+            _spiritualCharButton?.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Spiritual));
+            _startGameButton?.onClick.AddListener(OnStartGameButtonClicked);
         }
         
         private void OnStartGameButtonClicked()
@@ -140,13 +75,8 @@ namespace MonoChrome
                     }
                 }
                 
-                // 캐릭터 생성
-                Debug.Log($"ButtonHandlers: Creating player character with sense type: {_selectedSenseType}");
-                CharacterManager.Instance.CreatePlayerCharacter(_selectedSenseType);
-                
-                // 던전 진입 - 브릿지 패턴을 통한 게임 시작
-                Debug.Log("ButtonHandlers: Starting game by entering dungeon (using bridge pattern)");
-                MasterGameManager.Instance.EnterDungeon();
+                Debug.Log($"ButtonHandlers: Requesting game start with {_selectedSenseType}");
+                MasterGameManager.Instance.SelectCharacter(_selectedSenseType.ToString());
             }
             catch (System.Exception ex)
             {
