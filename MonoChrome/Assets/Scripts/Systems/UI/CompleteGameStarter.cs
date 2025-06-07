@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using MonoChrome.Systems.Dungeon;
-using MonoChrome.Systems.UI;
+using MonoChrome;
+using MonoChrome;
 
 namespace MonoChrome
 {
@@ -248,7 +248,7 @@ namespace MonoChrome
 
             try
             {
-                var dungeonController = FindObjectOfType<MonoChrome.Systems.Dungeon.DungeonController>();
+                var dungeonController = FindObjectOfType<MonoChrome.DungeonController>();
 
                 if (dungeonController != null)
                 {

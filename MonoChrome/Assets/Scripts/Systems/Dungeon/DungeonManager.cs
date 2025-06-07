@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MonoChrome.Systems.Dungeon
+namespace MonoChrome
 {
     /// <summary>
     /// Minimal legacy bridge for old DungeonManager references.

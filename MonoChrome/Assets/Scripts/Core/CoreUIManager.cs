@@ -1,6 +1,6 @@
 using UnityEngine;
 using MonoChrome.Events;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 using System.Collections.Generic;
 
 namespace MonoChrome.Core

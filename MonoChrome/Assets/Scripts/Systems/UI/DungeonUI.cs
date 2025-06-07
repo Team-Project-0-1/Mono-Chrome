@@ -1,14 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 using MonoChrome.StatusEffects;
-using MonoChrome.Systems.UI;
+using MonoChrome;
 using MonoChrome.Events;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// 던전 UI를 관리하는 클래스

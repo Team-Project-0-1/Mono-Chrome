@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using MonoChrome.Events;
 using MonoChrome.Core;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 using UnityEngine.UI;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// UI 컨트롤러 - 순수하게 UI 표시만 담당 (뷰 레이어)

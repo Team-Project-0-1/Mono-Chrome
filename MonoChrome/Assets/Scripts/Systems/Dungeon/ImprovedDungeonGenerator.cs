@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MonoChrome.Systems.Dungeon
+namespace MonoChrome
 {
     /// <summary>
     /// 개선된 던전 생성기 - 노드 겹침 방지 및 최적화된 배치

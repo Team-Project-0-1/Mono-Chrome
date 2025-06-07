@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using MonoChrome.StatusEffects;
 
+#if UNITY_EDITOR
 namespace MonoChrome
 {
     public class ImmediateUITest : MonoBehaviour
@@ -74,3 +75,5 @@ namespace MonoChrome
         }
     }
 }
+#endif
+

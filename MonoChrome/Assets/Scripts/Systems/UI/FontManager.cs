@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-namespace MonoChrome.Systems.UI
+namespace MonoChrome
 {
     /// <summary>
     /// 폰트 관리 및 한글 텍스트 렌더링을 위한 매니저 클래스

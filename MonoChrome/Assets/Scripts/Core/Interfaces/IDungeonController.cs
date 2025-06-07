@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 
 namespace MonoChrome.Core
 {

@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEditor;
 using System.IO;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 
 namespace MonoChrome.Dungeon.Editor
 {

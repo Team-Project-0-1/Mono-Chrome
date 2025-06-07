@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MonoChrome.Systems.Dungeon
+namespace MonoChrome
 {
     /// <summary>
     /// 스테이지별 테마 데이터를 관리하는 ScriptableObject

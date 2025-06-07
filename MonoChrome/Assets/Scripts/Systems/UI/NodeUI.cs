@@ -1,4 +1,4 @@
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -16,12 +16,12 @@ namespace MonoChrome
         [SerializeField] private Color inaccessibleColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
         
         private DungeonNode nodeData;
-        private Systems.Dungeon.DungeonController dungeonController;
+        private DungeonController dungeonController;
         
         private void Awake()
         {
             // Find reference once at start
-            dungeonController = FindObjectOfType<Systems.Dungeon.DungeonController>();
+            dungeonController = FindObjectOfType<DungeonController>();
             if (dungeonController == null)
             {
                 Debug.LogError("DungeonController not found in the scene!");
@@ -206,7 +206,7 @@ namespace MonoChrome
             else
             {
                 // 컴포넌트가 생성된 후 던전 매니저가 다시 찾아지는 경우
-                dungeonController = FindObjectOfType<Systems.Dungeon.DungeonController>();
+                dungeonController = FindObjectOfType<DungeonController>();
                 if (dungeonController != null)
                 {
                     dungeonController.MoveToNode(nodeData.ID);

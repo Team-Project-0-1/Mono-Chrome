@@ -1,8 +1,8 @@
 using UnityEngine;
-using MonoChrome.Systems.UI;
+using MonoChrome;
 using MonoChrome.Events;
 using System.Collections.Generic;
-using MonoChrome.Systems.Dungeon;
+using MonoChrome;
 
 namespace MonoChrome.Core
 {
@@ -18,7 +18,7 @@ namespace MonoChrome.Core
         [SerializeField] private bool _maintainLegacySupport = true;
 
         // UI 시스템 참조들
-        private Systems.UI.UIController _modernUIController;
+        private UIController _modernUIController;
         private CoreUIManager _coreUIManager;
         
         // 현재 활성 UI 시스템 상태
@@ -62,7 +62,7 @@ namespace MonoChrome.Core
         private void FindUIControllers()
         {
             // 현대적 UIController 찾기
-            _modernUIController = FindFirstObjectByType<Systems.UI.UIController>();
+            _modernUIController = FindFirstObjectByType<UIController>();
             if (_modernUIController != null)
             {
                 LogDebug("ModernUIController 발견");
@@ -76,7 +76,7 @@ namespace MonoChrome.Core
             }
 
             // 현대적 UIController 찾기
-            _modernUIController = FindFirstObjectByType<Systems.UI.UIController>();
+            _modernUIController = FindFirstObjectByType<UIController>();
             if (_modernUIController != null)
             {
                 LogDebug("ModernUIController 발견");
