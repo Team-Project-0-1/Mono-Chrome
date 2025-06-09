@@ -27,11 +27,14 @@ namespace MonoChrome
         private void Awake()
         {
             InitializeUIReferences();
+            InitializeUI(); // 즉시 초기화로 타이밍 문제 해결
         }
 
         private void Start()
         {
-            InitializeUI();
+            // UI가 이미 Awake에서 초기화됨
+            // 현재 상태에 맞는 패널 표시 재확인
+            ShowPanelForCurrentState();
         }
 
         private void OnEnable()
@@ -77,8 +80,24 @@ namespace MonoChrome
 
         private GameObject FindPanel(Transform parent, string panelName)
         {
+            // 먼저 직접 자식에서 찾기
             Transform panelTransform = parent.Find(panelName);
-            return panelTransform?.gameObject;
+            if (panelTransform != null)
+            {
+                Debug.Log($"[UIController] {panelName} 찾음 (직접 자식)");
+                return panelTransform.gameObject;
+            }
+            
+            // 직접 자식에서 못 찾으면 전체 씬에서 찾기
+            GameObject panelObject = GameObject.Find(panelName);
+            if (panelObject != null)
+            {
+                Debug.Log($"[UIController] {panelName} 찾음 (전체 씬)");
+                return panelObject;
+            }
+            
+            Debug.LogWarning($"[UIController] {panelName}을 찾을 수 없습니다!");
+            return null;
         }
 
         private void InitializeUI()
@@ -130,6 +149,8 @@ namespace MonoChrome
         /// </summary>
         public void ShowPanel(string panelName)
         {
+            Debug.Log($"[UIController] ShowPanel 호출됨: {panelName}, 초기화 상태: {_isInitialized}");
+            
             if (!_isInitialized)
             {
                 Debug.LogWarning($"[UIController] UI가 아직 초기화되지 않음 - {panelName}");
@@ -140,14 +161,17 @@ namespace MonoChrome
             
             if (targetPanel != null)
             {
+                Debug.Log($"[UIController] 패널 찾음: {panelName}, activeSelf: {targetPanel.activeSelf}");
                 HideAllPanels();
                 targetPanel.SetActive(true);
                 _currentActivePanel = targetPanel;
-                Debug.Log($"[UIController] 패널 표시됨 - {panelName}");
+                Debug.Log($"[UIController] 패널 표시 완료 - {panelName}");
             }
             else
             {
                 Debug.LogWarning($"[UIController] 패널을 찾을 수 없음 - {panelName}");
+                // 전체 패널 상태 로그
+                LogAllPanelStates();
             }
         }
 
@@ -245,6 +269,22 @@ namespace MonoChrome
                     dungeonUI.UpdatePlayerStatus(currentHealth, maxHealth);
                 }
             }
+        }
+
+        /// <summary>
+        /// 디버깅을 위한 모든 패널 상태 로그
+        /// </summary>
+        private void LogAllPanelStates()
+        {
+            Debug.Log("[UIController] === 패널 상태 로그 ===");
+            Debug.Log($"[UIController] MainMenuPanel: {(_mainMenuPanel != null ? $"Found, active: {_mainMenuPanel.activeSelf}" : "Not Found")}");
+            Debug.Log($"[UIController] CharacterSelectionPanel: {(_characterSelectionPanel != null ? $"Found, active: {_characterSelectionPanel.activeSelf}" : "Not Found")}");
+            Debug.Log($"[UIController] DungeonPanel: {(_dungeonPanel != null ? $"Found, active: {_dungeonPanel.activeSelf}" : "Not Found")}");
+            Debug.Log($"[UIController] CombatPanel: {(_combatPanel != null ? $"Found, active: {_combatPanel.activeSelf}" : "Not Found")}");
+            Debug.Log($"[UIController] GameOverPanel: {(_gameOverPanel != null ? $"Found, active: {_gameOverPanel.activeSelf}" : "Not Found")}");
+            Debug.Log($"[UIController] VictoryPanel: {(_victoryPanel != null ? $"Found, active: {_victoryPanel.activeSelf}" : "Not Found")}");
+            Debug.Log($"[UIController] CurrentActivePanel: {(_currentActivePanel != null ? _currentActivePanel.name : "None")}");
+            Debug.Log("[UIController] ========================");
         }
 
         #region Input Handlers - 사용자 입력을 이벤트로 변환

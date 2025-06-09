@@ -598,10 +598,30 @@ namespace MonoChrome.Core
         /// </summary>
         private IEnumerator TransitionToDungeonAfterCharacterSelection()
         {
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.2f);
             
+            LogDebug("캐릭터 선택 후 던전 전환 시작");
+            
+            // 1. 게임 상태 변경
             _stateMachine?.EnterDungeon();
+            
+            // 2. 던전 생성 이벤트 발행
             DungeonEvents.RequestDungeonGeneration(_currentStage);
+            
+            // 3. UI 전환 대기 후 강제 표시 (백업)
+            yield return new WaitForSeconds(0.3f);
+            
+            // 만약 이벤트 방식이 실패하면 강제 표시
+            GameObject dungeonPanel = GameObject.Find("DungeonPanel");
+            if (dungeonPanel == null || !dungeonPanel.activeInHierarchy)
+            {
+                LogDebug("이벤트 방식 실패, 강제 던전 패널 표시");
+                ForceShowDungeon();
+            }
+            else
+            {
+                LogDebug("던전 패널 정상 표시 완료");
+            }
         }
 
         /// <summary>
@@ -662,6 +682,88 @@ namespace MonoChrome.Core
         public void StartRest() => _stateMachine?.TryChangeState(GameStateMachine.GameState.Rest);
         public void GameOver() => _stateMachine?.TryChangeState(GameStateMachine.GameState.GameOver);
         public void Victory() => _stateMachine?.TryChangeState(GameStateMachine.GameState.Victory);
+        #endregion
+        
+        #region Force UI Control (강제 UI 제어)
+        /// <summary>
+        /// 이벤트 기반 방식이 실패할 경우를 대비한 강제 패널 표시
+        /// </summary>
+        public void ForceShowCharacterSelection()
+        {
+            LogDebug("강제 캠릭터 선택 패널 표시");
+            
+            GameObject charPanel = GameObject.Find("CharacterSelectionPanel");
+            GameObject dungeonPanel = GameObject.Find("DungeonPanel");
+            GameObject combatPanel = GameObject.Find("CombatPanel");
+            
+            // 모든 패널 비활성화
+            if (dungeonPanel != null) dungeonPanel.SetActive(false);
+            if (combatPanel != null) combatPanel.SetActive(false);
+            
+            // 캠릭터 선택 패널 활성화
+            if (charPanel != null)
+            {
+                charPanel.SetActive(true);
+                LogDebug("캠릭터 선택 패널 강제 표시 완료");
+            }
+            else
+            {
+                LogDebug("경고: CharacterSelectionPanel을 찾을 수 없습니다!");
+            }
+        }
+        
+        /// <summary>
+        /// 강제 던전 패널 표시
+        /// </summary>
+        public void ForceShowDungeon()
+        {
+            LogDebug("강제 던전 패널 표시");
+            
+            GameObject charPanel = GameObject.Find("CharacterSelectionPanel");
+            GameObject dungeonPanel = GameObject.Find("DungeonPanel");
+            GameObject combatPanel = GameObject.Find("CombatPanel");
+            
+            // 모든 패널 비활성화
+            if (charPanel != null) charPanel.SetActive(false);
+            if (combatPanel != null) combatPanel.SetActive(false);
+            
+            // 던전 패널 활성화
+            if (dungeonPanel != null)
+            {
+                dungeonPanel.SetActive(true);
+                LogDebug("던전 패널 강제 표시 완료");
+                
+                // 3개 방 버튼 생성
+                StartCoroutine(CreateDungeonRoomButtonsDelayed());
+            }
+            else
+            {
+                LogDebug("경고: DungeonPanel을 찾을 수 없습니다!");
+            }
+        }
+        
+        /// <summary>
+        /// 던전 방 버튼 생성 (지연 실행)
+        /// </summary>
+        private IEnumerator CreateDungeonRoomButtonsDelayed()
+        {
+            yield return new WaitForSeconds(0.2f);
+            
+            // 던전 UI 버튼 생성 로직
+            LogDebug("던전 방 버튼 생성 시도");
+            
+            // DungeonController에게 던전 생성 요청
+            var dungeonController = FindFirstObjectByType<DungeonController>();
+            if (dungeonController != null)
+            {
+                dungeonController.GenerateNewDungeon(_currentStage);
+                LogDebug("던전 생성 요청 완료");
+            }
+            else
+            {
+                LogDebug("경고: DungeonController를 찾을 수 없습니다");
+            }
+        }
         #endregion
 
         #region Status & Debug

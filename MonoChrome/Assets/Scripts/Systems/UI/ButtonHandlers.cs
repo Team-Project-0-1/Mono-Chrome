@@ -1,148 +1,256 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using MonoChrome.Core;
 
 namespace MonoChrome
 {
     /// <summary>
     /// UI 버튼들의 이벤트 핸들러를 관리하는 클래스
-    /// 브릿지 패턴과 호환되도록 수정됨
+    /// CharacterSelectionPanel에 직접 붙어서 자식 버튼들을 관리
     /// </summary>
     public class ButtonHandlers : MonoBehaviour
     {
-        [Header("캐릭터 선택 버튼들 (Inspector에서 할당)")]
+        [Header("버튼 참조 (자동으로 찾아짐)")]
+        [SerializeField] private Button _startGameButton;
         [SerializeField] private Button _auditoryCharButton;
         [SerializeField] private Button _olfactoryCharButton;
         [SerializeField] private Button _tactileCharButton;
         [SerializeField] private Button _spiritualCharButton;
-        [SerializeField] private Button _startGameButton;
-
-        [SerializeField] private GameObject _characterSelectionPanel;
         
-        // 명시적으로 Core 네임스페이스의 SenseType 사용
-        private MonoChrome.SenseType _selectedSenseType = MonoChrome.SenseType.Auditory; // 기본값
+        [Header("현재 선택된 캐릭터")]
+        [SerializeField] private SenseType _selectedSenseType = SenseType.Auditory; // 기본값
+        
+        private bool _isInitialized = false;
         
         private void Start()
         {
-            SetupButtonEvents();
-            Debug.Log("ButtonHandlers: Initialized and events wired");
+            Debug.Log("[ButtonHandlers] 초기화 시작...");
+            StartCoroutine(InitializeAfterFrame());
         }
-
-        private void SetupButtonEvents()
+        
+        /// <summary>
+        /// 한 프레임 후 초기화 (다른 시스템들의 초기화 완료 대기)
+        /// </summary>
+        private IEnumerator InitializeAfterFrame()
         {
-            _auditoryCharButton?.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Auditory));
-            _olfactoryCharButton?.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Olfactory));
-            _tactileCharButton?.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Tactile));
-            _spiritualCharButton?.onClick.AddListener(() => OnCharacterTypeButtonClicked(MonoChrome.SenseType.Spiritual));
-            _startGameButton?.onClick.AddListener(OnStartGameButtonClicked);
+            yield return null; // 한 프레임 대기
+            
+            FindButtons();
+            SubscribeEvents();
+            SetDefaultSelection();
+            
+            _isInitialized = true;
+            Debug.Log("[ButtonHandlers] 초기화 완료!");
+        }
+        
+        private void FindButtons()
+        {
+            Debug.Log("[ButtonHandlers] 버튼들을 찾는 중...");
+            
+            // CharacterSelectionPanel의 직접 자식들에서 버튼 찾기
+            Transform myTransform = transform;
+            
+            // 각 버튼을 이름으로 찾기
+            _startGameButton = FindChildButton("StartGameButton");
+            _auditoryCharButton = FindChildButton("AuditoryCharButton");
+            _olfactoryCharButton = FindChildButton("OlfactoryCharButton");
+            _tactileCharButton = FindChildButton("TactileCharButton");
+            _spiritualCharButton = FindChildButton("SpiritualCharButton");
+            
+            // 찾기 결과 로그
+            Debug.Log($"[ButtonHandlers] StartGameButton: {(_startGameButton != null ? "✓" : "✗")}");
+            Debug.Log($"[ButtonHandlers] AuditoryCharButton: {(_auditoryCharButton != null ? "✓" : "✗")}");
+            Debug.Log($"[ButtonHandlers] OlfactoryCharButton: {(_olfactoryCharButton != null ? "✓" : "✗")}");
+            Debug.Log($"[ButtonHandlers] TactileCharButton: {(_tactileCharButton != null ? "✓" : "✗")}");
+            Debug.Log($"[ButtonHandlers] SpiritualCharButton: {(_spiritualCharButton != null ? "✓" : "✗")}");
+        }
+        
+        private Button FindChildButton(string buttonName)
+        {
+            Transform child = transform.Find(buttonName);
+            if (child != null)
+            {
+                Button button = child.GetComponent<Button>();
+                if (button != null)
+                {
+                    Debug.Log($"[ButtonHandlers] {buttonName} 버튼을 찾았습니다!");
+                    return button;
+                }
+                else
+                {
+                    Debug.LogWarning($"[ButtonHandlers] {buttonName} 오브젝트는 있지만 Button 컴포넌트가 없습니다!");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"[ButtonHandlers] {buttonName} 오브젝트를 찾을 수 없습니다!");
+            }
+            return null;
+        }
+        
+        private void SubscribeEvents()
+        {
+            Debug.Log("[ButtonHandlers] 버튼 이벤트 구독 중...");
+            
+            // 기존 이벤트 제거 후 새로 등록
+            if (_startGameButton != null)
+            {
+                _startGameButton.onClick.RemoveAllListeners();
+                _startGameButton.onClick.AddListener(OnStartGameButtonClicked);
+                Debug.Log("[ButtonHandlers] StartGameButton 이벤트 구독 완료");
+            }
+                
+            if (_auditoryCharButton != null)
+            {
+                _auditoryCharButton.onClick.RemoveAllListeners();
+                _auditoryCharButton.onClick.AddListener(() => OnCharacterTypeButtonClicked(SenseType.Auditory));
+                Debug.Log("[ButtonHandlers] AuditoryCharButton 이벤트 구독 완료");
+            }
+                
+            if (_olfactoryCharButton != null)
+            {
+                _olfactoryCharButton.onClick.RemoveAllListeners();
+                _olfactoryCharButton.onClick.AddListener(() => OnCharacterTypeButtonClicked(SenseType.Olfactory));
+                Debug.Log("[ButtonHandlers] OlfactoryCharButton 이벤트 구독 완료");
+            }
+                
+            if (_tactileCharButton != null)
+            {
+                _tactileCharButton.onClick.RemoveAllListeners();
+                _tactileCharButton.onClick.AddListener(() => OnCharacterTypeButtonClicked(SenseType.Tactile));
+                Debug.Log("[ButtonHandlers] TactileCharButton 이벤트 구독 완료");
+            }
+                
+            if (_spiritualCharButton != null)
+            {
+                _spiritualCharButton.onClick.RemoveAllListeners();
+                _spiritualCharButton.onClick.AddListener(() => OnCharacterTypeButtonClicked(SenseType.Spiritual));
+                Debug.Log("[ButtonHandlers] SpiritualCharButton 이벤트 구독 완료");
+            }
+        }
+        
+        private void SetDefaultSelection()
+        {
+            // 기본적으로 첫 번째 캐릭터 선택
+            OnCharacterTypeButtonClicked(SenseType.Auditory);
         }
         
         private void OnStartGameButtonClicked()
         {
-            Debug.Log("ButtonHandlers: Start Game Button clicked!");
+            if (!_isInitialized)
+            {
+                Debug.LogWarning("[ButtonHandlers] 아직 초기화가 완료되지 않았습니다!");
+                return;
+            }
+            
+            Debug.Log($"[ButtonHandlers] 게임 시작! 선택된 캐릭터: {_selectedSenseType}");
             
             try
             {
-                // MasterGameManager 참조 확인
-                if (MasterGameManager.Instance == null)
+                // MasterGameManager를 통한 캐릭터 선택 및 게임 시작
+                if (MasterGameManager.Instance != null)
                 {
-                    Debug.LogError("ButtonHandlers: MasterGameManager.Instance is null!");
-                    return;
-                }
-                
-                // 캐릭터 선택 패널 명시적 비활성화 (중요!)
-                if (_characterSelectionPanel != null)
-                {
-                    _characterSelectionPanel.SetActive(false);
-                    Debug.Log("ButtonHandlers: Character selection panel deactivated");
+                    // 캐릭터 선택
+                    string characterName = GetCharacterNameBySenseType(_selectedSenseType);
+                    MasterGameManager.Instance.SelectCharacter(characterName);
+                    
+                    Debug.Log($"[ButtonHandlers] MasterGameManager.SelectCharacter() 호출 완료: {characterName}");
                 }
                 else
                 {
-                    // 패널 참조가 없으면 전체 화면에서 찾기
-                    GameObject panel = GameObject.Find("CharacterSelectionPanel");
-                    if (panel != null)
-                    {
-                        panel.SetActive(false);
-                        Debug.Log("ButtonHandlers: Found and deactivated CharacterSelectionPanel by name");
-                    }
-                    
-                    // UI Manager를 통한 패널 비활성화 시도
-                    var uiManager = FindObjectOfType<CoreUIManager>();
-                    if (uiManager != null)
-                    {
-                        uiManager.OnPanelSwitched("DungeonPanel");
-                        Debug.Log("ButtonHandlers: Switched to DungeonPanel via UIManager");
-                    }
+                    Debug.LogError("[ButtonHandlers] MasterGameManager.Instance가 null입니다!");
                 }
-                
-                Debug.Log($"ButtonHandlers: Requesting game start with {_selectedSenseType}");
-                MasterGameManager.Instance.SelectCharacter(_selectedSenseType.ToString());
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"ButtonHandlers: Error in OnStartGameButtonClicked: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"[ButtonHandlers] 게임 시작 중 오류 발생: {ex.Message}\n{ex.StackTrace}");
             }
         }
         
-        // 참고: 씬 로드 후의 처리는 InitializeReferences.cs에서 수행함
-        
-        private void OnCharacterTypeButtonClicked(MonoChrome.SenseType senseType)
+        private void OnCharacterTypeButtonClicked(SenseType senseType)
         {
             // 선택한 캐릭터 타입 저장
             _selectedSenseType = senseType;
             
-            // UI 강조 효과
+            // UI 피드백
             HighlightSelectedCharacterButton(senseType);
             
-            Debug.Log($"ButtonHandlers: Selected character type: {senseType}");
+            Debug.Log($"[ButtonHandlers] 캐릭터 선택됨: {senseType}");
         }
         
-        private void HighlightSelectedCharacterButton(MonoChrome.SenseType senseType)
+        private void HighlightSelectedCharacterButton(SenseType senseType)
         {
             try
             {
-                // 모든 버튼 강조 제거
-                if (_auditoryCharButton != null && _auditoryCharButton.GetComponent<Image>() != null) 
-                    _auditoryCharButton.GetComponent<Image>().color = Color.white;
-                    
-                if (_olfactoryCharButton != null && _olfactoryCharButton.GetComponent<Image>() != null) 
-                    _olfactoryCharButton.GetComponent<Image>().color = Color.white;
-                    
-                if (_tactileCharButton != null && _tactileCharButton.GetComponent<Image>() != null) 
-                    _tactileCharButton.GetComponent<Image>().color = Color.white;
-                    
-                if (_spiritualCharButton != null && _spiritualCharButton.GetComponent<Image>() != null) 
-                    _spiritualCharButton.GetComponent<Image>().color = Color.white;
+                // 모든 버튼 기본 색상으로 초기화
+                ResetButtonColor(_auditoryCharButton);
+                ResetButtonColor(_olfactoryCharButton);
+                ResetButtonColor(_tactileCharButton);
+                ResetButtonColor(_spiritualCharButton);
                 
                 // 선택된 버튼 강조
-                Color highlightColor = new Color(0.8f, 0.8f, 1f); // 밝은 파란색
+                Color highlightColor = new Color(0.8f, 0.8f, 1f, 1f); // 밝은 파란색
                 
-                switch(senseType)
+                Button selectedButton = senseType switch
                 {
-                    case MonoChrome.SenseType.Auditory:
-                        if (_auditoryCharButton != null && _auditoryCharButton.GetComponent<Image>() != null) 
-                            _auditoryCharButton.GetComponent<Image>().color = highlightColor;
-                        break;
-                    case MonoChrome.SenseType.Olfactory:
-                        if (_olfactoryCharButton != null && _olfactoryCharButton.GetComponent<Image>() != null) 
-                            _olfactoryCharButton.GetComponent<Image>().color = highlightColor;
-                        break;
-                    case MonoChrome.SenseType.Tactile:
-                        if (_tactileCharButton != null && _tactileCharButton.GetComponent<Image>() != null) 
-                            _tactileCharButton.GetComponent<Image>().color = highlightColor;
-                        break;
-                    case MonoChrome.SenseType.Spiritual:
-                        if (_spiritualCharButton != null && _spiritualCharButton.GetComponent<Image>() != null) 
-                            _spiritualCharButton.GetComponent<Image>().color = highlightColor;
-                        break;
-                }
+                    SenseType.Auditory => _auditoryCharButton,
+                    SenseType.Olfactory => _olfactoryCharButton,
+                    SenseType.Tactile => _tactileCharButton,
+                    SenseType.Spiritual => _spiritualCharButton,
+                    _ => _auditoryCharButton
+                };
                 
-                Debug.Log($"ButtonHandlers: Highlighted {senseType} character button");
+                if (selectedButton != null)
+                {
+                    Image buttonImage = selectedButton.GetComponent<Image>();
+                    if (buttonImage != null)
+                    {
+                        buttonImage.color = highlightColor;
+                        Debug.Log($"[ButtonHandlers] {senseType} 버튼이 강조되었습니다");
+                    }
+                }
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"ButtonHandlers: Error in HighlightSelectedCharacterButton: {ex.Message}");
+                Debug.LogError($"[ButtonHandlers] 버튼 강조 중 오류: {ex.Message}");
             }
+        }
+        
+        private void ResetButtonColor(Button button)
+        {
+            if (button != null)
+            {
+                Image buttonImage = button.GetComponent<Image>();
+                if (buttonImage != null)
+                {
+                    buttonImage.color = Color.white;
+                }
+            }
+        }
+        
+        private string GetCharacterNameBySenseType(SenseType senseType)
+        {
+            return senseType switch
+            {
+                SenseType.Auditory => "김훈희",  // 청각 캐릭터
+                SenseType.Olfactory => "신제우", // 후각 캐릭터  
+                SenseType.Tactile => "곽장환",   // 촉각 캐릭터
+                SenseType.Spiritual => "박재석", // 영적 캐릭터
+                _ => "김훈희" // 기본값
+            };
+        }
+        
+        private void OnDestroy()
+        {
+            // 이벤트 정리
+            _startGameButton?.onClick.RemoveAllListeners();
+            _auditoryCharButton?.onClick.RemoveAllListeners();
+            _olfactoryCharButton?.onClick.RemoveAllListeners();
+            _tactileCharButton?.onClick.RemoveAllListeners();
+            _spiritualCharButton?.onClick.RemoveAllListeners();
         }
     }
 }
