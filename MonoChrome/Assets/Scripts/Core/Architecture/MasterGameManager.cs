@@ -458,6 +458,15 @@ namespace MonoChrome.Core
                     // 던전 상태 진입 시 던전 UI 업데이트 요청
                     StartCoroutine(RequestDungeonUIUpdateDelayed());
                     break;
+                case GameStateMachine.GameState.Event:
+                    UIEvents.RequestDungeonSubPanelShow("Event");
+                    break;
+                case GameStateMachine.GameState.Shop:
+                    UIEvents.RequestDungeonSubPanelShow("Shop");
+                    break;
+                case GameStateMachine.GameState.Rest:
+                    UIEvents.RequestDungeonSubPanelShow("Rest");
+                    break;
             }
         }
 

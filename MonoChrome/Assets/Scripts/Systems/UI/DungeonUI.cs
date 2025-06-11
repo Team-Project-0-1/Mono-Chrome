@@ -93,6 +93,7 @@ namespace MonoChrome
             UIEvents.OnDungeonMapUpdateRequested += OnDungeonMapUpdateRequested;
             UIEvents.OnPlayerStatusUpdateRequested += OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated += OnDungeonGenerated;
+            UIEvents.OnDungeonSubPanelShowRequested += OnDungeonSubPanelShowRequested;
         }
         
         /// <summary>
@@ -103,6 +104,7 @@ namespace MonoChrome
             UIEvents.OnDungeonMapUpdateRequested -= OnDungeonMapUpdateRequested;
             UIEvents.OnPlayerStatusUpdateRequested -= OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated -= OnDungeonGenerated;
+            UIEvents.OnDungeonSubPanelShowRequested -= OnDungeonSubPanelShowRequested;
         }
         
         /// <summary>
@@ -119,6 +121,25 @@ namespace MonoChrome
         private void OnPlayerStatusUpdateRequested(int currentHealth, int maxHealth)
         {
             UpdatePlayerStatus(currentHealth, maxHealth);
+        }
+
+        /// <summary>
+        /// 서브 패널 표시 요청 이벤트 핸들러
+        /// </summary>
+        private void OnDungeonSubPanelShowRequested(string panelName)
+        {
+            switch (panelName)
+            {
+                case "Event":
+                    ShowEventPanel();
+                    break;
+                case "Shop":
+                    ShowShopPanel();
+                    break;
+                case "Rest":
+                    ShowRestPanel();
+                    break;
+            }
         }
         
         /// <summary>
