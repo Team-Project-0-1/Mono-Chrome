@@ -93,6 +93,7 @@ namespace MonoChrome
             UIEvents.OnDungeonMapUpdateRequested += OnDungeonMapUpdateRequested;
             UIEvents.OnPlayerStatusUpdateRequested += OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated += OnDungeonGenerated;
+            DungeonEvents.OnNodeMoveCompleted += OnNodeMoveCompleted;
             UIEvents.OnDungeonSubPanelShowRequested += OnDungeonSubPanelShowRequested;
         }
         
@@ -104,6 +105,7 @@ namespace MonoChrome
             UIEvents.OnDungeonMapUpdateRequested -= OnDungeonMapUpdateRequested;
             UIEvents.OnPlayerStatusUpdateRequested -= OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated -= OnDungeonGenerated;
+            DungeonEvents.OnNodeMoveCompleted -= OnNodeMoveCompleted;
             UIEvents.OnDungeonSubPanelShowRequested -= OnDungeonSubPanelShowRequested;
         }
         
@@ -738,6 +740,28 @@ namespace MonoChrome
             catch (System.Exception ex)
             {
                 Debug.LogError($"DungeonUI: Error in OnRoomSelected: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+
+        private void OnNodeMoveCompleted(DungeonNode node)
+        {
+            if (node == null)
+                return;
+
+            switch (node.Type)
+            {
+                case NodeType.Event:
+                    ShowEventPanel();
+                    break;
+                case NodeType.Shop:
+                    ShowShopPanel();
+                    break;
+                case NodeType.Rest:
+                    ShowRestPanel();
+                    break;
+                default:
+                    ShowRoomSelectionPanel();
+                    break;
             }
         }
         
