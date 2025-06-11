@@ -65,9 +65,12 @@ namespace MonoChrome.Events
         
         /// <summary>플레이어 상태 업데이트 요청 이벤트</summary>
         public static event Action<int, int> OnPlayerStatusUpdateRequested;
-        
+
         /// <summary>던전 UI 업데이트 요청 이벤트</summary>
         public static event Action OnDungeonUIUpdateRequested;
+
+        /// <summary>특정 던전 서브 패널 표시 요청 이벤트</summary>
+        public static event Action<NodeType> OnDungeonSubPanelShowRequested;
 
         // 이벤트 발행 메서드들
         public static void RequestPanelShow(string panelName) 
@@ -82,6 +85,9 @@ namespace MonoChrome.Events
         public static void RequestDungeonUIUpdate()
             => OnDungeonUIUpdateRequested?.Invoke();
 
+        public static void RequestDungeonSubPanelShow(NodeType panelType)
+            => OnDungeonSubPanelShowRequested?.Invoke(panelType);
+
         /// <summary>모든 UI 이벤트 구독 해제</summary>
         public static void ClearAllSubscriptions()
         {
@@ -89,6 +95,7 @@ namespace MonoChrome.Events
             OnDungeonMapUpdateRequested = null;
             OnPlayerStatusUpdateRequested = null;
             OnDungeonUIUpdateRequested = null;
+            OnDungeonSubPanelShowRequested = null;
         }
     }
 

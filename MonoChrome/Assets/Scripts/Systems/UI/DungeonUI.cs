@@ -93,6 +93,8 @@ namespace MonoChrome
             UIEvents.OnDungeonMapUpdateRequested += OnDungeonMapUpdateRequested;
             UIEvents.OnPlayerStatusUpdateRequested += OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated += OnDungeonGenerated;
+            UIEvents.OnDungeonSubPanelShowRequested += OnDungeonSubPanelShowRequested;
+            DungeonEvents.OnNodeMoveCompleted += OnNodeMoveCompleted;
         }
         
         /// <summary>
@@ -103,6 +105,8 @@ namespace MonoChrome
             UIEvents.OnDungeonMapUpdateRequested -= OnDungeonMapUpdateRequested;
             UIEvents.OnPlayerStatusUpdateRequested -= OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated -= OnDungeonGenerated;
+            UIEvents.OnDungeonSubPanelShowRequested -= OnDungeonSubPanelShowRequested;
+            DungeonEvents.OnNodeMoveCompleted -= OnNodeMoveCompleted;
         }
         
         /// <summary>
@@ -119,6 +123,37 @@ namespace MonoChrome
         private void OnPlayerStatusUpdateRequested(int currentHealth, int maxHealth)
         {
             UpdatePlayerStatus(currentHealth, maxHealth);
+        }
+
+        /// <summary>
+        /// 서브 패널 표시 요청 이벤트 핸들러
+        /// </summary>
+        private void OnDungeonSubPanelShowRequested(NodeType panelType)
+        {
+            switch (panelType)
+            {
+                case NodeType.Event:
+                    ShowEventPanel();
+                    break;
+                case NodeType.Shop:
+                    ShowShopPanel();
+                    break;
+                case NodeType.Rest:
+                    ShowRestPanel();
+                    break;
+                default:
+                    ShowRoomSelectionPanel();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 노드 이동 완료 이벤트 핸들러
+        /// </summary>
+        private void OnNodeMoveCompleted(DungeonNode node)
+        {
+            if (node == null) return;
+            UIEvents.RequestDungeonSubPanelShow(node.Type);
         }
         
         /// <summary>
