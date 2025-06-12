@@ -60,6 +60,10 @@ namespace MonoChrome
             // 더 이상 DungeonManager에 직접 의존하지 않음
             // 이벤트 시스템을 통해서만 소통
             Debug.Log("DungeonUI: Awake - 이벤트 기반 시스템으로 초기화");
+
+            // 패널이 비활성화 상태에서도 이벤트를 수신하기 위해
+            // Awake 단계에서 바로 구독을 수행한다
+            SubscribeToEvents();
         }
         
         private void Start()
@@ -72,16 +76,19 @@ namespace MonoChrome
         {
             // OnEnable은 GameObject가 활성화될 때마다 호출됨 (핵심!)
             Debug.Log("DungeonUI: OnEnable called");
-            
-            // 이벤트 구독
-            SubscribeToEvents();
-            
+
+            // 이벤트 구독은 Awake에서 수행하므로 여기서는 초기화만 보장
             EnsureInitialization();
         }
         
         private void OnDisable()
         {
-            // 이벤트 구독 해제
+            // 패널 비활성화 시에는 구독을 유지해 이벤트를 놓치지 않는다
+        }
+
+        private void OnDestroy()
+        {
+            // 객체 파괴 시에만 구독 해제
             UnsubscribeFromEvents();
         }
         
