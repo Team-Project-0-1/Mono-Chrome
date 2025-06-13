@@ -12,34 +12,55 @@ namespace MonoChrome.Events
     {
         /// <summary>던전 생성 요청 이벤트</summary>
         public static event Action<int> OnDungeonGenerationRequested;
-        
+
         /// <summary>던전 생성 완료 이벤트</summary>
         public static event Action<List<DungeonNode>, int> OnDungeonGenerated;
-        
+
         /// <summary>노드 이동 요청 이벤트</summary>
         public static event Action<int> OnNodeMoveRequested;
-        
+
         /// <summary>노드 이동 완료 이벤트</summary>
         public static event Action<DungeonNode> OnNodeMoveCompleted;
-        
+
         /// <summary>방 활동 완료 이벤트</summary>
         public static event Action OnRoomActivityCompleted;
 
         // 이벤트 발행 메서드들
-        public static void RequestDungeonGeneration(int stageIndex) 
-            => OnDungeonGenerationRequested?.Invoke(stageIndex);
-        
-        public static void NotifyDungeonGenerated(List<DungeonNode> nodes, int currentIndex) 
+        public static void RequestDungeonGeneration(int stageIndex)
+        {
+            int subscriberCount = OnDungeonGenerationRequested?.GetInvocationList()?.Length ?? 0;
+            Debug.Log($"[DungeonEvents] === 던전 생성 이벤트 발행 시작: 스테이지 {stageIndex} ===");
+            Debug.Log($"[DungeonEvents] 발행 전 구독자 수: {subscriberCount}");
+            
+            if (subscriberCount == 0)
+            {
+                Debug.LogWarning($"[DungeonEvents] 경고: 던전 생성 이벤트에 구독자가 없습니다!");
+            }
+            
+            OnDungeonGenerationRequested?.Invoke(stageIndex);
+            
+            int subscriberCountAfter = OnDungeonGenerationRequested?.GetInvocationList()?.Length ?? 0;
+            Debug.Log($"[DungeonEvents] 발행 후 구독자 수: {subscriberCountAfter}");
+            Debug.Log($"[DungeonEvents] === 던전 생성 이벤트 발행 완료: 스테이지 {stageIndex} ===");
+        }
+
+        public static void NotifyDungeonGenerated(List<DungeonNode> nodes, int currentIndex)
             => OnDungeonGenerated?.Invoke(nodes, currentIndex);
-        
-        public static void RequestNodeMove(int nodeIndex) 
+
+        public static void RequestNodeMove(int nodeIndex)
             => OnNodeMoveRequested?.Invoke(nodeIndex);
-        
-        public static void NotifyNodeMoveCompleted(DungeonNode node) 
+
+        public static void NotifyNodeMoveCompleted(DungeonNode node)
             => OnNodeMoveCompleted?.Invoke(node);
-        
-        public static void NotifyRoomActivityCompleted() 
+
+        public static void NotifyRoomActivityCompleted()
             => OnRoomActivityCompleted?.Invoke();
+
+        /// <summary>현재 던전 생성 이벤트 구독자 수 확인</summary>
+        public static int GetSubscriberCount()
+        {
+            return OnDungeonGenerationRequested?.GetInvocationList()?.Length ?? 0;
+        }
 
         /// <summary>모든 던전 이벤트 구독 해제</summary>
         public static void ClearAllSubscriptions()
@@ -50,92 +71,93 @@ namespace MonoChrome.Events
             OnNodeMoveCompleted = null;
             OnRoomActivityCompleted = null;
         }
-    }
 
-    /// <summary>
-    /// UI 관련 이벤트들
-    /// </summary>
-    public static class UIEvents
-    {
-        /// <summary>패널 표시 요청 이벤트</summary>
-        public static event Action<string> OnPanelShowRequested;
-        
-        /// <summary>던전 맵 업데이트 요청 이벤트</summary>
-        public static event Action<List<DungeonNode>, int> OnDungeonMapUpdateRequested;
-        
-        /// <summary>플레이어 상태 업데이트 요청 이벤트</summary>
-        public static event Action<int, int> OnPlayerStatusUpdateRequested;
 
-        /// <summary>던전 UI 업데이트 요청 이벤트</summary>
-        public static event Action OnDungeonUIUpdateRequested;
-
-        /// <summary>특정 던전 서브 패널 표시 요청 이벤트</summary>
-        public static event Action<string> OnDungeonSubPanelShowRequested;
-
-        // 이벤트 발행 메서드들
-        public static void RequestPanelShow(string panelName) 
-            => OnPanelShowRequested?.Invoke(panelName);
-        
-        public static void RequestDungeonMapUpdate(List<DungeonNode> nodes, int currentIndex) 
-            => OnDungeonMapUpdateRequested?.Invoke(nodes, currentIndex);
-        
-        public static void RequestPlayerStatusUpdate(int currentHealth, int maxHealth) 
-            => OnPlayerStatusUpdateRequested?.Invoke(currentHealth, maxHealth);
-        
-        public static void RequestDungeonUIUpdate()
-            => OnDungeonUIUpdateRequested?.Invoke();
-
-        public static void RequestDungeonSubPanelShow(string panelName)
-            => OnDungeonSubPanelShowRequested?.Invoke(panelName);
-
-        /// <summary>모든 UI 이벤트 구독 해제</summary>
-        public static void ClearAllSubscriptions()
+        /// <summary>
+        /// UI 관련 이벤트들
+        /// </summary>
+        public static class UIEvents
         {
-            OnPanelShowRequested = null;
-            OnDungeonMapUpdateRequested = null;
-            OnPlayerStatusUpdateRequested = null;
-            OnDungeonUIUpdateRequested = null;
-            OnDungeonSubPanelShowRequested = null;
+            /// <summary>패널 표시 요청 이벤트</summary>
+            public static event Action<string> OnPanelShowRequested;
+
+            /// <summary>던전 맵 업데이트 요청 이벤트</summary>
+            public static event Action<List<DungeonNode>, int> OnDungeonMapUpdateRequested;
+
+            /// <summary>플레이어 상태 업데이트 요청 이벤트</summary>
+            public static event Action<int, int> OnPlayerStatusUpdateRequested;
+
+            /// <summary>던전 UI 업데이트 요청 이벤트</summary>
+            public static event Action OnDungeonUIUpdateRequested;
+
+            /// <summary>특정 던전 서브 패널 표시 요청 이벤트</summary>
+            public static event Action<string> OnDungeonSubPanelShowRequested;
+
+            // 이벤트 발행 메서드들
+            public static void RequestPanelShow(string panelName)
+                => OnPanelShowRequested?.Invoke(panelName);
+
+            public static void RequestDungeonMapUpdate(List<DungeonNode> nodes, int currentIndex)
+                => OnDungeonMapUpdateRequested?.Invoke(nodes, currentIndex);
+
+            public static void RequestPlayerStatusUpdate(int currentHealth, int maxHealth)
+                => OnPlayerStatusUpdateRequested?.Invoke(currentHealth, maxHealth);
+
+            public static void RequestDungeonUIUpdate()
+                => OnDungeonUIUpdateRequested?.Invoke();
+
+            public static void RequestDungeonSubPanelShow(string panelName)
+                => OnDungeonSubPanelShowRequested?.Invoke(panelName);
+
+            /// <summary>모든 UI 이벤트 구독 해제</summary>
+            public static void ClearAllSubscriptions()
+            {
+                OnPanelShowRequested = null;
+                OnDungeonMapUpdateRequested = null;
+                OnPlayerStatusUpdateRequested = null;
+                OnDungeonUIUpdateRequested = null;
+                OnDungeonSubPanelShowRequested = null;
+            }
         }
-    }
 
-    /// <summary>
-    /// 전투 관련 이벤트들
-    /// </summary>
-    public static class CombatEvents
-    {
-        /// <summary>전투 시작 요청 이벤트</summary>
-        public static event Action<string, CharacterType> OnCombatStartRequested;
-        
-        /// <summary>전투 초기화 완료 이벤트</summary>
-        public static event Action OnCombatInitialized;
-        
-        /// <summary>전투 종료 요청 이벤트</summary>
-        public static event Action<bool> OnCombatEndRequested; // bool: isVictory
-        
-        /// <summary>전투 종료 이벤트</summary>
-        public static event Action<bool> OnCombatEnded; // bool: isVictory
-
-        // 이벤트 발행 메서드들
-        public static void RequestCombatStart(string enemyType, CharacterType type) 
-            => OnCombatStartRequested?.Invoke(enemyType, type);
-        
-        public static void NotifyCombatInitialized() 
-            => OnCombatInitialized?.Invoke();
-        
-        public static void RequestCombatEnd(bool isVictory)
-            => OnCombatEndRequested?.Invoke(isVictory);
-        
-        public static void NotifyCombatEnded(bool isVictory) 
-            => OnCombatEnded?.Invoke(isVictory);
-
-        /// <summary>모든 전투 이벤트 구독 해제</summary>
-        public static void ClearAllSubscriptions()
+        /// <summary>
+        /// 전투 관련 이벤트들
+        /// </summary>
+        public static class CombatEvents
         {
-            OnCombatStartRequested = null;
-            OnCombatInitialized = null;
-            OnCombatEndRequested = null;
-            OnCombatEnded = null;
+            /// <summary>전투 시작 요청 이벤트</summary>
+            public static event Action<string, CharacterType> OnCombatStartRequested;
+
+            /// <summary>전투 초기화 완료 이벤트</summary>
+            public static event Action OnCombatInitialized;
+
+            /// <summary>전투 종료 요청 이벤트</summary>
+            public static event Action<bool> OnCombatEndRequested; // bool: isVictory
+
+            /// <summary>전투 종료 이벤트</summary>
+            public static event Action<bool> OnCombatEnded; // bool: isVictory
+
+            // 이벤트 발행 메서드들
+            public static void RequestCombatStart(string enemyType, CharacterType type)
+                => OnCombatStartRequested?.Invoke(enemyType, type);
+
+            public static void NotifyCombatInitialized()
+                => OnCombatInitialized?.Invoke();
+
+            public static void RequestCombatEnd(bool isVictory)
+                => OnCombatEndRequested?.Invoke(isVictory);
+
+            public static void NotifyCombatEnded(bool isVictory)
+                => OnCombatEnded?.Invoke(isVictory);
+
+            /// <summary>모든 전투 이벤트 구독 해제</summary>
+            public static void ClearAllSubscriptions()
+            {
+                OnCombatStartRequested = null;
+                OnCombatInitialized = null;
+                OnCombatEndRequested = null;
+                OnCombatEnded = null;
+            }
         }
     }
 }

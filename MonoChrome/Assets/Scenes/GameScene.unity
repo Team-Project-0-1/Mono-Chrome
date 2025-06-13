@@ -2600,7 +2600,6 @@ GameObject:
   - component: {fileID: 817079191}
   - component: {fileID: 817079190}
   - component: {fileID: 817079192}
-  - component: {fileID: 817079193}
   m_Layer: 0
   m_Name: CharacterSelectionPanel
   m_TagString: Untagged
@@ -2689,19 +2688,6 @@ MonoBehaviour:
   _tactileCharButton: {fileID: 2064018138}
   _spiritualCharButton: {fileID: 1504048762}
   _selectedSenseType: 0
---- !u!114 &817079193
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 817079188}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54b1fd492d144a7429e616dd5e593640, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  selectedSenseType: 0
 --- !u!1 &833337008
 GameObject:
   m_ObjectHideFlags: 0

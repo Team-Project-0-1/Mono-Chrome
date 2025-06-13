@@ -90,7 +90,10 @@ namespace MonoChrome
         
         private void SetDefaultSelection()
         {
-            SelectCharacter(SenseType.Auditory);
+            // UI 기본 하이라이트만 설정 (실제 선택은 하지 않음)
+            selectedSenseType = SenseType.Auditory;
+            UpdateButtonHighlight();
+            Debug.Log("[CharacterSelectionUI] 기본 UI 하이라이트 설정: Auditory (실제 선택 아님)");
         }
         
         private void UpdateButtonHighlight()

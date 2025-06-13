@@ -108,7 +108,7 @@ namespace MonoChrome.Core
         private void ShowMainMenuUI()
         {
             LogDebug("메인 메뉴 UI 표시");
-            UIEvents.RequestPanelShow("MainMenuPanel");
+            DungeonEvents.UIEvents.RequestPanelShow("MainMenuPanel");
         }
         
         /// <summary>
@@ -117,7 +117,7 @@ namespace MonoChrome.Core
         private void ShowCharacterSelectionUI()
         {
             LogDebug("캐릭터 선택 UI 표시");
-            UIEvents.RequestPanelShow("CharacterSelectionPanel");
+            DungeonEvents.UIEvents.RequestPanelShow("CharacterSelectionPanel");
         }
         
         /// <summary>
@@ -126,7 +126,7 @@ namespace MonoChrome.Core
         private void ShowDungeonUI()
         {
             LogDebug("던전 UI 표시");
-            UIEvents.RequestPanelShow("DungeonPanel");
+            DungeonEvents.UIEvents.RequestPanelShow("DungeonPanel");
         }
         
         /// <summary>
@@ -135,7 +135,7 @@ namespace MonoChrome.Core
         private void ShowCombatUI()
         {
             LogDebug("전투 UI 표시");
-            UIEvents.RequestPanelShow("CombatPanel");
+            DungeonEvents.UIEvents.RequestPanelShow("CombatPanel");
         }
         
         /// <summary>
@@ -144,7 +144,7 @@ namespace MonoChrome.Core
         private void ShowGameOverUI()
         {
             LogDebug("게임 오버 UI 표시");
-            UIEvents.RequestPanelShow("GameOverPanel");
+            DungeonEvents.UIEvents.RequestPanelShow("GameOverPanel");
         }
         
         /// <summary>
@@ -153,7 +153,7 @@ namespace MonoChrome.Core
         private void ShowVictoryUI()
         {
             LogDebug("승리 UI 표시");
-            UIEvents.RequestPanelShow("VictoryPanel");
+            DungeonEvents.UIEvents.RequestPanelShow("VictoryPanel");
         }
         #endregion
         
@@ -164,7 +164,7 @@ namespace MonoChrome.Core
         public void UpdateDungeonUI()
         {
             LogDebug("던전 UI 업데이트 요청");
-            UIEvents.RequestDungeonUIUpdate();
+            DungeonEvents.UIEvents.RequestDungeonUIUpdate();
         }
         
         /// <summary>
@@ -173,7 +173,7 @@ namespace MonoChrome.Core
         public void UpdateDungeonMap(List<DungeonNode> nodes, int currentIndex)
         {
             LogDebug($"던전 맵 업데이트: {nodes.Count}개 노드, 현재 인덱스 {currentIndex}");
-            UIEvents.RequestDungeonMapUpdate(nodes, currentIndex);
+            DungeonEvents.UIEvents.RequestDungeonMapUpdate(nodes, currentIndex);
         }
         
         /// <summary>
@@ -182,7 +182,7 @@ namespace MonoChrome.Core
         public void OnPanelSwitched(string panelName)
         {
             LogDebug($"패널 전환: {panelName}");
-            UIEvents.RequestPanelShow(panelName);
+            DungeonEvents.UIEvents.RequestPanelShow(panelName);
         }
         #endregion
         

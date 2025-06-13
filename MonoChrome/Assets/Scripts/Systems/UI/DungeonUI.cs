@@ -97,11 +97,11 @@ namespace MonoChrome
         /// </summary>
         private void SubscribeToEvents()
         {
-            UIEvents.OnDungeonMapUpdateRequested += OnDungeonMapUpdateRequested;
-            UIEvents.OnPlayerStatusUpdateRequested += OnPlayerStatusUpdateRequested;
+            DungeonEvents.UIEvents.OnDungeonMapUpdateRequested += OnDungeonMapUpdateRequested;
+            DungeonEvents.UIEvents.OnPlayerStatusUpdateRequested += OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated += OnDungeonGenerated;
             DungeonEvents.OnNodeMoveCompleted += OnNodeMoveCompleted;
-            UIEvents.OnDungeonSubPanelShowRequested += OnDungeonSubPanelShowRequested;
+            DungeonEvents.UIEvents.OnDungeonSubPanelShowRequested += OnDungeonSubPanelShowRequested;
         }
         
         /// <summary>
@@ -109,11 +109,11 @@ namespace MonoChrome
         /// </summary>
         private void UnsubscribeFromEvents()
         {
-            UIEvents.OnDungeonMapUpdateRequested -= OnDungeonMapUpdateRequested;
-            UIEvents.OnPlayerStatusUpdateRequested -= OnPlayerStatusUpdateRequested;
+            DungeonEvents.UIEvents.OnDungeonMapUpdateRequested -= OnDungeonMapUpdateRequested;
+            DungeonEvents.UIEvents.OnPlayerStatusUpdateRequested -= OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated -= OnDungeonGenerated;
             DungeonEvents.OnNodeMoveCompleted -= OnNodeMoveCompleted;
-            UIEvents.OnDungeonSubPanelShowRequested -= OnDungeonSubPanelShowRequested;
+            DungeonEvents.UIEvents.OnDungeonSubPanelShowRequested -= OnDungeonSubPanelShowRequested;
         }
         
         /// <summary>

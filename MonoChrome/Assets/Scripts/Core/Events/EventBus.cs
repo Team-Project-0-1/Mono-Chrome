@@ -116,16 +116,18 @@ namespace MonoChrome.Core
         /// </summary>
         public void ClearAllEvents()
         {
+            Debug.Log("[EventBus] ClearAllEvents() 호출됨 - 모든 이벤트 구독 해제 시작");
+            
             // 각 이벤트 클래스의 Clear 메서드 호출
             DungeonEvents.ClearAllSubscriptions();
-            CombatEvents.ClearAllSubscriptions();
-            UIEvents.ClearAllSubscriptions();
+            DungeonEvents.CombatEvents.ClearAllSubscriptions();
+            DungeonEvents.UIEvents.ClearAllSubscriptions();
             
             // 구독자 정보 초기화
             _subscribers.Clear();
             _eventCounts.Clear();
             
-            Debug.Log("[EventBus] All events cleared");
+            Debug.Log("[EventBus] All events cleared - 모든 이벤트 구독 해제 완료");
         }
 
         /// <summary>

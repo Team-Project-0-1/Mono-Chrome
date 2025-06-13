@@ -170,14 +170,14 @@ namespace MonoChrome.Core
                 GameStateMachine.OnStateEntered += OnGameStateEntered;
             }
 
-            // 던전 이벤트
-            DungeonEvents.OnDungeonGenerationRequested += OnDungeonGenerationRequested;
-            DungeonEvents.OnNodeMoveRequested += OnNodeMoveRequested;
+            // 던전 이벤트 - 생성/이동 요청은 DungeonController가 직접 처리하도록 수정
+            // DungeonEvents.OnDungeonGenerationRequested += OnDungeonGenerationRequested; // 제거됨
+            // DungeonEvents.OnNodeMoveRequested += OnNodeMoveRequested; // 제거됨
             DungeonEvents.OnRoomActivityCompleted += OnRoomActivityCompleted;
 
             // 전투 이벤트
-            CombatEvents.OnCombatStartRequested += OnCombatStartRequested;
-            CombatEvents.OnCombatEndRequested += OnCombatEndRequested;
+            DungeonEvents.CombatEvents.OnCombatStartRequested += OnCombatStartRequested;
+            DungeonEvents.CombatEvents.OnCombatEndRequested += OnCombatEndRequested;
 
             LogDebug("게임 이벤트 구독 완료");
         }
@@ -192,13 +192,13 @@ namespace MonoChrome.Core
             GameStateMachine.OnStateEntered -= OnGameStateEntered;
 
             // 던전 이벤트
-            DungeonEvents.OnDungeonGenerationRequested -= OnDungeonGenerationRequested;
-            DungeonEvents.OnNodeMoveRequested -= OnNodeMoveRequested;
+            // DungeonEvents.OnDungeonGenerationRequested -= OnDungeonGenerationRequested; // 제거됨
+            // DungeonEvents.OnNodeMoveRequested -= OnNodeMoveRequested; // 제거됨
             DungeonEvents.OnRoomActivityCompleted -= OnRoomActivityCompleted;
 
             // 전투 이벤트
-            CombatEvents.OnCombatStartRequested -= OnCombatStartRequested;
-            CombatEvents.OnCombatEndRequested -= OnCombatEndRequested;
+            DungeonEvents.CombatEvents.OnCombatStartRequested -= OnCombatStartRequested;
+            DungeonEvents.CombatEvents.OnCombatEndRequested -= OnCombatEndRequested;
 
             LogDebug("게임 이벤트 구독 해제 완료");
         }
@@ -411,7 +411,12 @@ namespace MonoChrome.Core
             {
                 case "GameScene":
                     _systemsReady = false;
-                    _eventBus?.ClearAllEvents();
+                    // GameScene 내에서는 이벤트를 정리하지 않음 (던전 생성 등을 위해 필요)
+                    LogDebug("GameScene 데이터 정리 완료 (이벤트는 유지)");
+                    break;
+                case "MainMenu":
+                    _eventBus?.ClearAllEvents(); // 메인 메뉴로 돌아갈 때만 이벤트 정리
+                    LogDebug("메인 메뉴 데이터 정리 완료");
                     break;
             }
         }
@@ -426,23 +431,23 @@ namespace MonoChrome.Core
             switch (newState)
             {
                 case GameStateMachine.GameState.CharacterSelection:
-                    UIEvents.RequestPanelShow("CharacterSelectionPanel");
+                    DungeonEvents.UIEvents.RequestPanelShow("CharacterSelectionPanel");
                     break;
                     
                 case GameStateMachine.GameState.Dungeon:
-                    UIEvents.RequestPanelShow("DungeonPanel");
+                    DungeonEvents.UIEvents.RequestPanelShow("DungeonPanel");
                     break;
                     
                 case GameStateMachine.GameState.Combat:
-                    UIEvents.RequestPanelShow("CombatPanel");
+                    DungeonEvents.UIEvents.RequestPanelShow("CombatPanel");
                     break;
                     
                 case GameStateMachine.GameState.GameOver:
-                    UIEvents.RequestPanelShow("GameOverPanel");
+                    DungeonEvents.UIEvents.RequestPanelShow("GameOverPanel");
                     break;
                     
                 case GameStateMachine.GameState.Victory:
-                    UIEvents.RequestPanelShow("VictoryPanel");
+                    DungeonEvents.UIEvents.RequestPanelShow("VictoryPanel");
                     break;
             }
         }
@@ -459,13 +464,13 @@ namespace MonoChrome.Core
                     StartCoroutine(RequestDungeonUIUpdateDelayed());
                     break;
                 case GameStateMachine.GameState.Event:
-                    UIEvents.RequestDungeonSubPanelShow("Event");
+                    DungeonEvents.UIEvents.RequestDungeonSubPanelShow("Event");
                     break;
                 case GameStateMachine.GameState.Shop:
-                    UIEvents.RequestDungeonSubPanelShow("Shop");
+                    DungeonEvents.UIEvents.RequestDungeonSubPanelShow("Shop");
                     break;
                 case GameStateMachine.GameState.Rest:
-                    UIEvents.RequestDungeonSubPanelShow("Rest");
+                    DungeonEvents.UIEvents.RequestDungeonSubPanelShow("Rest");
                     break;
             }
         }
@@ -476,40 +481,12 @@ namespace MonoChrome.Core
         private IEnumerator RequestDungeonUIUpdateDelayed()
         {
             yield return new WaitForSeconds(0.2f);
-            UIEvents.RequestDungeonUIUpdate();
+            DungeonEvents.UIEvents.RequestDungeonUIUpdate();
         }
         #endregion
 
         #region Game Event Handlers
-        private void OnDungeonGenerationRequested(int stageIndex)
-        {
-            LogDebug($"던전 생성 요청: 스테이지 {stageIndex}");
-            
-            _currentStage = stageIndex;
-            
-            // DungeonController에게 던전 생성 요청
-            var dungeonController = FindFirstObjectByType<DungeonController>();
-            if (dungeonController != null)
-            {
-                dungeonController.GenerateNewDungeon(stageIndex);
-            }
-            else
-            {
-                LogDebug("경고: DungeonController를 찾을 수 없습니다.");
-            }
-        }
 
-        private void OnNodeMoveRequested(int nodeIndex)
-        {
-            LogDebug($"노드 이동 요청: {nodeIndex}");
-            
-            // DungeonController에게 노드 이동 요청
-            var dungeonController = FindFirstObjectByType<DungeonController>();
-            if (dungeonController != null)
-            {
-                dungeonController.MoveToNode(nodeIndex);
-            }
-        }
 
         private void OnRoomActivityCompleted()
         {
@@ -614,23 +591,48 @@ namespace MonoChrome.Core
             // 1. 게임 상태 변경
             _stateMachine?.EnterDungeon();
             
-            // 2. 던전 생성 이벤트 발행
+            // 2. 던전 생성 이벤트 발행 (DungeonController가 직접 받아서 처리)
+            LogDebug($"던전 생성 요청: 스테이지 {_currentStage}");
+            
+            // 이벤트 발행 전 구독 상태 확인
+            var dungeonController = FindFirstObjectByType<DungeonController>();
+            if (dungeonController == null)
+            {
+                LogDebug("오류: DungeonController를 찾을 수 없음!");
+                yield break;
+            }
+            
+            if (!dungeonController.gameObject.activeInHierarchy)
+            {
+                LogDebug("오류: DungeonController가 비활성 상태!");
+                yield break;
+            }
+            
+            LogDebug($"DungeonController 상태: 활성={dungeonController.gameObject.activeInHierarchy}, 이름={dungeonController.gameObject.name}");
+            
+            // 이벤트 발행
             DungeonEvents.RequestDungeonGeneration(_currentStage);
             
-            // 3. UI 전환 대기 후 강제 표시 (백업)
+            // 0.3초 대기 후 구독자 수 확인
             yield return new WaitForSeconds(0.3f);
             
-            // 만약 이벤트 방식이 실패하면 강제 표시
-            GameObject dungeonPanel = GameObject.Find("DungeonPanel");
-            if (dungeonPanel == null || !dungeonPanel.activeInHierarchy)
+            // Fallback: 이벤트가 실패한 경우 직접 호출
+            var currentSubscriberCount = DungeonEvents.GetSubscriberCount();
+            if (currentSubscriberCount == 0)
             {
-                LogDebug("이벤트 방식 실패, 강제 던전 패널 표시");
-                ForceShowDungeon();
+                LogDebug("이벤트 방식 실패 - 직접 DungeonController 호출로 전환");
+                dungeonController.GenerateNewDungeon(_currentStage);
+                LogDebug("직접 호출 방식으로 던전 생성 완료");
             }
             else
             {
-                LogDebug("던전 패널 정상 표시 완료");
+                LogDebug($"이벤트 방식 성공 - 구독자 수: {currentSubscriberCount}");
             }
+            
+            // 3. 던전 생성 완료 대기
+            yield return new WaitForSeconds(0.5f);
+            
+            LogDebug("던전 전환 완료");
         }
 
         /// <summary>
@@ -651,7 +653,7 @@ namespace MonoChrome.Core
         {
             LogDebug($"전투 시작: {enemyType}, {characterType}");
             
-            CombatEvents.RequestCombatStart(enemyType, characterType);
+            DungeonEvents.CombatEvents.RequestCombatStart(enemyType, characterType);
         }
 
         /// <summary>

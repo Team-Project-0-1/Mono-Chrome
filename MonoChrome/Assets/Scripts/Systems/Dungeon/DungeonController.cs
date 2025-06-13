@@ -24,23 +24,64 @@ namespace MonoChrome
         public DungeonNode CurrentNode => _currentNode;
         public int CurrentNodeIndex => _currentNodeIndex;
 
+        private void Awake()
+        {
+            LogDebug("DungeonController Awake() 호출");
+        }
+
+        private void Start()
+        {
+            LogDebug("DungeonController Start() 호출");
+            
+            // 이벤트 구독 상태 확인
+            int subscriberCount = DungeonEvents.GetSubscriberCount();
+            LogDebug($"현재 던전 생성 이벤트 구독자 수: {subscriberCount}");
+            
+            // 구독이 되어 있지 않다면 다시 구독
+            if (subscriberCount == 0)
+            {
+                LogDebug("구독자가 없음 - 이벤트 재구독 시작");
+                DungeonEvents.OnDungeonGenerationRequested += HandleDungeonGenerationRequest;
+                DungeonEvents.OnNodeMoveRequested += HandleNodeMoveRequest;
+                DungeonEvents.OnRoomActivityCompleted += HandleRoomActivityCompleted;
+                LogDebug("이벤트 재구독 완료");
+            }
+            
+            LogDebug("DungeonController Start() 완료");
+        }
+
         private void OnEnable()
         {
+            LogDebug("이벤트 구독 시작");
+            
+            // 중복 구독 방지를 위해 먼저 해제
+            DungeonEvents.OnDungeonGenerationRequested -= HandleDungeonGenerationRequest;
+            DungeonEvents.OnNodeMoveRequested -= HandleNodeMoveRequest;
+            DungeonEvents.OnRoomActivityCompleted -= HandleRoomActivityCompleted;
+            
+            // 이벤트 구독
             DungeonEvents.OnDungeonGenerationRequested += HandleDungeonGenerationRequest;
             DungeonEvents.OnNodeMoveRequested += HandleNodeMoveRequest;
             DungeonEvents.OnRoomActivityCompleted += HandleRoomActivityCompleted;
+            
+            LogDebug($"이벤트 구독 완료 (구독자 수: {DungeonEvents.GetSubscriberCount()})");
         }
 
         private void OnDisable()
         {
+            LogDebug("이벤트 구독 해제 시작");
             DungeonEvents.OnDungeonGenerationRequested -= HandleDungeonGenerationRequest;
             DungeonEvents.OnNodeMoveRequested -= HandleNodeMoveRequest;
             DungeonEvents.OnRoomActivityCompleted -= HandleRoomActivityCompleted;
+            LogDebug("이벤트 구독 해제 완료");
         }
 
         private void HandleDungeonGenerationRequest(int stageIndex)
         {
+            LogDebug($"=== 던전 생성 이벤트 수신: 스테이지 {stageIndex} ===");
+            LogDebug($"현재 구독자 수: {DungeonEvents.GetSubscriberCount()}");
             GenerateDungeon(stageIndex);
+            LogDebug($"=== 던전 생성 이벤트 처리 완료: 스테이지 {stageIndex} ===");
         }
 
         private void HandleNodeMoveRequest(int nodeIndex)
@@ -74,7 +115,7 @@ namespace MonoChrome
             _dungeonNodes = CreateSimpleDungeon();
             SetupStartingNode();
             
-            UIEvents.RequestDungeonMapUpdate(_dungeonNodes, _currentNodeIndex);
+            DungeonEvents.UIEvents.RequestDungeonMapUpdate(_dungeonNodes, _currentNodeIndex);
             DungeonEvents.NotifyDungeonGenerated(_dungeonNodes, _currentNodeIndex);
             
             LogDebug($"던전 생성 완료 - {_dungeonNodes.Count}개 노드");
@@ -91,7 +132,7 @@ namespace MonoChrome
             UpdateNodeStates(nodeIndex, targetNode);
             DungeonEvents.NotifyNodeMoveCompleted(targetNode);
             ProcessNodeType(targetNode);
-            UIEvents.RequestDungeonMapUpdate(_dungeonNodes, _currentNodeIndex);
+            DungeonEvents.UIEvents.RequestDungeonMapUpdate(_dungeonNodes, _currentNodeIndex);
             
             LogDebug($"노드 이동 완료: {nodeIndex} ({targetNode.Type})");
         }
@@ -167,7 +208,7 @@ namespace MonoChrome
             GameStateMachine.Instance.StartCombat();
             string enemyType = GetEnemyType(node.Type);
             CharacterType characterType = GetCharacterType(node.Type);
-            CombatEvents.RequestCombatStart(enemyType, characterType);
+            DungeonEvents.CombatEvents.RequestCombatStart(enemyType, characterType);
         }
 
         private string GetEnemyType(NodeType nodeType)

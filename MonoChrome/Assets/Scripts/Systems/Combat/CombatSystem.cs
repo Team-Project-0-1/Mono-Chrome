@@ -253,13 +253,13 @@ namespace MonoChrome.Systems.Combat
         private void SubscribeToEvents()
         {
             // 외부 전투 시작 요청 이벤트 구독
-            CombatEvents.OnCombatStartRequested += HandleCombatStartRequest;
+            DungeonEvents.CombatEvents.OnCombatStartRequested += HandleCombatStartRequest;
         }
 
         private void OnDestroy()
         {
             // 이벤트 구독 해제
-            CombatEvents.OnCombatStartRequested -= HandleCombatStartRequest;
+            DungeonEvents.CombatEvents.OnCombatStartRequested -= HandleCombatStartRequest;
         }
         #endregion
 
@@ -308,7 +308,7 @@ namespace MonoChrome.Systems.Combat
 
             // 전투 시작 이벤트 발행
             OnCombatStarted?.Invoke(_player, _enemy);
-            CombatEvents.NotifyCombatInitialized();
+            DungeonEvents.CombatEvents.NotifyCombatInitialized();
 
             // 첫 턴 시작
             StartTurn();
@@ -487,7 +487,7 @@ namespace MonoChrome.Systems.Combat
             _isCombatActive = false;
             
             OnCombatEnded?.Invoke(playerVictory);
-            CombatEvents.NotifyCombatEnded(playerVictory);
+            DungeonEvents.CombatEvents.NotifyCombatEnded(playerVictory);
         }
 
         /// <summary>

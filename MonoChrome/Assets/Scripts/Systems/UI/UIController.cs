@@ -111,17 +111,17 @@ namespace MonoChrome
         private void SubscribeToEvents()
         {
             GameStateMachine.OnStateChanged += OnGameStateChanged;
-            UIEvents.OnPanelShowRequested += OnPanelShowRequested;
-            UIEvents.OnDungeonMapUpdateRequested += OnDungeonMapUpdateRequested;
-            UIEvents.OnPlayerStatusUpdateRequested += OnPlayerStatusUpdateRequested;
+            DungeonEvents.UIEvents.OnPanelShowRequested += OnPanelShowRequested;
+            DungeonEvents.UIEvents.OnDungeonMapUpdateRequested += OnDungeonMapUpdateRequested;
+            DungeonEvents.UIEvents.OnPlayerStatusUpdateRequested += OnPlayerStatusUpdateRequested;
         }
 
         private void UnsubscribeFromEvents()
         {
             GameStateMachine.OnStateChanged -= OnGameStateChanged;
-            UIEvents.OnPanelShowRequested -= OnPanelShowRequested;
-            UIEvents.OnDungeonMapUpdateRequested -= OnDungeonMapUpdateRequested;
-            UIEvents.OnPlayerStatusUpdateRequested -= OnPlayerStatusUpdateRequested;
+            DungeonEvents.UIEvents.OnPanelShowRequested -= OnPanelShowRequested;
+            DungeonEvents.UIEvents.OnDungeonMapUpdateRequested -= OnDungeonMapUpdateRequested;
+            DungeonEvents.UIEvents.OnPlayerStatusUpdateRequested -= OnPlayerStatusUpdateRequested;
         }
 
         private void OnGameStateChanged(GameStateMachine.GameState previousState, GameStateMachine.GameState newState)

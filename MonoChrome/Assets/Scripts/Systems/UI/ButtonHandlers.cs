@@ -134,8 +134,9 @@ namespace MonoChrome
         
         private void SetDefaultSelection()
         {
-            // 기본적으로 첫 번째 캐릭터 선택
-            OnCharacterTypeButtonClicked(SenseType.Auditory);
+            // 기본값만 설정, UI 하이라이트는 사용자 선택 시에만 적용
+            _selectedSenseType = SenseType.Auditory;
+            Debug.Log("[ButtonHandlers] 기본값 설정: Auditory (하이라이트 없음, 사용자 선택 대기)");
         }
         
         private void OnStartGameButtonClicked()
