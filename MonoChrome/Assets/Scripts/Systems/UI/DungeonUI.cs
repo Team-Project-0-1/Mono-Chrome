@@ -106,7 +106,7 @@ namespace MonoChrome
             DungeonEvents.UIEvents.OnPlayerStatusUpdateRequested += OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated += OnDungeonGenerated;
             DungeonEvents.OnNodeMoveCompleted += OnNodeMoveCompleted;
-            DungeonEvents.UIEvents.OnDungeonSubPanelShowRequested += OnDungeonSubPanelShowRequested;
+            // DungeonEvents.UIEvents.OnDungeonSubPanelShowRequested += OnDungeonSubPanelShowRequested;
             DungeonEvents.OnRoomChoicesUpdateRequested += OnRoomChoicesUpdateRequested;
         }
         
@@ -119,7 +119,7 @@ namespace MonoChrome
             DungeonEvents.UIEvents.OnPlayerStatusUpdateRequested -= OnPlayerStatusUpdateRequested;
             DungeonEvents.OnDungeonGenerated -= OnDungeonGenerated;
             DungeonEvents.OnNodeMoveCompleted -= OnNodeMoveCompleted;
-            DungeonEvents.UIEvents.OnDungeonSubPanelShowRequested -= OnDungeonSubPanelShowRequested;
+            // DungeonEvents.UIEvents.OnDungeonSubPanelShowRequested -= OnDungeonSubPanelShowRequested;
             DungeonEvents.OnRoomChoicesUpdateRequested -= OnRoomChoicesUpdateRequested;
         }
         
@@ -156,6 +156,30 @@ namespace MonoChrome
                     ShowRestPanel();
                     break;
             }
+        }
+        
+        public void ShowEventPanel()
+        {
+            Debug.Log("DungeonUI: Showing Event Panel");
+            HideAllPanels();
+            if (eventPanel != null)
+                eventPanel.SetActive(true);
+        }
+        
+        public void ShowShopPanel()
+        {
+            Debug.Log("DungeonUI: Showing Shop Panel");
+            HideAllPanels();
+            if (shopPanel != null)
+                shopPanel.SetActive(true);
+        }
+        
+        public void ShowRestPanel()
+        {
+            Debug.Log("DungeonUI: Showing Rest Panel");
+            HideAllPanels();
+            if (restPanel != null)
+                restPanel.SetActive(true);
         }
 
         /// <summary>
@@ -547,30 +571,6 @@ namespace MonoChrome
                 roomSelectionPanel.SetActive(true);
         }
         
-        public void ShowEventPanel()
-        {
-            Debug.Log("DungeonUI: Showing Event Panel");
-            HideAllPanels();
-            if (eventPanel != null)
-                eventPanel.SetActive(true);
-        }
-        
-        public void ShowShopPanel()
-        {
-            Debug.Log("DungeonUI: Showing Shop Panel");
-            HideAllPanels();
-            if (shopPanel != null)
-                shopPanel.SetActive(true);
-        }
-        
-        public void ShowRestPanel()
-        {
-            Debug.Log("DungeonUI: Showing Rest Panel");
-            HideAllPanels();
-            if (restPanel != null)
-                restPanel.SetActive(true);
-        }
-        
         public void ShowRoomSelection(RoomData[] roomDataArray)
         {
             if (roomSelectionPanel == null || roomButtons == null || roomDataArray == null)
@@ -775,13 +775,10 @@ namespace MonoChrome
             switch (node.Type)
             {
                 case NodeType.Event:
-                    ShowEventPanel();
                     break;
                 case NodeType.Shop:
-                    ShowShopPanel();
                     break;
                 case NodeType.Rest:
-                    ShowRestPanel();
                     break;
                 default:
                     ShowRoomSelectionPanel();
@@ -1142,10 +1139,10 @@ namespace MonoChrome
                     roomTypeIcons[index].color = GetRoomIconColor(choice.Type);
                 }
 
-                // 방 설명 설정 (감각 힌트 사용)
+                // 방 설명 설정 (간단한 텍스트 사용)
                 if (roomDescriptions != null && index < roomDescriptions.Length && roomDescriptions[index] != null)
                 {
-                    roomDescriptions[index].text = choice.SensoryHint;
+                    roomDescriptions[index].text = GetRoomTypeText(choice.Type);
                     
                     // 한글 폰트 적용
                     if (FontManager.Instance != null)
@@ -1286,8 +1283,57 @@ namespace MonoChrome
                 roomSelectionPanel.SetActive(false);
             }
 
+            // 선택된 방 타입에 따라 적절한 상태로 전환
+            TransitionToRoomType(selectedChoice.Type);
+
             // 선택 완료 이벤트 발행
             DungeonEvents.NotifyRoomChoiceSelected(selectedChoice);
+        }
+
+        /// <summary>
+        /// 선택된 방 타입에 따라 게임 상태 전환
+        /// </summary>
+        private void TransitionToRoomType(NodeType roomType)
+        {
+            var gameStateMachine = Core.GameStateMachine.Instance;
+            if (gameStateMachine == null)
+            {
+                Debug.LogError("DungeonUI: GameStateMachine을 찾을 수 없습니다!");
+                return;
+            }
+
+            switch (roomType)
+            {
+                case NodeType.Combat:
+                    Debug.Log("DungeonUI: 전투 상태로 전환 요청");
+                    gameStateMachine.StartCombat();
+                    break;
+                    
+                case NodeType.Event:
+                    Debug.Log("DungeonUI: 이벤트 상태로 전환 요청");
+                    gameStateMachine.EnterEvent();
+                    break;
+                    
+                case NodeType.Shop:
+                    Debug.Log("DungeonUI: 상점 상태로 전환 요청");
+                    gameStateMachine.EnterShop();
+                    break;
+                    
+                case NodeType.Rest:
+                    Debug.Log("DungeonUI: 휴식 상태로 전환 요청");
+                    gameStateMachine.EnterRest();
+                    break;
+                    
+                case NodeType.MiniBoss:
+                case NodeType.Boss:
+                    Debug.Log("DungeonUI: 보스 전투 상태로 전환 요청");
+                    gameStateMachine.StartCombat();
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"DungeonUI: 알 수 없는 방 타입: {roomType}");
+                    break;
+            }
         }
 
         #endregion

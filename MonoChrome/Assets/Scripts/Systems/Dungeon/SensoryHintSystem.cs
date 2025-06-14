@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MonoChrome.Core;
@@ -9,17 +8,16 @@ namespace MonoChrome.Systems.Dungeon
     /// 감각 기반 힌트 생성 시스템
     /// 플레이어의 감각 타입에 따라 방 정보를 다르게 제공
     /// </summary>
-    public class SensoryHintSystem : MonoBehaviour
+    public class SensoryHintSystem
     {
-        [Header("힌트 시스템 설정")]
-        [SerializeField] private bool enableDebugLogs = true;
-        [SerializeField] private float hintAccuracy = 0.8f;
+        private bool enableDebugLogs = true;
+        private float hintAccuracy = 0.8f;
 
         // 감각별 방 타입 힌트 데이터베이스
         private Dictionary<NodeType, Dictionary<SenseType, string[]>> _senseHints;
         private Dictionary<NodeType, string[]> _genericHints;
 
-        private void Awake()
+        public SensoryHintSystem()
         {
             InitializeHintDatabases();
             LogDebug("SensoryHintSystem 초기화 완료");
