@@ -208,15 +208,16 @@ namespace MonoChrome.Core
             // 씬 이벤트 구독 해제
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
-            
+
             // 게임 이벤트 구독 해제
             UnsubscribeFromGameEvents();
-            
-            // 이벤트 정리
-            _eventBus?.ClearAllEvents();
-            
+
+            // 중복 인스턴스가 파괴될 때 이벤트를 모두 정리하면
+            // 이미 구독을 마친 다른 시스템들이 동작하지 않게 된다.
+            // 따라서 싱글턴 본인일 때만 이벤트 버스를 정리한다.
             if (_instance == this)
             {
+                _eventBus?.ClearAllEvents();
                 _instance = null;
             }
         }
