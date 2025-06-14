@@ -1,9 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
-
 namespace MonoChrome
 {
-    
     [System.Serializable]
     public class DungeonNode
     {
@@ -14,6 +12,9 @@ namespace MonoChrome
         public bool IsVisited = false;
         public bool IsAccessible = false;
         
+        // Description 프로퍼티 추가
+        public string Description { get; private set; }
+        
         // 노드별 특수 데이터
         public int EnemyID = -1; // 전투 노드일 경우 적 ID
         public int EventID = -1; // 이벤트 노드일 경우 이벤트 ID
@@ -23,6 +24,7 @@ namespace MonoChrome
             ID = id;
             Type = type;
             Position = position;
+            Description = GetNodeDescription(); // Description 초기화
         }
         
         // 노드 아이콘 또는 색상 가져오기

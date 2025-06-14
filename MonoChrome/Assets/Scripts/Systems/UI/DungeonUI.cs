@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using MonoChrome;
 using MonoChrome.StatusEffects;
-using MonoChrome;
 using MonoChrome.Events;
+using MonoChrome.Systems.Dungeon;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -20,6 +20,10 @@ namespace MonoChrome
         [SerializeField] private Button[] roomButtons;
         [SerializeField] private Image[] roomTypeIcons;
         [SerializeField] private TextMeshProUGUI[] roomDescriptions;
+        [SerializeField] private TextMeshProUGUI[] roomHintTexts;
+        [SerializeField] private Image[] roomHintBackgrounds;
+        [SerializeField] private TextMeshProUGUI[] roomSuccessRateTexts;
+        [SerializeField] private GameObject[] roomSuccessRateObjects;
         
         [Header("Event, Shop, and Rest Panels")]
         [SerializeField] private GameObject eventPanel;
@@ -54,6 +58,7 @@ namespace MonoChrome
         [SerializeField] private Sprite defaultIcon;
         
         private bool _isInitialized = false;
+        private List<RoomChoice> _currentRoomChoices = new List<RoomChoice>();
         
         private void Awake()
         {
@@ -102,6 +107,7 @@ namespace MonoChrome
             DungeonEvents.OnDungeonGenerated += OnDungeonGenerated;
             DungeonEvents.OnNodeMoveCompleted += OnNodeMoveCompleted;
             DungeonEvents.UIEvents.OnDungeonSubPanelShowRequested += OnDungeonSubPanelShowRequested;
+            DungeonEvents.OnRoomChoicesUpdateRequested += OnRoomChoicesUpdateRequested;
         }
         
         /// <summary>
@@ -114,6 +120,7 @@ namespace MonoChrome
             DungeonEvents.OnDungeonGenerated -= OnDungeonGenerated;
             DungeonEvents.OnNodeMoveCompleted -= OnNodeMoveCompleted;
             DungeonEvents.UIEvents.OnDungeonSubPanelShowRequested -= OnDungeonSubPanelShowRequested;
+            DungeonEvents.OnRoomChoicesUpdateRequested -= OnRoomChoicesUpdateRequested;
         }
         
         /// <summary>
@@ -149,6 +156,16 @@ namespace MonoChrome
                     ShowRestPanel();
                     break;
             }
+        }
+
+        /// <summary>
+        /// 방 선택지 업데이트 이벤트 핸들러
+        /// </summary>
+        private void OnRoomChoicesUpdateRequested(List<RoomChoice> choices)
+        {
+            Debug.Log($"DungeonUI: 방 선택지 업데이트 요청 수신 - {choices.Count}개 선택지");
+            _currentRoomChoices = new List<RoomChoice>(choices);
+            ShowRoomChoices(choices);
         }
         
         /// <summary>
@@ -1068,5 +1085,211 @@ namespace MonoChrome
                 }
             }
         }
+
+        #region 턴 기반 방 선택지 시스템
+
+        /// <summary>
+        /// 방 선택지들을 UI에 표시 (턴 기반 시스템)
+        /// </summary>
+        private void ShowRoomChoices(List<RoomChoice> choices)
+        {
+            Debug.Log($"DungeonUI: 방 선택지 표시 시작 - {choices.Count}개");
+            
+            if (roomSelectionPanel != null)
+            {
+                roomSelectionPanel.SetActive(true);
+            }
+
+            // 모든 버튼을 우선 비활성화
+            for (int i = 0; i < roomButtons.Length; i++)
+            {
+                if (roomButtons[i] != null)
+                {
+                    if (i < choices.Count)
+                    {
+                        roomButtons[i].gameObject.SetActive(true);
+                        SetupRoomChoiceButton(i, choices[i]);
+                    }
+                    else
+                    {
+                        roomButtons[i].gameObject.SetActive(false);
+                    }
+                }
+            }
+
+            Debug.Log($"DungeonUI: 방 선택지 표시 완료");
+        }
+
+        /// <summary>
+        /// RoomChoice 데이터를 사용하여 버튼 설정
+        /// </summary>
+        private void SetupRoomChoiceButton(int index, RoomChoice choice)
+        {
+            if (index < 0 || index >= roomButtons.Length || choice == null)
+            {
+                Debug.LogError($"DungeonUI: Invalid parameters for SetupRoomChoiceButton - index: {index}, choice: {choice != null}");
+                return;
+            }
+
+            Debug.Log($"DungeonUI: 방 선택지 버튼 설정 - {index}번 버튼: {choice.Type} ({choice.SensoryHint})");
+
+            try
+            {
+                // 방 아이콘 설정 (타입별 명확한 아이콘)
+                if (roomTypeIcons != null && index < roomTypeIcons.Length && roomTypeIcons[index] != null)
+                {
+                    roomTypeIcons[index].sprite = GetRoomIcon(choice.Type);
+                    roomTypeIcons[index].color = GetRoomIconColor(choice.Type);
+                }
+
+                // 방 설명 설정 (감각 힌트 사용)
+                if (roomDescriptions != null && index < roomDescriptions.Length && roomDescriptions[index] != null)
+                {
+                    roomDescriptions[index].text = choice.SensoryHint;
+                    
+                    // 한글 폰트 적용
+                    if (FontManager.Instance != null)
+                    {
+                        FontManager.Instance.ApplyKoreanFont(roomDescriptions[index]);
+                    }
+                }
+
+                // 힌트 텍스트 설정 (방 타입과 턴 정보)
+                if (roomHintTexts != null && index < roomHintTexts.Length && roomHintTexts[index] != null)
+                {
+                    string typeText = GetRoomTypeText(choice.Type);
+                    roomHintTexts[index].text = $"{choice.TurnNumber}턴 • {typeText}";
+                    roomHintTexts[index].color = choice.HintColor;
+                    
+                    if (FontManager.Instance != null)
+                    {
+                        FontManager.Instance.ApplyKoreanFont(roomHintTexts[index]);
+                    }
+                }
+
+                // 성공률 표시 (이벤트인 경우)
+                SetupSuccessRateDisplay(index, choice);
+
+                // 힌트 배경 색상 설정
+                if (roomHintBackgrounds != null && index < roomHintBackgrounds.Length && roomHintBackgrounds[index] != null)
+                {
+                    Color backgroundColor = choice.HintColor;
+                    backgroundColor.a = 0.3f; // 투명도 조정
+                    roomHintBackgrounds[index].color = backgroundColor;
+                }
+
+                // 버튼 클릭 이벤트 설정
+                Button button = roomButtons[index];
+                button.onClick.RemoveAllListeners();
+                
+                // RoomChoice를 캡처하여 클릭 이벤트 등록
+                RoomChoice capturedChoice = choice;
+                button.onClick.AddListener(() => {
+                    Debug.Log($"DungeonUI: 방 선택지 버튼 클릭 - {capturedChoice.TurnNumber}턴 {capturedChoice.Type}");
+                    OnRoomChoiceSelected(capturedChoice);
+                });
+
+                button.interactable = true;
+
+                Debug.Log($"DungeonUI: 방 선택지 버튼 {index} 설정 완료");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"DungeonUI: 방 선택지 버튼 {index} 설정 실패: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 성공률 표시 설정
+        /// </summary>
+        private void SetupSuccessRateDisplay(int index, RoomChoice choice)
+        {
+            // 성공률 객체 표시/숨김
+            if (roomSuccessRateObjects != null && index < roomSuccessRateObjects.Length && roomSuccessRateObjects[index] != null)
+            {
+                bool shouldShow = choice.Type == NodeType.Event && choice.ShowSuccessRate;
+                roomSuccessRateObjects[index].SetActive(shouldShow);
+            }
+
+            // 성공률 텍스트 설정
+            if (roomSuccessRateTexts != null && index < roomSuccessRateTexts.Length && roomSuccessRateTexts[index] != null)
+            {
+                if (choice.Type == NodeType.Event)
+                {
+                    // 임시로 청각 감각으로 계산 (추후 실제 플레이어 감각으로 변경)
+                    SenseType playerSense = SenseType.Auditory;
+                    string rateText = choice.GetSuccessRateText(playerSense);
+                    
+                    if (choice.HasSenseBonus(playerSense))
+                    {
+                        roomSuccessRateTexts[index].text = $"성공률: {rateText} ⭐";
+                        roomSuccessRateTexts[index].color = Color.yellow;
+                    }
+                    else
+                    {
+                        roomSuccessRateTexts[index].text = $"성공률: {rateText}";
+                        roomSuccessRateTexts[index].color = Color.white;
+                    }
+                    
+                    if (FontManager.Instance != null)
+                    {
+                        FontManager.Instance.ApplyKoreanFont(roomSuccessRateTexts[index]);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 방 타입에 따른 색상 반환
+        /// </summary>
+        private Color GetRoomIconColor(NodeType type)
+        {
+            return type switch
+            {
+                NodeType.Combat => new Color(1f, 0.4f, 0.4f),      // 빨간색
+                NodeType.Event => new Color(1f, 1f, 0.4f),         // 노란색
+                NodeType.Shop => new Color(0.4f, 1f, 0.4f),        // 초록색
+                NodeType.Rest => new Color(0.4f, 0.4f, 1f),        // 파란색
+                NodeType.MiniBoss => new Color(1f, 0.6f, 0f),      // 주황색
+                NodeType.Boss => new Color(0.6f, 0f, 0.6f),        // 보라색
+                _ => Color.white
+            };
+        }
+
+        /// <summary>
+        /// 방 타입 텍스트 반환
+        /// </summary>
+        private string GetRoomTypeText(NodeType type)
+        {
+            return type switch
+            {
+                NodeType.Combat => "전투",
+                NodeType.Event => "이벤트",
+                NodeType.Shop => "상점",
+                NodeType.Rest => "휴식",
+                NodeType.MiniBoss => "미니보스",
+                NodeType.Boss => "보스",
+                _ => "알 수 없음"
+            };
+        }
+
+        /// <summary>
+        /// 방 선택지가 선택되었을 때 처리
+        /// </summary>
+        private void OnRoomChoiceSelected(RoomChoice selectedChoice)
+        {
+            Debug.Log($"DungeonUI: 방 선택 완료 - {selectedChoice.TurnNumber}턴 {selectedChoice.Type}: {selectedChoice.SensoryHint}");
+            
+            // 방 선택 패널 숨기기
+            if (roomSelectionPanel != null)
+            {
+                roomSelectionPanel.SetActive(false);
+            }
+
+            // 선택 완료 이벤트 발행
+            DungeonEvents.NotifyRoomChoiceSelected(selectedChoice);
+        }
+
+        #endregion
     }
 }

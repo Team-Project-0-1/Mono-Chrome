@@ -114,7 +114,7 @@ namespace MonoChrome.Core
                 GameState.Shop => from == GameState.Dungeon,
                 GameState.Rest => from == GameState.Dungeon,
                 GameState.GameOver => from is GameState.Combat or GameState.Event,
-                GameState.Victory => from == GameState.Combat,
+                GameState.Victory => from is GameState.Combat or GameState.Dungeon,
                 GameState.MainMenu => true, // 언제든 메인메뉴로 복귀 가능
                 GameState.Paused => from != GameState.MainMenu, // 메인메뉴 제외 모든 상태에서 일시정지 가능
                 _ => false
@@ -136,6 +136,9 @@ namespace MonoChrome.Core
 
         // 이벤트 처리 완료 후 던전으로 복귀
         public void CompleteRoomActivity() => TryChangeState(GameState.Dungeon);
+        
+        // 던전 완료 처리 - 승리 또는 다음 스테이지로 이동
+        public void CompleteDungeon() => TryChangeState(GameState.Victory);
         #endregion
     }
 }

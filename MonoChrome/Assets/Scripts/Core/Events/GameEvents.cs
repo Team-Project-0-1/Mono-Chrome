@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using MonoChrome;
+using MonoChrome.Systems.Dungeon;
 
 namespace MonoChrome.Events
 {
@@ -24,6 +25,15 @@ namespace MonoChrome.Events
 
         /// <summary>방 활동 완료 이벤트</summary>
         public static event Action OnRoomActivityCompleted;
+
+        /// <summary>턴 기반 방 선택지 업데이트 이벤트</summary>
+        public static event Action<List<RoomChoice>> OnRoomChoicesUpdateRequested;
+
+        /// <summary>방 선택 완료 이벤트</summary>
+        public static event Action<RoomChoice> OnRoomChoiceSelected;
+
+        /// <summary>던전 완료 이벤트</summary>
+        public static event Action<int> OnDungeonCompleted;
 
         // 이벤트 발행 메서드들
         public static void RequestDungeonGeneration(int stageIndex)
@@ -56,6 +66,24 @@ namespace MonoChrome.Events
         public static void NotifyRoomActivityCompleted()
             => OnRoomActivityCompleted?.Invoke();
 
+        public static void RequestRoomChoicesUpdate(List<RoomChoice> choices)
+        {
+            Debug.Log($"[DungeonEvents] 방 선택지 업데이트 요청: {choices.Count}개 선택지");
+            OnRoomChoicesUpdateRequested?.Invoke(choices);
+        }
+
+        public static void NotifyRoomChoiceSelected(RoomChoice selectedChoice)
+        {
+            Debug.Log($"[DungeonEvents] 방 선택 완료: {selectedChoice.TurnNumber}턴 {selectedChoice.Type}");
+            OnRoomChoiceSelected?.Invoke(selectedChoice);
+        }
+
+        public static void NotifyDungeonCompleted(int stageIndex)
+        {
+            Debug.Log($"[DungeonEvents] 던전 완료: 스테이지 {stageIndex + 1}");
+            OnDungeonCompleted?.Invoke(stageIndex);
+        }
+
         /// <summary>현재 던전 생성 이벤트 구독자 수 확인</summary>
         public static int GetSubscriberCount()
         {
@@ -70,6 +98,9 @@ namespace MonoChrome.Events
             OnNodeMoveRequested = null;
             OnNodeMoveCompleted = null;
             OnRoomActivityCompleted = null;
+            OnRoomChoicesUpdateRequested = null;
+            OnRoomChoiceSelected = null;
+            OnDungeonCompleted = null;
         }
 
 
