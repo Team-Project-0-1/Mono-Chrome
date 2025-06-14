@@ -75,6 +75,7 @@ namespace MonoChrome.Core
         // 핵심 시스템 상태 추적
         private bool _isInitialized = false;
         private bool _systemsReady = false;
+        private bool _isCombatInitializing = false;
         
         // 현재 게임 데이터 (단순화)
         private string _selectedCharacterName = "";
@@ -428,34 +429,26 @@ namespace MonoChrome.Core
         {
             LogDebug($"게임 상태 변경: {previousState} -> {newState}");
             
-            // 상태별 특수 처리
-            switch (newState)
-            {
-                case GameStateMachine.GameState.CharacterSelection:
-                    DungeonEvents.UIEvents.RequestPanelShow("CharacterSelectionPanel");
-                    break;
-                    
-                case GameStateMachine.GameState.Dungeon:
-                    DungeonEvents.UIEvents.RequestPanelShow("DungeonPanel");
-                    break;
-                    
-                case GameStateMachine.GameState.Combat:
-                    DungeonEvents.UIEvents.RequestPanelShow("CombatPanel");
-                    break;
-                    
-                case GameStateMachine.GameState.GameOver:
-                    DungeonEvents.UIEvents.RequestPanelShow("GameOverPanel");
-                    break;
-                    
-                case GameStateMachine.GameState.Victory:
-                    DungeonEvents.UIEvents.RequestPanelShow("VictoryPanel");
-                    break;
-            }
+            // UI 패널 전환은 UIController가 GameStateMachine.OnStateChanged를 통해 직접 처리하므로
+            // 여기서는 상태별 비즈니스 로직만 처리
         }
 
         private void OnGameStateEntered(GameStateMachine.GameState state)
         {
             LogDebug($"게임 상태 진입: {state}");
+            
+            // 던전 상태 진입 시 이벤트 재구독 (ClearAllEvents 호출로 인한 구독 해제 대응)
+            if (state == GameStateMachine.GameState.Dungeon)
+            {
+                LogDebug("던전 진입 - 전투 이벤트 재구독 시도");
+                // 중복 구독 방지를 위해 먼저 해제
+                DungeonEvents.CombatEvents.OnCombatStartRequested -= OnCombatStartRequested;
+                DungeonEvents.CombatEvents.OnCombatEndRequested -= OnCombatEndRequested;
+                // 재구독
+                DungeonEvents.CombatEvents.OnCombatStartRequested += OnCombatStartRequested;
+                DungeonEvents.CombatEvents.OnCombatEndRequested += OnCombatEndRequested;
+                LogDebug("전투 이벤트 재구독 완료");
+            }
             
             // 상태 진입 시 특수 로직
             switch (state)
@@ -499,9 +492,24 @@ namespace MonoChrome.Core
 
         private void OnCombatStartRequested(string enemyType, CharacterType characterType)
         {
-            LogDebug($"전투 시작 요청: {enemyType}, {characterType}");
+            LogDebug($"[MasterGameManager] 전투 시작 요청 수신: {enemyType}, {characterType}");
             
-            _stateMachine?.TryChangeState(GameStateMachine.GameState.Combat);
+            // 이미 전투 초기화 중인지 확인
+            if (_isCombatInitializing)
+            {
+                LogDebug("이미 전투 초기화 중 - 요청 무시");
+                return;
+            }
+            
+            // 이미 Combat 상태인지 확인
+            if (_stateMachine.CurrentState != GameStateMachine.GameState.Combat)
+            {
+                _stateMachine?.TryChangeState(GameStateMachine.GameState.Combat);
+            }
+            else
+            {
+                LogDebug("이미 Combat 상태임 - 상태 전환 생략");
+            }
             
             // CombatSystem에게 전투 시작 요청
             StartCoroutine(InitializeCombatSafely(enemyType, characterType));
@@ -526,25 +534,46 @@ namespace MonoChrome.Core
         /// </summary>
         private IEnumerator InitializeCombatSafely(string enemyType, CharacterType characterType)
         {
-            // CombatSystem 준비 대기
-            var combatSystem = FindFirstObjectByType<CombatSystem>();
-            while (combatSystem == null)
-            {
-                yield return null;
-                combatSystem = FindFirstObjectByType<CombatSystem>();
-            }
+            _isCombatInitializing = true;
             
             try
             {
-                // 전투 초기화
-                combatSystem.InitializeCombat();
-                LogDebug("전투 초기화 완료");
+                // CombatSystem 준비 대기
+                var combatSystem = FindFirstObjectByType<CombatSystem>();
+                while (combatSystem == null)
+                {
+                    yield return null;
+                    combatSystem = FindFirstObjectByType<CombatSystem>();
+                }
+
+                bool initializationSucceeded = false;
+
+                try
+                {
+                    // 전투 초기화
+                    combatSystem.InitializeCombat();
+                    LogDebug("전투 시스템 초기화 완료");
+                    initializationSucceeded = true;
+                }
+                catch (Exception ex)
+                {
+                    LogDebug($"전투 초기화 실패: {ex.Message}");
+                }
+
+                if (initializationSucceeded)
+                {
+                    yield return new WaitForSeconds(0.1f); // 짧은 지연 후 전투 시작
+                    // 직접 전투 시작 - 이벤트 루프 방지
+                    combatSystem.StartCombat(enemyType, characterType);
+                    LogDebug($"전투 시작: {enemyType}, {characterType}");
+                }
             }
-            catch (Exception ex)
+            finally
             {
-                LogDebug($"전투 초기화 실패: {ex.Message}");
+                _isCombatInitializing = false;
             }
         }
+
         #endregion
 
         #region Public API - 게임 플로우 제어

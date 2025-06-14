@@ -170,7 +170,10 @@ namespace MonoChrome.Events
 
             // 이벤트 발행 메서드들
             public static void RequestCombatStart(string enemyType, CharacterType type)
-                => OnCombatStartRequested?.Invoke(enemyType, type);
+            {
+                Debug.Log($"[DungeonEvents.CombatEvents] 전투 시작 이벤트 발행: {enemyType}, {type}");
+                OnCombatStartRequested?.Invoke(enemyType, type);
+            }
 
             public static void NotifyCombatInitialized()
                 => OnCombatInitialized?.Invoke();

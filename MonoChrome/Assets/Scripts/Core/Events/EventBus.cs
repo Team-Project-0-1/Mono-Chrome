@@ -117,6 +117,7 @@ namespace MonoChrome.Core
         public void ClearAllEvents()
         {
             Debug.Log("[EventBus] ClearAllEvents() 호출됨 - 모든 이벤트 구독 해제 시작");
+            Debug.Log($"[EventBus] 호출 스택:\n{System.Environment.StackTrace}");
             
             // 각 이벤트 클래스의 Clear 메서드 호출
             DungeonEvents.ClearAllSubscriptions();

@@ -284,7 +284,7 @@ namespace MonoChrome
             GameObject playerHealthText = new GameObject("PlayerHealthText");
             playerHealthText.transform.SetParent(playerHealthBar.transform, false);
             Text playerText = playerHealthText.AddComponent<Text>();
-            playerText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            playerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             playerText.alignment = TextAnchor.MiddleCenter;
             playerText.text = "100/100";
             RectTransform playerTextRect = playerHealthText.GetComponent<RectTransform>();
@@ -308,7 +308,7 @@ namespace MonoChrome
             GameObject enemyHealthText = new GameObject("EnemyHealthText");
             enemyHealthText.transform.SetParent(enemyHealthBar.transform, false);
             Text enemyText = enemyHealthText.AddComponent<Text>();
-            enemyText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            enemyText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             enemyText.alignment = TextAnchor.MiddleCenter;
             enemyText.text = "100/100";
             RectTransform enemyTextRect = enemyHealthText.GetComponent<RectTransform>();
@@ -372,7 +372,7 @@ namespace MonoChrome
             GameObject activeSkillText = new GameObject("Text");
             activeSkillText.transform.SetParent(activeSkillButton.transform, false);
             Text activeBtnText = activeSkillText.AddComponent<Text>();
-            activeBtnText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            activeBtnText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             activeBtnText.alignment = TextAnchor.MiddleCenter;
             activeBtnText.text = "액티브 스킬";
             activeBtnText.color = Color.black;
@@ -399,7 +399,7 @@ namespace MonoChrome
             GameObject endTurnText = new GameObject("Text");
             endTurnText.transform.SetParent(endTurnButton.transform, false);
             Text endTurnBtnText = endTurnText.AddComponent<Text>();
-            endTurnBtnText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            endTurnBtnText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             endTurnBtnText.alignment = TextAnchor.MiddleCenter;
             endTurnBtnText.text = "턴 종료";
             endTurnBtnText.color = Color.black;

@@ -1305,8 +1305,13 @@ namespace MonoChrome
             switch (roomType)
             {
                 case NodeType.Combat:
-                    Debug.Log("DungeonUI: 전투 상태로 전환 요청");
-                    gameStateMachine.StartCombat();
+                    Debug.Log("DungeonUI: 전투 시작 요청");
+                    // GameStateMachine을 직접 호출하지 않고 전투 이벤트를 발행
+                    string enemyType = GetEnemyTypeForCombat(roomType);
+                    CharacterType characterType = GetCharacterTypeForCombat(roomType);
+                    Debug.Log($"DungeonUI: 전투 이벤트 발행 시도 - 적: {enemyType}, 타입: {characterType}");
+                    DungeonEvents.CombatEvents.RequestCombatStart(enemyType, characterType);
+                    Debug.Log("DungeonUI: 전투 이벤트 발행 완료");
                     break;
                     
                 case NodeType.Event:
@@ -1326,14 +1331,45 @@ namespace MonoChrome
                     
                 case NodeType.MiniBoss:
                 case NodeType.Boss:
-                    Debug.Log("DungeonUI: 보스 전투 상태로 전환 요청");
-                    gameStateMachine.StartCombat();
+                    Debug.Log($"DungeonUI: {roomType} 전투 시작 요청");
+                    // GameStateMachine을 직접 호출하지 않고 전투 이벤트를 발행
+                    string bossEnemyType = GetEnemyTypeForCombat(roomType);
+                    CharacterType bossCharacterType = GetCharacterTypeForCombat(roomType);
+                    DungeonEvents.CombatEvents.RequestCombatStart(bossEnemyType, bossCharacterType);
                     break;
                     
                 default:
                     Debug.LogWarning($"DungeonUI: 알 수 없는 방 타입: {roomType}");
                     break;
             }
+        }
+
+        /// <summary>
+        /// 전투 타입에 따른 적 타입 반환
+        /// </summary>
+        private string GetEnemyTypeForCombat(NodeType nodeType)
+        {
+            return nodeType switch
+            {
+                NodeType.Combat => "루멘 리퍼",
+                NodeType.MiniBoss => "그림자 수호자",
+                NodeType.Boss => "검은 심연",
+                _ => "기본 적"
+            };
+        }
+
+        /// <summary>
+        /// 전투 타입에 따른 캐릭터 타입 반환
+        /// </summary>
+        private CharacterType GetCharacterTypeForCombat(NodeType nodeType)
+        {
+            return nodeType switch
+            {
+                NodeType.Combat => CharacterType.Normal,
+                NodeType.MiniBoss => CharacterType.MiniBoss,
+                NodeType.Boss => CharacterType.Boss,
+                _ => CharacterType.Normal
+            };
         }
 
         #endregion

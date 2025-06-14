@@ -217,7 +217,7 @@ namespace MonoChrome
             text.color = Color.black;
 
             // TODO: 폰트 설정
-            // text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            // text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
 
             // 버튼 이벤트 등록
             button.onClick.AddListener(() => {

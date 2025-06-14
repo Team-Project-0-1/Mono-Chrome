@@ -334,7 +334,7 @@ namespace MonoChrome
             text.fontStyle = FontStyle.Bold;
             
             // 폰트 설정 (기본 폰트 사용)
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             
             if (prefix == "Player")
                 playerHealthText = text;
@@ -436,7 +436,7 @@ namespace MonoChrome
             enemyIntentionText.color = Color.yellow;
             enemyIntentionText.fontSize = 16;
             enemyIntentionText.fontStyle = FontStyle.Bold;
-            enemyIntentionText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            enemyIntentionText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             
             Debug.Log("CombatUI: EnemyIntentionText created");
         }
@@ -651,7 +651,7 @@ namespace MonoChrome
             textRT.offsetMax = Vector2.zero;
             
             Text text = textObj.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.alignment = TextAnchor.MiddleCenter;
             text.fontSize = 18;
             text.color = Color.white;
@@ -778,7 +778,7 @@ namespace MonoChrome
             nameRT.offsetMax = new Vector2(0, 15);
             
             Text nameText = nameTextObj.AddComponent<Text>();
-            nameText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            nameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             nameText.fontSize = 16;
             nameText.color = Color.white;
             nameText.fontStyle = FontStyle.Bold;
@@ -794,7 +794,7 @@ namespace MonoChrome
             effectRT.offsetMax = new Vector2(0, 15);
             
             Text effectText = effectTextObj.AddComponent<Text>();
-            effectText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            effectText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             effectText.fontSize = 11;
             effectText.color = new Color(0.8f, 0.8f, 0.8f);
             effectText.alignment = TextAnchor.MiddleLeft;
@@ -809,7 +809,7 @@ namespace MonoChrome
             powerRT.offsetMax = new Vector2(-10, 0);
             
             Text powerText = powerTextObj.AddComponent<Text>();
-            powerText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            powerText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             powerText.fontSize = 12;
             powerText.color = Color.yellow;
             powerText.alignment = TextAnchor.MiddleCenter;
@@ -1050,7 +1050,7 @@ namespace MonoChrome
             textRT.offsetMax = Vector2.zero;
             
             Text text = textObj.AddComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.alignment = TextAnchor.MiddleCenter;
             text.fontSize = 8;
             text.color = Color.white;

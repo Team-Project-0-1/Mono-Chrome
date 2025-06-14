@@ -117,6 +117,335 @@ namespace MonoChrome.Systems.Combat
             Debug.Log("CombatSystem: Ready for combat");
         }
         
+        /// <summary>
+        /// 전투 시작 (적과 캐릭터 타입으로)
+        /// </summary>
+        public void StartCombat(string enemyType, CharacterType characterType)
+        {
+            Debug.Log($"CombatSystem: Starting combat against {enemyType} with character type {characterType}");
+            
+            // 전투 시작 로직
+            InitializeForNewCombat();
+            
+            // UI 초기화
+            InitializeCombatUI();
+            
+            // 첫 턴 시작
+            StartPlayerTurn();
+        }
+        
+        /// <summary>
+        /// 전투 UI 초기화
+        /// </summary>
+        private void InitializeCombatUI()
+        {
+            // CombatPanel을 통해 CombatUI 찾기
+            var combatUI = FindFirstObjectByType<CombatUI>();
+            
+            // CombatUI가 없으면 CombatPanel에서 생성 시도
+            if (combatUI == null)
+            {
+                var combatPanel = GameObject.Find("CombatPanel");
+                if (combatPanel != null)
+                {
+                    combatUI = combatPanel.GetComponent<CombatUI>();
+                    if (combatUI == null)
+                    {
+                        // CombatUI 컴포넌트가 없으면 추가
+                        combatUI = combatPanel.AddComponent<CombatUI>();
+                        Debug.Log("CombatSystem: Added CombatUI component to CombatPanel");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("CombatSystem: CombatPanel not found! Creating basic UI structure...");
+                    CreateBasicCombatUI();
+                    combatUI = FindFirstObjectByType<CombatUI>();
+                }
+            }
+            
+            if (combatUI != null)
+            {
+                combatUI.InitializeCombatUI();
+                Debug.Log("CombatSystem: Combat UI initialized successfully");
+            }
+            else
+            {
+                Debug.LogWarning("CombatSystem: Combat UI not found after creation attempt");
+            }
+        }
+        
+        /// <summary>
+        /// 기본 전투 UI 구조 생성
+        /// </summary>
+        private void CreateBasicCombatUI()
+        {
+            // Canvas 찾기
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null)
+            {
+                Debug.LogError("CombatSystem: No Canvas found for UI creation!");
+                return;
+            }
+            
+            // CombatPanel 생성
+            GameObject combatPanel = new GameObject("CombatPanel");
+            combatPanel.transform.SetParent(canvas.transform, false);
+            
+            // RectTransform 설정 (전체 화면 차지)
+            RectTransform rectTransform = combatPanel.AddComponent<RectTransform>();
+            rectTransform.anchorMin = Vector2.zero;
+            rectTransform.anchorMax = Vector2.one;
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+            
+            // 필수 UI 요소들 생성
+            CreateCombatUIElements(combatPanel);
+            
+            // CombatUI 컴포넌트 추가 (마지막에 추가해야 ValidateComponents가 제대로 작동)
+            combatPanel.AddComponent<CombatUI>();
+            
+            // 기본적으로 비활성화 (UIController가 관리)
+            combatPanel.SetActive(false);
+            
+            Debug.Log("CombatSystem: Created complete CombatPanel with all required UI elements");
+        }
+        
+        /// <summary>
+        /// 전투 UI 요소들 생성
+        /// </summary>
+        private void CreateCombatUIElements(GameObject combatPanel)
+        {
+            // 플레이어 체력바 생성
+            CreateHealthBar(combatPanel, "PlayerHealthBar", new Vector2(0.1f, 0.85f), new Vector2(0.4f, 0.95f));
+            
+            // 적 체력바 생성
+            CreateHealthBar(combatPanel, "EnemyHealthBar", new Vector2(0.6f, 0.85f), new Vector2(0.9f, 0.95f));
+            
+            // 동전 영역 생성
+            CreateCoinArea(combatPanel);
+            
+            // 패턴 영역 생성
+            CreatePatternArea(combatPanel);
+            
+            // 컨트롤 버튼들 생성
+            CreateControlButtons(combatPanel);
+            
+            // 정보 텍스트들 생성
+            CreateInfoTexts(combatPanel);
+        }
+        
+        /// <summary>
+        /// 체력바 생성
+        /// </summary>
+        private void CreateHealthBar(GameObject parent, string name, Vector2 anchorMin, Vector2 anchorMax)
+        {
+            GameObject healthBarObj = new GameObject(name);
+            healthBarObj.transform.SetParent(parent.transform, false);
+            
+            RectTransform healthBarRT = healthBarObj.AddComponent<RectTransform>();
+            healthBarRT.anchorMin = anchorMin;
+            healthBarRT.anchorMax = anchorMax;
+            healthBarRT.offsetMin = Vector2.zero;
+            healthBarRT.offsetMax = Vector2.zero;
+            
+            Debug.Log($"CombatSystem: Created {name}");
+        }
+        
+        /// <summary>
+        /// 동전 영역 생성
+        /// </summary>
+        private void CreateCoinArea(GameObject parent)
+        {
+            GameObject coinArea = new GameObject("CoinArea");
+            coinArea.transform.SetParent(parent.transform, false);
+            
+            RectTransform coinAreaRT = coinArea.AddComponent<RectTransform>();
+            coinAreaRT.anchorMin = new Vector2(0.2f, 0.5f);
+            coinAreaRT.anchorMax = new Vector2(0.8f, 0.7f);
+            coinAreaRT.offsetMin = Vector2.zero;
+            coinAreaRT.offsetMax = Vector2.zero;
+            
+            Debug.Log("CombatSystem: Created CoinArea");
+        }
+        
+        /// <summary>
+        /// 패턴 영역 생성
+        /// </summary>
+        private void CreatePatternArea(GameObject parent)
+        {
+            GameObject patternArea = new GameObject("PatternArea");
+            patternArea.transform.SetParent(parent.transform, false);
+            
+            RectTransform patternAreaRT = patternArea.AddComponent<RectTransform>();
+            patternAreaRT.anchorMin = new Vector2(0.1f, 0.1f);
+            patternAreaRT.anchorMax = new Vector2(0.9f, 0.4f);
+            patternAreaRT.offsetMin = Vector2.zero;
+            patternAreaRT.offsetMax = Vector2.zero;
+            
+            Debug.Log("CombatSystem: Created PatternArea");
+        }
+        
+        /// <summary>
+        /// 컨트롤 버튼들 생성
+        /// </summary>
+        private void CreateControlButtons(GameObject parent)
+        {
+            // 액티브 스킬 버튼
+            GameObject activeSkillBtn = new GameObject("ActiveSkillButton");
+            activeSkillBtn.transform.SetParent(parent.transform, false);
+            
+            RectTransform activeSkillRT = activeSkillBtn.AddComponent<RectTransform>();
+            activeSkillRT.anchorMin = new Vector2(0.1f, 0.02f);
+            activeSkillRT.anchorMax = new Vector2(0.3f, 0.08f);
+            activeSkillRT.offsetMin = Vector2.zero;
+            activeSkillRT.offsetMax = Vector2.zero;
+            
+            activeSkillBtn.AddComponent<UnityEngine.UI.Image>();
+            activeSkillBtn.AddComponent<UnityEngine.UI.Button>();
+            
+            // 턴 종료 버튼
+            GameObject endTurnBtn = new GameObject("EndTurnButton");
+            endTurnBtn.transform.SetParent(parent.transform, false);
+            
+            RectTransform endTurnRT = endTurnBtn.AddComponent<RectTransform>();
+            endTurnRT.anchorMin = new Vector2(0.7f, 0.02f);
+            endTurnRT.anchorMax = new Vector2(0.9f, 0.08f);
+            endTurnRT.offsetMin = Vector2.zero;
+            endTurnRT.offsetMax = Vector2.zero;
+            
+            endTurnBtn.AddComponent<UnityEngine.UI.Image>();
+            endTurnBtn.AddComponent<UnityEngine.UI.Button>();
+            
+            Debug.Log("CombatSystem: Created control buttons");
+        }
+        
+        /// <summary>
+        /// 정보 텍스트들 생성
+        /// </summary>
+        private void CreateInfoTexts(GameObject parent)
+        {
+            // 턴 정보 텍스트
+            GameObject turnInfoObj = new GameObject("TurnInfoText");
+            turnInfoObj.transform.SetParent(parent.transform, false);
+            
+            RectTransform turnInfoRT = turnInfoObj.AddComponent<RectTransform>();
+            turnInfoRT.anchorMin = new Vector2(0.4f, 0.02f);
+            turnInfoRT.anchorMax = new Vector2(0.6f, 0.08f);
+            turnInfoRT.offsetMin = Vector2.zero;
+            turnInfoRT.offsetMax = Vector2.zero;
+            
+            UnityEngine.UI.Text turnInfoText = turnInfoObj.AddComponent<UnityEngine.UI.Text>();
+            turnInfoText.text = "Turn: 1";
+            turnInfoText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            turnInfoText.alignment = TextAnchor.MiddleCenter;
+            turnInfoText.color = Color.white;
+            
+            Debug.Log("CombatSystem: Created info texts");
+        }
+        
+        /// <summary>
+        /// 새 전투를 위한 초기화
+        /// </summary>
+        private void InitializeForNewCombat()
+        {
+            // 모든 동전 상태 초기화
+            for (int i = 0; i < _coinCount; i++)
+            {
+                _coinStates[i] = false;
+                _lockedCoins[i] = false;
+            }
+            
+            Debug.Log("CombatSystem: Initialized for new combat");
+        }
+        
+        /// <summary>
+        /// 플레이어 턴 시작
+        /// </summary>
+        private void StartPlayerTurn()
+        {
+            Debug.Log("CombatSystem: Starting player turn");
+            
+            // 동전 던지기
+            FlipCoins();
+            
+            // UI 업데이트
+            UpdateCombatUI();
+            
+            // 플레이어 턴 준비 완료 알림
+            Debug.Log("CombatSystem: Player turn ready with updated UI");
+        }
+        
+        /// <summary>
+        /// 전투 UI 업데이트
+        /// </summary>
+        private void UpdateCombatUI()
+        {
+            var combatUI = FindFirstObjectByType<CombatUI>();
+            if (combatUI != null)
+            {
+                // 동전 결과 업데이트
+                var coinResults = GetCoinResults();
+                combatUI.UpdateCoinUI(coinResults);
+                Debug.Log($"CombatSystem: Updated coin UI with {coinResults.Count} coins");
+                
+                // 사용 가능한 패턴 업데이트 (테스트용 패턴 생성)
+                var testPatterns = CreateTestPatterns();
+                combatUI.UpdatePatternUI(testPatterns);
+                Debug.Log($"CombatSystem: Updated pattern UI with {testPatterns.Count} patterns");
+                
+                // 턴 카운터 업데이트
+                combatUI.UpdateTurnCounter(_turnCount);
+            }
+            else
+            {
+                Debug.LogError("CombatSystem: CombatUI not found for UI update");
+            }
+        }
+        
+        /// <summary>
+        /// 테스트용 패턴 생성
+        /// </summary>
+        private List<Pattern> CreateTestPatterns()
+        {
+            var patterns = new List<Pattern>();
+            
+            // 기본 공격 패턴
+            var attackPattern = new Pattern
+            {
+                Name = "기본 공격",
+                Description = "적에게 피해를 가합니다",
+                IsAttack = true,
+                AttackBonus = 10,
+                DefenseBonus = 0
+            };
+            patterns.Add(attackPattern);
+            
+            // 기본 방어 패턴
+            var defensePattern = new Pattern
+            {
+                Name = "기본 방어",
+                Description = "방어력을 증가시킵니다",
+                IsAttack = false,
+                AttackBonus = 0,
+                DefenseBonus = 5
+            };
+            patterns.Add(defensePattern);
+            
+            // 강화 공격 패턴
+            var enhancedAttack = new Pattern
+            {
+                Name = "강화 공격",
+                Description = "강력한 피해를 가합니다",
+                IsAttack = true,
+                AttackBonus = 15,
+                DefenseBonus = 0
+            };
+            patterns.Add(enhancedAttack);
+            
+            return patterns;
+        }
+        
         private void InitializeCoinSystem()
         {
             _coinStates = new bool[_coinCount];
@@ -269,7 +598,7 @@ namespace MonoChrome.Systems.Combat
         /// </summary>
         private void HandleCombatStartRequest(string enemyType, CharacterType characterType)
         {
-            Debug.Log($"[CombatSystem] 전투 시작 요청: {enemyType}, {characterType}");
+            Debug.Log($"[CombatSystem] 전투 시작 요청 수신: {enemyType}, {characterType}");
 
             // 캐릭터들을 외부에서 받아옴
             var characterManager = CharacterManager.Instance;
