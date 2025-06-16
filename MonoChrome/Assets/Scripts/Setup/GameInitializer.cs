@@ -21,7 +21,9 @@ namespace MonoChrome.Setup
 #if UNITY_EDITOR
             if (initializeGameData)
             {
-                DataInitializer.GenerateGameData();
+                // GameDataGenerator 통합으로 DataInitializer 대체
+                Debug.Log("GameInitializer: 데이터 초기화는 GameDataGenerator를 사용해주세요.");
+                Debug.Log("메뉴: MonoChrome → Game Data Utility");
             }
 #endif
             if (createMasterGameManager && MasterGameManager.Instance == null)
@@ -38,7 +40,13 @@ namespace MonoChrome.Setup
         [MenuItem("MonoChrome/Run Full Setup")]
         public static void RunFullSetup()
         {
-            Initialize(createMasterGameManager: true, initializeGameData: true);
+            // 이제 MasterGameManager만 생성하고, 데이터 생성은 GameDataGenerator 사용
+            Initialize(createMasterGameManager: true, initializeGameData: false);
+            
+            // GameDataGenerator UI 창 열기
+            EditorApplication.delayCall += () => {
+                GameDataGenerator.ShowWindow();
+            };
         }
 #endif
 

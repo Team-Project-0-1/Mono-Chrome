@@ -303,91 +303,40 @@ namespace MonoChrome.Core.Data
         }
         
         /// <summary>
-        /// 기본 패턴들 생성 (응급용)
+        /// 기본 패턴들 생성 (응급용 - ScriptableObject 시스템 사용 불가 시)
         /// </summary>
         private List<Pattern> GetFallbackPatterns(bool[] coinStates)
         {
+            Debug.LogWarning("DataConnector: Using fallback pattern generation - ScriptableObject system failed");
+            
             List<Pattern> patterns = new List<Pattern>();
             
-            if (coinStates == null || coinStates.Length < 2)
+            // 최소한의 기본 패턴만 생성
+            patterns.Add(new Pattern
             {
-                // 기본 패턴 하나라도 반환
-                patterns.Add(new Pattern
-                {
-                    ID = 1,
-                    Name = "기본 공격",
-                    Description = "간단한 공격",
-                    IsAttack = true,
-                    PatternType = PatternType.Consecutive2,
-                    PatternValue = true,
-                    AttackBonus = 2,
-                    DefenseBonus = 0
-                });
-                return patterns;
-            }
+                ID = 1,
+                Name = "기본 공격",
+                Description = "기본적인 공격",
+                IsAttack = true,
+                PatternType = PatternType.Consecutive2,
+                PatternValue = true,
+                AttackBonus = 2,
+                DefenseBonus = 0
+            });
             
-            // 동전 상태를 분석해서 가능한 기본 패턴들 생성
-            if (HasConsecutivePattern(coinStates, true, 2))
+            patterns.Add(new Pattern
             {
-                patterns.Add(new Pattern
-                {
-                    ID = 1,
-                    Name = "앞면 2연",
-                    Description = "기본 공격 패턴",
-                    IsAttack = true,
-                    PatternType = PatternType.Consecutive2,
-                    PatternValue = true,
-                    AttackBonus = 2,
-                    DefenseBonus = 0
-                });
-            }
+                ID = 2,
+                Name = "기본 방어",
+                Description = "기본적인 방어",
+                IsAttack = false,
+                PatternType = PatternType.Consecutive2,
+                PatternValue = false,
+                AttackBonus = 0,
+                DefenseBonus = 2
+            });
             
-            if (HasConsecutivePattern(coinStates, false, 2))
-            {
-                patterns.Add(new Pattern
-                {
-                    ID = 2,
-                    Name = "뒷면 2연",
-                    Description = "기본 방어 패턴",
-                    IsAttack = false,
-                    PatternType = PatternType.Consecutive2,
-                    PatternValue = false,
-                    AttackBonus = 0,
-                    DefenseBonus = 2
-                });
-            }
-            
-            if (HasConsecutivePattern(coinStates, true, 3))
-            {
-                patterns.Add(new Pattern
-                {
-                    ID = 3,
-                    Name = "앞면 3연",
-                    Description = "강력한 공격",
-                    IsAttack = true,
-                    PatternType = PatternType.Consecutive3,
-                    PatternValue = true,
-                    AttackBonus = 4,
-                    DefenseBonus = 0
-                });
-            }
-            
-            if (HasConsecutivePattern(coinStates, false, 3))
-            {
-                patterns.Add(new Pattern
-                {
-                    ID = 4,
-                    Name = "뒷면 3연",
-                    Description = "강력한 방어",
-                    IsAttack = false,
-                    PatternType = PatternType.Consecutive3,
-                    PatternValue = false,
-                    AttackBonus = 0,
-                    DefenseBonus = 4
-                });
-            }
-            
-            Debug.Log($"DataConnector: {patterns.Count}개의 기본 패턴 생성");
+            Debug.LogWarning($"DataConnector: {patterns.Count}개의 폴백 패턴 생성");
             return patterns;
         }
         

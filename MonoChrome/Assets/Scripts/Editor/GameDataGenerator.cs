@@ -7,7 +7,7 @@ namespace MonoChrome.Editor
 {
     /// <summary>
     /// 포트폴리오 품질을 위한 완전한 게임 데이터 생성 도구
-    /// ScriptableObject 기반 데이터 관리 시스템 구축
+    /// ScriptableObject 기반 데이터 관리 시스템 구축 - 몬스터 패턴 포함
     /// </summary>
     public class GameDataGenerator : EditorWindow
     {
@@ -17,7 +17,7 @@ namespace MonoChrome.Editor
         {
             GameDataGenerator window = GetWindow<GameDataGenerator>();
             window.titleContent = new GUIContent("Game Data Utility");
-            window.minSize = new Vector2(500, 600);
+            window.minSize = new Vector2(500, 700);
             window.Show();
         }
         #endregion
@@ -25,6 +25,7 @@ namespace MonoChrome.Editor
         #region GUI Variables
         private bool _createCharacters = true;
         private bool _createPatterns = true;
+        private bool _createMonsterPatterns = true; // 새로 추가
         private bool _createManagers = true;
         private bool _createPrefabs = true;
         private bool _overwriteExisting = false;
@@ -70,12 +71,12 @@ namespace MonoChrome.Editor
         {
             GUILayout.Space(10);
             EditorGUILayout.LabelField("MONOCHROME: the Eclipse", _headerStyle);
-            EditorGUILayout.LabelField("MonoChrome 게임 데이터 유틸리티", EditorStyles.centeredGreyMiniLabel);
+            EditorGUILayout.LabelField("MonoChrome 게임 데이터 유틸리티 (v2.0)", EditorStyles.centeredGreyMiniLabel);
             GUILayout.Space(20);
             
             EditorGUILayout.HelpBox(
                 "이 도구는 ScriptableObject 기반의 완전한 게임 데이터를 생성합니다.\n" +
-                "캐릭터, 패턴, 매니저, UI 프리팹을 모두 자동으로 생성하여\n" +
+                "캐릭터, 플레이어/몬스터 패턴, 매니저를 모두 자동으로 생성하여\n" +
                 "포트폴리오 품질의 데이터 관리 시스템을 구축합니다.", 
                 MessageType.Info
             );
@@ -87,7 +88,8 @@ namespace MonoChrome.Editor
             EditorGUILayout.LabelField("생성 옵션", EditorStyles.boldLabel);
             
             _createCharacters = EditorGUILayout.Toggle("캐릭터 데이터 생성", _createCharacters);
-            _createPatterns = EditorGUILayout.Toggle("패턴 데이터 생성", _createPatterns);
+            _createPatterns = EditorGUILayout.Toggle("플레이어 패턴 생성", _createPatterns);
+            _createMonsterPatterns = EditorGUILayout.Toggle("몬스터 패턴 생성", _createMonsterPatterns);
             _createManagers = EditorGUILayout.Toggle("매니저 데이터 생성", _createManagers);
             _createPrefabs = EditorGUILayout.Toggle("UI 프리팹 생성", _createPrefabs);
             
@@ -114,18 +116,18 @@ namespace MonoChrome.Editor
             }
             if (GUILayout.Button("패턴만 생성"))
             {
-                GeneratePatternData();
+                GenerateAllPatternData();
             }
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("몬스터 패턴만"))
+            {
+                GenerateMonsterPatterns();
+            }
             if (GUILayout.Button("매니저만 생성"))
             {
                 GenerateManagerData();
-            }
-            if (GUILayout.Button("프리팹만 생성"))
-            {
-                GenerateUIPrefabs();
             }
             EditorGUILayout.EndHorizontal();
             
@@ -165,8 +167,8 @@ namespace MonoChrome.Editor
                 if (_createCharacters)
                     GenerateCharacterData();
                 
-                if (_createPatterns)
-                    GeneratePatternData();
+                if (_createPatterns || _createMonsterPatterns)
+                    GenerateAllPatternData();
                 
                 if (_createManagers)
                     GenerateManagerData();
@@ -203,6 +205,7 @@ namespace MonoChrome.Editor
                 "Assets/ScriptableObjects/Patterns/Tactile",
                 "Assets/ScriptableObjects/Patterns/Spiritual",
                 "Assets/ScriptableObjects/Patterns/Enemy",
+                "Assets/ScriptableObjects/Patterns/Boss",
                 "Assets/ScriptableObjects/Managers",
                 "Assets/Resources",
                 "Assets/Prefabs",
@@ -245,6 +248,149 @@ namespace MonoChrome.Editor
             CreateEnemyCharacter("검은 심연", CharacterType.Boss, "모든 빛을 삼키는 최종 포식자", 200, 15, 8, StatusEffectType.Curse, StatusEffectType.Seal);
             
             Debug.Log("GameDataGenerator: 캐릭터 데이터 생성 완료");
+        }
+        
+        /// <summary>
+        /// 모든 패턴 데이터 생성 (플레이어 + 몬스터)
+        /// </summary>
+        private void GenerateAllPatternData()
+        {
+            Debug.Log("GameDataGenerator: 모든 패턴 데이터 생성 시작");
+            
+            int patternId = 1;
+            
+            if (_createPatterns)
+            {
+                // 기본 패턴들
+                CreateBasicPatterns(ref patternId);
+                
+                // 감각별 특수 패턴들
+                GenerateSenseSpecificPatterns(ref patternId);
+            }
+            
+            if (_createMonsterPatterns)
+            {
+                // 몬스터 패턴들 (1000번대부터 시작)
+                patternId = 1000;
+                GenerateMonsterPatterns(ref patternId);
+            }
+            
+            // PatternDataManager 자동 업데이트
+            UpdatePatternDataManager();
+            
+            Debug.Log("GameDataGenerator: 모든 패턴 데이터 생성 완료");
+        }
+        
+        /// <summary>
+        /// 기본 패턴 생성
+        /// </summary>
+        private void CreateBasicPatterns(ref int patternId)
+        {
+            CreatePattern("앞면 2연", patternId++, PatternType.Consecutive2, true, true, 2, 0, "기본적인 공격 패턴", "Basic");
+            CreatePattern("뒷면 2연", patternId++, PatternType.Consecutive2, false, false, 0, 2, "기본적인 방어 패턴", "Basic");
+            CreatePattern("앞면 3연", patternId++, PatternType.Consecutive3, true, true, 4, 0, "강력한 공격 패턴", "Basic");
+            CreatePattern("뒷면 3연", patternId++, PatternType.Consecutive3, false, false, 0, 4, "강력한 방어 패턴", "Basic");
+            CreatePattern("앞면 4연", patternId++, PatternType.Consecutive4, true, true, 6, 0, "매우 강력한 공격", "Basic");
+            CreatePattern("뒷면 4연", patternId++, PatternType.Consecutive4, false, false, 0, 6, "매우 강력한 방어", "Basic");
+            CreatePattern("앞면 5연", patternId++, PatternType.Consecutive5, true, true, 8, 0, "최강 공격", "Basic");
+            CreatePattern("뒷면 5연", patternId++, PatternType.Consecutive5, false, false, 0, 8, "최강 방어", "Basic");
+            CreatePattern("앞면 유일", patternId++, PatternType.AllOfOne, true, true, 10, 0, "완전 공격", "Basic");
+            CreatePattern("뒷면 유일", patternId++, PatternType.AllOfOne, false, false, 0, 10, "완전 방어", "Basic");
+            CreatePattern("각성", patternId++, PatternType.Alternating, true, true, 5, 3, "균형잡힌 교대 패턴", "Basic");
+        }
+        
+        /// <summary>
+        /// 몬스터 전용 패턴 생성
+        /// </summary>
+        private void GenerateMonsterPatterns()
+        {
+            int patternId = 1000;
+            GenerateMonsterPatterns(ref patternId);
+            UpdatePatternDataManager();
+        }
+        
+        /// <summary>
+        /// 몬스터 패턴 생성 (내부 로직)
+        /// </summary>
+        private void GenerateMonsterPatterns(ref int patternId)
+        {
+            Debug.Log("GameDataGenerator: 몬스터 패턴 생성 시작");
+            
+            // 루멘 리퍼 패턴 (표식 기반)
+            CreatePatternWithStatus("추적", patternId++, PatternType.Consecutive2, true, true, 
+                2, 0, "2회 공격 + 표식 2 부여", "Enemy", 
+                new StatusEffectDataWrapper[] {
+                    new StatusEffectDataWrapper { effectType = StatusEffectType.Mark, magnitude = 2, duration = 3 }
+                });
+            
+            CreatePatternWithStatus("수확", patternId++, PatternType.Consecutive4, true, true, 
+                0, 0, "표식 스택 × 피해량 반영 후 표식 초기화", "Enemy", 
+                new StatusEffectDataWrapper[0]);
+            
+            // 약탈자 패턴 (증폭 기반) 
+            CreatePatternWithStatus("강화", patternId++, PatternType.Consecutive2, false, false,
+                0, 2, "방어 +2 + 증폭 +1", "Enemy",
+                new StatusEffectDataWrapper[] {
+                    new StatusEffectDataWrapper { effectType = StatusEffectType.Amplify, magnitude = 1, duration = 2 }
+                });
+                
+            CreatePatternWithStatus("파괴적 타격", patternId++, PatternType.Consecutive5, true, true,
+                8, 0, "현재 증폭 수치 × 2 피해", "Enemy",
+                new StatusEffectDataWrapper[0]);
+            
+            // 들개 패턴 (반격/분쇄 기반)
+            CreatePatternWithStatus("야성 본능", patternId++, PatternType.Consecutive2, false, false,
+                0, 1, "방어 +1 + 반격 +3", "Enemy",
+                new StatusEffectDataWrapper[] {
+                    new StatusEffectDataWrapper { effectType = StatusEffectType.Counter, magnitude = 3, duration = 1 }
+                });
+                
+            CreatePatternWithStatus("광기 어택", patternId++, PatternType.Consecutive3, true, true,
+                6, 0, "강력한 공격 + 분쇄 +2", "Enemy",
+                new StatusEffectDataWrapper[] {
+                    new StatusEffectDataWrapper { effectType = StatusEffectType.Crush, magnitude = 2, duration = 2 }
+                });
+            
+            // 보스 패턴들 (2000번대)
+            patternId = 2000;
+            
+            // 그림자 수호자 패턴
+            CreatePatternWithStatus("어둠의 손길", patternId++, PatternType.Consecutive2, true, true,
+                3, 0, "공격 + 저주 +2", "Boss",
+                new StatusEffectDataWrapper[] {
+                    new StatusEffectDataWrapper { effectType = StatusEffectType.Curse, magnitude = 2, duration = 2 }
+                });
+                
+            CreatePatternWithStatus("그림자 방벽", patternId++, PatternType.Consecutive3, false, false,
+                0, 5, "강력한 방어 + 동전 1개 봉인", "Boss",
+                new StatusEffectDataWrapper[] {
+                    new StatusEffectDataWrapper { effectType = StatusEffectType.Seal, magnitude = 1, duration = 1 }
+                });
+            
+            // 검은 심연 패턴 (페이즈별)
+            CreatePatternWithStatus("심연의 속삭임", patternId++, PatternType.Consecutive2, true, true,
+                2, 0, "공격 + 저주 +3", "Boss",
+                new StatusEffectDataWrapper[] {
+                    new StatusEffectDataWrapper { effectType = StatusEffectType.Curse, magnitude = 3, duration = 3 }
+                });
+                
+            CreatePatternWithStatus("동전 봉인", patternId++, PatternType.Consecutive3, false, false,
+                0, 3, "방어 + 동전 2개 봉인", "Boss",
+                new StatusEffectDataWrapper[] {
+                    new StatusEffectDataWrapper { effectType = StatusEffectType.Seal, magnitude = 2, duration = 2 }
+                });
+                
+            CreatePatternWithStatus("절망의 심연", patternId++, PatternType.Consecutive4, true, true,
+                8, 0, "방어력 무시 관통 공격", "Boss",
+                new StatusEffectDataWrapper[] {
+                    new StatusEffectDataWrapper { effectType = StatusEffectType.Curse, magnitude = 5, duration = 1 }
+                });
+                
+            CreatePatternWithStatus("최종 심판", patternId++, PatternType.AllOfOne, true, true,
+                12, 0, "봉인 × 저주 수치 기반 피해 발산", "Boss",
+                new StatusEffectDataWrapper[0]);
+            
+            Debug.Log("GameDataGenerator: 몬스터 패턴 생성 완료");
         }
         
         /// <summary>
@@ -298,34 +444,6 @@ namespace MonoChrome.Editor
         }
         
         /// <summary>
-        /// 패턴 데이터 생성
-        /// </summary>
-        private void GeneratePatternData()
-        {
-            Debug.Log("GameDataGenerator: 패턴 데이터 생성 시작");
-            
-            int patternId = 1;
-            
-            // 기본 패턴들
-            CreatePattern("앞면 2연", patternId++, PatternType.Consecutive2, true, true, 2, 0, "기본적인 공격 패턴", "Basic");
-            CreatePattern("뒷면 2연", patternId++, PatternType.Consecutive2, false, false, 0, 2, "기본적인 방어 패턴", "Basic");
-            CreatePattern("앞면 3연", patternId++, PatternType.Consecutive3, true, true, 4, 0, "강력한 공격 패턴", "Basic");
-            CreatePattern("뒷면 3연", patternId++, PatternType.Consecutive3, false, false, 0, 4, "강력한 방어 패턴", "Basic");
-            CreatePattern("앞면 4연", patternId++, PatternType.Consecutive4, true, true, 6, 0, "매우 강력한 공격", "Basic");
-            CreatePattern("뒷면 4연", patternId++, PatternType.Consecutive4, false, false, 0, 6, "매우 강력한 방어", "Basic");
-            CreatePattern("앞면 5연", patternId++, PatternType.Consecutive5, true, true, 8, 0, "최강 공격", "Basic");
-            CreatePattern("뒷면 5연", patternId++, PatternType.Consecutive5, false, false, 0, 8, "최강 방어", "Basic");
-            CreatePattern("앞면 유일", patternId++, PatternType.AllOfOne, true, true, 10, 0, "완전 공격", "Basic");
-            CreatePattern("뒷면 유일", patternId++, PatternType.AllOfOne, false, false, 0, 10, "완전 방어", "Basic");
-            CreatePattern("각성", patternId++, PatternType.Alternating, true, true, 5, 3, "균형잡힌 교대 패턴", "Basic");
-            
-            // 감각별 특수 패턴들
-            GenerateSenseSpecificPatterns(ref patternId);
-            
-            Debug.Log("GameDataGenerator: 패턴 데이터 생성 완료");
-        }
-        
-        /// <summary>
         /// 감각별 특수 패턴 생성
         /// </summary>
         private void GenerateSenseSpecificPatterns(ref int patternId)
@@ -355,7 +473,7 @@ namespace MonoChrome.Editor
         }
         
         /// <summary>
-        /// 패턴 생성
+        /// 기본 패턴 생성 (상태 효과 없음)
         /// </summary>
         private void CreatePattern(string name, int id, PatternType type, bool value, bool isAttack, int atkBonus, int defBonus, string desc, string category)
         {
@@ -374,13 +492,114 @@ namespace MonoChrome.Editor
             pattern.specialEffect = desc;
             
             // 감각 타입 설정
-            if (category != "Basic")
+            if (category != "Basic" && category != "Enemy" && category != "Boss")
             {
                 SenseType senseType = GetSenseTypeFromCategory(category);
                 pattern.applicableSenseTypes = new SenseType[] { senseType };
             }
             
+            // 몬스터 전용 설정
+            if (category == "Enemy" || category == "Boss")
+            {
+                pattern.applicableCharacterTypes = category == "Boss" ? 
+                    new CharacterType[] { CharacterType.Boss, CharacterType.MiniBoss } :
+                    new CharacterType[] { CharacterType.Normal, CharacterType.Elite };
+            }
+            
             AssetDatabase.CreateAsset(pattern, path);
+            Debug.Log($"GameDataGenerator: 패턴 생성 - {name} ({category})");
+        }
+        
+        /// <summary>
+        /// 상태 효과 포함 패턴 생성
+        /// </summary>
+        private void CreatePatternWithStatus(string name, int id, PatternType type, bool value, bool isAttack, 
+            int atkBonus, int defBonus, string desc, string category, StatusEffectDataWrapper[] statusEffects)
+        {
+            string path = $"Assets/ScriptableObjects/Patterns/{category}/{name}.asset";
+            if (!_overwriteExisting && File.Exists(path)) return;
+            
+            PatternSO pattern = ScriptableObject.CreateInstance<PatternSO>();
+            pattern.patternName = name;
+            pattern.id = id;
+            pattern.patternType = type;
+            pattern.patternValue = value;
+            pattern.isAttack = isAttack;
+            pattern.attackBonus = atkBonus;
+            pattern.defenseBonus = defBonus;
+            pattern.description = desc;
+            pattern.specialEffect = desc;
+            pattern.statusEffects = statusEffects;
+            
+            // 몬스터 전용 설정
+            pattern.applicableCharacterTypes = category == "Boss" ? 
+                new CharacterType[] { CharacterType.Boss, CharacterType.MiniBoss } :
+                new CharacterType[] { CharacterType.Normal, CharacterType.Elite };
+            
+            AssetDatabase.CreateAsset(pattern, path);
+            Debug.Log($"GameDataGenerator: 몬스터 패턴 생성 - {name} ({category})");
+        }
+        
+        /// <summary>
+        /// PatternDataManager에 생성된 패턴들 자동 할당
+        /// </summary>
+        private void UpdatePatternDataManager()
+        {
+            PatternDataManager manager = AssetDatabase.LoadAssetAtPath<PatternDataManager>("Assets/Resources/PatternDataManager.asset");
+            if (manager == null)
+            {
+                Debug.LogWarning("PatternDataManager를 찾을 수 없습니다. 먼저 매니저를 생성하세요.");
+                return;
+            }
+
+            // SerializedObject를 사용해서 private 필드 업데이트
+            SerializedObject serializedManager = new SerializedObject(manager);
+            
+            // Enemy 패턴들 로드 및 할당
+            string[] enemyPatternGuids = AssetDatabase.FindAssets("t:PatternSO", new[] { "Assets/ScriptableObjects/Patterns/Enemy" });
+            if (enemyPatternGuids.Length > 0)
+            {
+                PatternSO[] enemyPatterns = new PatternSO[enemyPatternGuids.Length];
+                for (int i = 0; i < enemyPatternGuids.Length; i++)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(enemyPatternGuids[i]);
+                    enemyPatterns[i] = AssetDatabase.LoadAssetAtPath<PatternSO>(path);
+                }
+                
+                SerializedProperty enemyPatternsProperty = serializedManager.FindProperty("_enemyPatterns");
+                enemyPatternsProperty.arraySize = enemyPatterns.Length;
+                for (int i = 0; i < enemyPatterns.Length; i++)
+                {
+                    enemyPatternsProperty.GetArrayElementAtIndex(i).objectReferenceValue = enemyPatterns[i];
+                }
+                Debug.Log($"Enemy 패턴 {enemyPatterns.Length}개 할당 완료");
+            }
+
+            // Boss 패턴들 로드 및 할당
+            string[] bossPatternGuids = AssetDatabase.FindAssets("t:PatternSO", new[] { "Assets/ScriptableObjects/Patterns/Boss" });
+            if (bossPatternGuids.Length > 0)
+            {
+                PatternSO[] bossPatterns = new PatternSO[bossPatternGuids.Length];
+                for (int i = 0; i < bossPatternGuids.Length; i++)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(bossPatternGuids[i]);
+                    bossPatterns[i] = AssetDatabase.LoadAssetAtPath<PatternSO>(path);
+                }
+                
+                SerializedProperty bossPatternsProperty = serializedManager.FindProperty("_bossPatterns");
+                bossPatternsProperty.arraySize = bossPatterns.Length;
+                for (int i = 0; i < bossPatterns.Length; i++)
+                {
+                    bossPatternsProperty.GetArrayElementAtIndex(i).objectReferenceValue = bossPatterns[i];
+                }
+                Debug.Log($"Boss 패턴 {bossPatterns.Length}개 할당 완료");
+            }
+            
+            serializedManager.ApplyModifiedProperties();
+            EditorUtility.SetDirty(manager);
+            AssetDatabase.SaveAssets();
+            
+            Debug.Log("PatternDataManager 자동 업데이트 완료!");
         }
         
         /// <summary>
@@ -411,7 +630,6 @@ namespace MonoChrome.Editor
             AssetDatabase.CreateAsset(manager, path);
             
             Debug.Log("GameDataGenerator: CharacterDataManager 생성 완료");
-            Debug.Log("수동 작업 필요: 인스펙터에서 캐릭터 데이터들을 할당하세요.");
         }
         
         /// <summary>
@@ -426,7 +644,6 @@ namespace MonoChrome.Editor
             AssetDatabase.CreateAsset(manager, path);
             
             Debug.Log("GameDataGenerator: PatternDataManager 생성 완료");
-            Debug.Log("수동 작업 필요: 인스펙터에서 패턴 데이터들을 할당하세요.");
         }
         
         /// <summary>
@@ -436,8 +653,6 @@ namespace MonoChrome.Editor
         {
             Debug.Log("GameDataGenerator: UI 프리팹 생성 시작");
             
-            // 이 부분은 실제로는 Scene에서 수동으로 만들어야 하지만
-            // 가이드라인을 제공합니다.
             Debug.Log("UI 프리팹은 다음과 같이 구성하세요:");
             Debug.Log("1. CoinPrefab: Image + CoinUI 컴포넌트");
             Debug.Log("2. PatternButtonPrefab: Button + Text + PatternButtonUI 컴포넌트");

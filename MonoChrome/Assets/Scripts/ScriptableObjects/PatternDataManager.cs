@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using MonoChrome.Data;
 using MonoChrome.Systems.Combat;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace MonoChrome
     /// <summary>
     /// 패턴(족보) 데이터를 중앙에서 관리하는 매니저
     /// ScriptableObject 기반으로 데이터를 로드하고 캐시합니다.
+    /// PatternSO와 MonsterPatternSO를 모두 지원합니다.
     /// </summary>
     [CreateAssetMenu(fileName = "PatternDataManager", menuName = "MonoChrome/Managers/Pattern Data Manager")]
     public class PatternDataManager : ScriptableObject
@@ -43,11 +45,18 @@ namespace MonoChrome
         [Header("적 전용 패턴")]
         [SerializeField] private PatternSO[] _enemyPatterns;
         [SerializeField] private PatternSO[] _bossPatterns;
+        
+        [Header("몬스터 패턴 (AI용)")]
+        [SerializeField] private MonsterPatternSO[] _monsterPatterns;
 
         // 캐시된 데이터
         private Dictionary<int, PatternSO> _patternCache;
         private Dictionary<SenseType, List<PatternSO>> _patternsBySense;
         private Dictionary<CharacterType, List<PatternSO>> _patternsByCharacterType;
+        
+        // 몬스터 패턴 캐시
+        private Dictionary<string, List<MonsterPatternSO>> _monsterPatternsByType;
+        private List<MonsterPatternSO> _allMonsterPatterns;
 
         #region Public Methods
         /// <summary>
@@ -56,7 +65,8 @@ namespace MonoChrome
         public void Initialize()
         {
             BuildCache();
-            Debug.Log($"PatternDataManager initialized with {_patternCache.Count} patterns");
+            BuildMonsterPatternCache();
+            Debug.Log($"PatternDataManager initialized with {_patternCache.Count} patterns and {_allMonsterPatterns?.Count ?? 0} monster patterns");
         }
 
         /// <summary>
@@ -74,6 +84,49 @@ namespace MonoChrome
 
             Debug.LogWarning($"Pattern not found with ID: {patternId}");
             return null;
+        }
+
+        /// <summary>
+        /// 기본 패턴들 가져오기
+        /// </summary>
+        public List<PatternSO> GetBasicPatterns()
+        {
+            if (_patternCache == null)
+                BuildCache();
+
+            return _basicPatterns?.ToList() ?? new List<PatternSO>();
+        }
+
+        /// <summary>
+        /// 감각 유형별 패턴 가져오기
+        /// </summary>
+        public List<PatternSO> GetPatternsBySense(SenseType senseType)
+        {
+            if (_patternsBySense == null)
+                BuildCache();
+
+            if (_patternsBySense.TryGetValue(senseType, out List<PatternSO> patterns))
+            {
+                return patterns.ToList();
+            }
+
+            return new List<PatternSO>();
+        }
+
+        /// <summary>
+        /// 캐릭터 타입별 패턴 가져오기
+        /// </summary>
+        public List<PatternSO> GetPatternsByCharacterType(CharacterType characterType)
+        {
+            if (_patternsByCharacterType == null)
+                BuildCache();
+
+            if (_patternsByCharacterType.TryGetValue(characterType, out List<PatternSO> patterns))
+            {
+                return patterns.ToList();
+            }
+
+            return new List<PatternSO>();
         }
 
         /// <summary>
@@ -97,32 +150,84 @@ namespace MonoChrome
 
             List<PatternSO> availablePatterns = new List<PatternSO>();
 
-            // 기본 패턴 검사
+            // 기본 패턴 검사 - 앞면과 뒷면 버전 모두 확인
             if (_basicPatterns != null)
             {
                 foreach (PatternSO pattern in _basicPatterns)
                 {
-                    if (pattern != null && pattern.IsApplicableTo(CharacterType.Player, senseType) 
-                        && pattern.ValidatePattern(coinStates))
+                    if (pattern != null && pattern.IsApplicableTo(CharacterType.Player, senseType))
                     {
-                        availablePatterns.Add(pattern);
+                        // 앞면 패턴 확인
+                        if (pattern.ValidatePatternWithValue(coinStates, true))
+                        {
+                            var frontPattern = CreatePatternVariant(pattern, true);
+                            availablePatterns.Add(frontPattern);
+                        }
+                        
+                        // 뒷면 패턴 확인 (원본 패턴이 앞면용인 경우에만)
+                        if (pattern.patternValue && pattern.ValidatePatternWithValue(coinStates, false))
+                        {
+                            var backPattern = CreatePatternVariant(pattern, false);
+                            availablePatterns.Add(backPattern);
+                        }
                     }
                 }
             }
 
-            // 감각별 특수 패턴 검사
+            // 감각별 특수 패턴 검사 - 앞면과 뒷면 버전 모두 확인
             if (_patternsBySense.TryGetValue(senseType, out List<PatternSO> sensePatterns))
             {
                 foreach (PatternSO pattern in sensePatterns)
                 {
-                    if (pattern != null && pattern.ValidatePattern(coinStates))
+                    if (pattern != null)
                     {
-                        availablePatterns.Add(pattern);
+                        // 앞면 패턴 확인
+                        if (pattern.ValidatePatternWithValue(coinStates, true))
+                        {
+                            var frontPattern = CreatePatternVariant(pattern, true);
+                            availablePatterns.Add(frontPattern);
+                        }
+                        
+                        // 뒷면 패턴 확인 (원본 패턴이 앞면용인 경우에만)
+                        if (pattern.patternValue && pattern.ValidatePatternWithValue(coinStates, false))
+                        {
+                            var backPattern = CreatePatternVariant(pattern, false);
+                            availablePatterns.Add(backPattern);
+                        }
                     }
                 }
             }
 
+            Debug.Log($"PatternDataManager: Found {availablePatterns.Count} available patterns for {senseType} with coin states: [{string.Join(", ", coinStates)}]");
             return availablePatterns;
+        }
+        
+        /// <summary>
+        /// 패턴의 앞면/뒷면 변형 생성
+        /// </summary>
+        private PatternSO CreatePatternVariant(PatternSO basePattern, bool isHeads)
+        {
+            // 런타임에서만 사용하는 임시 PatternSO 생성
+            var variant = CreateInstance<PatternSO>();
+            
+            // 기본 속성 복사
+            variant.patternName = basePattern.patternName + (isHeads ? " (앞면)" : " (뒷면)");
+            variant.description = basePattern.description;
+            variant.id = basePattern.id + (isHeads ? 0 : 10000); // 뒷면은 ID에 10000 추가
+            variant.icon = basePattern.icon;
+            variant.patternType = basePattern.patternType;
+            variant.patternValue = isHeads;
+            variant.isAttack = basePattern.isAttack;
+            variant.condition = basePattern.condition;
+            variant.applicableCharacterTypes = basePattern.applicableCharacterTypes;
+            variant.applicableSenseTypes = basePattern.applicableSenseTypes;
+            variant.attackBonus = basePattern.attackBonus;
+            variant.defenseBonus = basePattern.defenseBonus;
+            variant.specialEffect = basePattern.specialEffect;
+            variant.statusEffects = basePattern.statusEffects;
+            variant.animationTrigger = basePattern.animationTrigger;
+            
+            return variant;
         }
 
         /// <summary>
@@ -203,6 +308,169 @@ namespace MonoChrome
         }
         #endregion
 
+        #region Monster Pattern Methods
+        /// <summary>
+        /// 모든 몬스터 패턴 가져오기 (AI Manager용)
+        /// </summary>
+        public List<MonsterPatternSO> GetAllMonsterPatterns()
+        {
+            if (_allMonsterPatterns == null)
+                BuildMonsterPatternCache();
+
+            return _allMonsterPatterns ?? new List<MonsterPatternSO>();
+        }
+
+        /// <summary>
+        /// 특정 몬스터 타입의 패턴들 가져오기
+        /// </summary>
+        /// <param name="monsterType">몬스터 타입 (이름 또는 타입)</param>
+        /// <returns>해당 타입의 몬스터 패턴 목록</returns>
+        public List<MonsterPatternSO> GetMonsterPatternsForType(string monsterType)
+        {
+            if (_monsterPatternsByType == null)
+                BuildMonsterPatternCache();
+
+            if (string.IsNullOrEmpty(monsterType))
+                return new List<MonsterPatternSO>();
+
+            // 정확한 일치 먼저 확인
+            if (_monsterPatternsByType.TryGetValue(monsterType, out List<MonsterPatternSO> exactMatch))
+            {
+                return exactMatch;
+            }
+
+            // 부분 일치 검색
+            var partialMatches = new List<MonsterPatternSO>();
+            foreach (var kvp in _monsterPatternsByType)
+            {
+                if (kvp.Key.Contains(monsterType) || monsterType.Contains(kvp.Key))
+                {
+                    partialMatches.AddRange(kvp.Value);
+                }
+            }
+
+            if (partialMatches.Count > 0)
+            {
+                Debug.Log($"PatternDataManager: {monsterType}에 대해 부분 일치 패턴 {partialMatches.Count}개 찾음");
+                return partialMatches;
+            }
+
+            // 찾지 못했으면 기본 패턴 반환
+            Debug.LogWarning($"PatternDataManager: {monsterType}에 해당하는 패턴을 찾지 못했습니다. 기본 패턴 반환");
+            return GetDefaultMonsterPatterns();
+        }
+
+        /// <summary>
+        /// 몬스터 이름으로 패턴 검색
+        /// </summary>
+        /// <param name="monsterName">몬스터 이름</param>
+        /// <returns>해당 몬스터의 패턴 목록</returns>
+        public List<MonsterPatternSO> GetMonsterPatternsByName(string monsterName)
+        {
+            if (_allMonsterPatterns == null)
+                BuildMonsterPatternCache();
+
+            return _allMonsterPatterns.Where(p => p.MonsterType.Equals(monsterName, System.StringComparison.OrdinalIgnoreCase))
+                                     .ToList();
+        }
+
+        /// <summary>
+        /// 특정 의도 타입의 몬스터 패턴 검색
+        /// </summary>
+        /// <param name="intentType">의도 타입</param>
+        /// <returns>해당 의도 타입의 패턴 목록</returns>
+        public List<MonsterPatternSO> GetMonsterPatternsByIntent(string intentType)
+        {
+            if (_allMonsterPatterns == null)
+                BuildMonsterPatternCache();
+
+            return _allMonsterPatterns.Where(p => p.IntentType.Contains(intentType))
+                                     .ToList();
+        }
+
+        /// <summary>
+        /// 기본 몬스터 패턴 가져오기 (패턴을 찾지 못했을 때 사용)
+        /// </summary>
+        private List<MonsterPatternSO> GetDefaultMonsterPatterns()
+        {
+            var defaultPatterns = new List<MonsterPatternSO>();
+
+            // 가장 기본적인 패턴 몇 개 반환
+            if (_allMonsterPatterns != null && _allMonsterPatterns.Count > 0)
+            {
+                defaultPatterns.AddRange(_allMonsterPatterns.Take(3));
+            }
+
+            return defaultPatterns;
+        }
+
+        /// <summary>
+        /// 몬스터 패턴 추가 (런타임)
+        /// </summary>
+        /// <param name="pattern">추가할 패턴</param>
+        public void AddMonsterPattern(MonsterPatternSO pattern)
+        {
+            if (pattern == null) return;
+
+            if (_allMonsterPatterns == null)
+                BuildMonsterPatternCache();
+
+            // 중복 체크
+            if (_allMonsterPatterns.Any(p => p.PatternName == pattern.PatternName))
+            {
+                Debug.LogWarning($"PatternDataManager: 같은 이름의 패턴이 이미 존재합니다 - {pattern.PatternName}");
+                return;
+            }
+
+            _allMonsterPatterns.Add(pattern);
+
+            // 타입별 캐시에도 추가
+            string monsterType = pattern.MonsterType;
+            if (!_monsterPatternsByType.ContainsKey(monsterType))
+            {
+                _monsterPatternsByType[monsterType] = new List<MonsterPatternSO>();
+            }
+            _monsterPatternsByType[monsterType].Add(pattern);
+
+            Debug.Log($"PatternDataManager: 몬스터 패턴 추가됨 - {pattern.PatternName} ({monsterType})");
+        }
+
+        /// <summary>
+        /// 몬스터 패턴 캐시 새로고침 (동적 로딩 후 호출)
+        /// </summary>
+        public void RefreshMonsterPatternCache()
+        {
+            BuildMonsterPatternCache();
+            Debug.Log("PatternDataManager: 몬스터 패턴 캐시 새로고침 완료");
+        }
+
+        /// <summary>
+        /// Resources 폴더에서 몬스터 패턴 동적 로딩
+        /// </summary>
+        public void LoadMonsterPatternsFromResources()
+        {
+            var loadedPatterns = Resources.LoadAll<MonsterPatternSO>("Patterns/Enemy");
+            
+            if (loadedPatterns != null && loadedPatterns.Length > 0)
+            {
+                var currentList = _monsterPatterns?.ToList() ?? new List<MonsterPatternSO>();
+                
+                foreach (var pattern in loadedPatterns)
+                {
+                    if (!currentList.Any(p => p.PatternName == pattern.PatternName))
+                    {
+                        currentList.Add(pattern);
+                    }
+                }
+                
+                _monsterPatterns = currentList.ToArray();
+                RefreshMonsterPatternCache();
+                
+                Debug.Log($"PatternDataManager: Resources에서 {loadedPatterns.Length}개의 몬스터 패턴 로드됨");
+            }
+        }
+        #endregion
+
         #region Private Methods
         /// <summary>
         /// 캐시 구축
@@ -237,6 +505,44 @@ namespace MonoChrome
             RegisterEnemyPatterns(_enemyPatterns, CharacterType.Normal);
             RegisterEnemyPatterns(_bossPatterns, CharacterType.Boss);
             RegisterEnemyPatterns(_bossPatterns, CharacterType.MiniBoss); // 미니보스도 보스 패턴 사용 가능
+        }
+
+        /// <summary>
+        /// 몬스터 패턴 캐시 구축
+        /// </summary>
+        private void BuildMonsterPatternCache()
+        {
+            _monsterPatternsByType = new Dictionary<string, List<MonsterPatternSO>>();
+            _allMonsterPatterns = new List<MonsterPatternSO>();
+
+            if (_monsterPatterns == null || _monsterPatterns.Length == 0)
+            {
+                Debug.LogWarning("PatternDataManager: 몬스터 패턴이 설정되지 않았습니다. Resources에서 로드를 시도합니다.");
+                LoadMonsterPatternsFromResources();
+                return;
+            }
+
+            foreach (var pattern in _monsterPatterns)
+            {
+                if (pattern == null) continue;
+
+                _allMonsterPatterns.Add(pattern);
+
+                string monsterType = pattern.MonsterType;
+                if (string.IsNullOrEmpty(monsterType))
+                {
+                    monsterType = "Default";
+                }
+
+                if (!_monsterPatternsByType.ContainsKey(monsterType))
+                {
+                    _monsterPatternsByType[monsterType] = new List<MonsterPatternSO>();
+                }
+
+                _monsterPatternsByType[monsterType].Add(pattern);
+            }
+
+            Debug.Log($"PatternDataManager: 몬스터 패턴 캐시 구축 완료 - {_allMonsterPatterns.Count}개 패턴, {_monsterPatternsByType.Count}개 타입");
         }
 
         /// <summary>
@@ -330,6 +636,26 @@ namespace MonoChrome
                     else
                     {
                         usedIds.Add(pattern.id);
+                    }
+                }
+            }
+
+            // 몬스터 패턴 검증
+            if (_monsterPatterns != null)
+            {
+                HashSet<string> usedNames = new HashSet<string>();
+                
+                foreach (var pattern in _monsterPatterns)
+                {
+                    if (pattern == null) continue;
+
+                    if (usedNames.Contains(pattern.PatternName))
+                    {
+                        Debug.LogWarning($"Duplicate monster pattern name: {pattern.PatternName}");
+                    }
+                    else
+                    {
+                        usedNames.Add(pattern.PatternName);
                     }
                 }
             }

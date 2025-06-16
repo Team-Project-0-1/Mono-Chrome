@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using MonoChrome.Core.Data;
+using MonoChrome.AI;
 using UnityEngine;
 using MonoChrome.Events;
 using MonoChrome.StatusEffects;
@@ -124,6 +125,9 @@ namespace MonoChrome.Systems.Combat
         {
             Debug.Log($"CombatSystem: Starting combat against {enemyType} with character type {characterType}");
             
+            // 캐릭터들 초기화
+            InitializeCharacters(enemyType, characterType);
+            
             // 전투 시작 로직
             InitializeForNewCombat();
             
@@ -132,6 +136,29 @@ namespace MonoChrome.Systems.Combat
             
             // 첫 턴 시작
             StartPlayerTurn();
+        }
+        
+        /// <summary>
+        /// 캐릭터들 초기화
+        /// </summary>
+        private void InitializeCharacters(string enemyType, CharacterType characterType)
+        {
+            // DataConnector를 통해 캐릭터 생성
+            var dataConnector = DataConnector.Instance;
+            if (dataConnector != null)
+            {
+                // 플레이어 생성 (임시로 기본 플레이어 생성)
+                _player = dataConnector.CreatePlayerCharacter("기본 플레이어");
+                
+                // 적 생성
+                _enemy = dataConnector.CreateEnemyCharacter(enemyType);
+                
+                Debug.Log($"CombatSystem: 캐릭터 초기화 완료 - 플레이어: {_player?.CharacterName}, 적: {_enemy?.CharacterName}");
+            }
+            else
+            {
+                Debug.LogError("CombatSystem: DataConnector를 찾을 수 없습니다.");
+            }
         }
         
         /// <summary>
@@ -369,11 +396,96 @@ namespace MonoChrome.Systems.Combat
             // 동전 던지기
             FlipCoins();
             
+            // 체력바 업데이트
+            UpdateHealthBars();
+            
             // UI 업데이트
             UpdateCombatUI();
             
+            // 적의 다음 의도 표시
+            ShowEnemyIntention();
+            
             // 플레이어 턴 준비 완료 알림
             Debug.Log("CombatSystem: Player turn ready with updated UI");
+        }
+        
+        /// <summary>
+        /// 체력바 업데이트
+        /// </summary>
+        private void UpdateHealthBars()
+        {
+            var combatUI = FindFirstObjectByType<CombatUI>();
+            if (combatUI != null && _player != null && _enemy != null)
+            {
+                combatUI.UpdateHealthBars(
+                    _player.CurrentHealth, 
+                    _player.MaxHealth,
+                    _enemy.CurrentHealth, 
+                    _enemy.MaxHealth
+                );
+                Debug.Log($"CombatSystem: Updated health bars - Player: {_player.CurrentHealth}/{_player.MaxHealth}, Enemy: {_enemy.CurrentHealth}/{_enemy.MaxHealth}");
+            }
+            else
+            {
+                Debug.LogError("CombatSystem: Cannot update health bars - missing references");
+            }
+        }
+        
+        /// <summary>
+        /// 적의 다음 턴 의도 표시
+        /// </summary>
+        private void ShowEnemyIntention()
+        {
+            var combatUI = FindFirstObjectByType<CombatUI>();
+            
+            if (_enemy == null)
+            {
+                Debug.LogWarning("CombatSystem: Cannot show enemy intention - enemy is null");
+                if (combatUI != null && combatUI.EnemyIntentionText != null)
+                {
+                    combatUI.EnemyIntentionText.text = "No enemy found";
+                }
+                return;
+            }
+            
+            // AI Manager를 통해 적의 다음 의도 결정
+            var aiManager = AIManager.Instance;
+            if (aiManager != null)
+            {
+                var selectedPattern = aiManager.DetermineIntent(_enemy, _player);
+                if (selectedPattern != null)
+                {
+                    // MonsterPatternSO를 Pattern으로 변환
+                    Pattern pattern = selectedPattern.ToPattern();
+                    
+                    // CombatUI에 적의 의도 표시
+                    if (combatUI != null)
+                    {
+                        combatUI.ShowEnemyIntention(pattern);
+                        Debug.Log($"CombatSystem: Showing enemy intention - {pattern.Name}");
+                    }
+                    else
+                    {
+                        Debug.LogError("CombatSystem: Cannot show enemy intention - CombatUI not found");
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("CombatSystem: No pattern selected for enemy intention");
+                    if (combatUI != null && combatUI.EnemyIntentionText != null)
+                    {
+                        combatUI.EnemyIntentionText.text = "Enemy is preparing...";
+                    }
+                }
+            }
+            else
+            {
+                Debug.LogError("CombatSystem: AIManager not found");
+                if (combatUI != null && combatUI.EnemyIntentionText != null)
+                {
+                    combatUI.EnemyIntentionText.text = "AI system error";
+                }
+            }
         }
         
         /// <summary>
@@ -389,10 +501,29 @@ namespace MonoChrome.Systems.Combat
                 combatUI.UpdateCoinUI(coinResults);
                 Debug.Log($"CombatSystem: Updated coin UI with {coinResults.Count} coins");
                 
-                // 사용 가능한 패턴 업데이트 (테스트용 패턴 생성)
-                var testPatterns = CreateTestPatterns();
-                combatUI.UpdatePatternUI(testPatterns);
-                Debug.Log($"CombatSystem: Updated pattern UI with {testPatterns.Count} patterns");
+                // 사용 가능한 패턴 업데이트 (DataConnector 사용)
+                List<Pattern> availablePatterns = new List<Pattern>();
+                if (_player != null)
+                {
+                    var dataConnector = DataConnector.Instance;
+                    if (dataConnector != null)
+                    {
+                        availablePatterns = dataConnector.GetAvailablePatterns(_player.SenseType, coinResults.ToArray());
+                        Debug.Log($"CombatSystem: Found {availablePatterns.Count} available patterns for {_player.SenseType}");
+                    }
+                    else
+                    {
+                        Debug.LogError("CombatSystem: DataConnector not found");
+                        availablePatterns = CreateTestPatterns(); // 백업용
+                    }
+                }
+                else
+                {
+                    availablePatterns = CreateTestPatterns(); // 백업용
+                }
+                
+                combatUI.UpdatePatternUI(availablePatterns);
+                Debug.Log($"CombatSystem: Updated pattern UI with {availablePatterns.Count} patterns");
                 
                 // 턴 카운터 업데이트
                 combatUI.UpdateTurnCounter(_turnCount);
@@ -404,46 +535,25 @@ namespace MonoChrome.Systems.Combat
         }
         
         /// <summary>
-        /// 테스트용 패턴 생성
+        /// 테스트용 패턴 생성 (더 이상 사용되지 않음 - ScriptableObject 사용)
         /// </summary>
+        [System.Obsolete("Use DataConnector.GetAvailablePatterns instead")]
         private List<Pattern> CreateTestPatterns()
         {
-            var patterns = new List<Pattern>();
+            Debug.LogWarning("CombatSystem: CreateTestPatterns is deprecated. Using DataConnector instead.");
             
-            // 기본 공격 패턴
-            var attackPattern = new Pattern
+            // DataConnector에서 기본 패턴 로드 시도
+            if (_player != null)
             {
-                Name = "기본 공격",
-                Description = "적에게 피해를 가합니다",
-                IsAttack = true,
-                AttackBonus = 10,
-                DefenseBonus = 0
-            };
-            patterns.Add(attackPattern);
+                var dataConnector = DataConnector.Instance;
+                if (dataConnector != null)
+                {
+                    return dataConnector.GetAvailablePatterns(_player.SenseType, new bool[] { true, true });
+                }
+            }
             
-            // 기본 방어 패턴
-            var defensePattern = new Pattern
-            {
-                Name = "기본 방어",
-                Description = "방어력을 증가시킵니다",
-                IsAttack = false,
-                AttackBonus = 0,
-                DefenseBonus = 5
-            };
-            patterns.Add(defensePattern);
-            
-            // 강화 공격 패턴
-            var enhancedAttack = new Pattern
-            {
-                Name = "강화 공격",
-                Description = "강력한 피해를 가합니다",
-                IsAttack = true,
-                AttackBonus = 15,
-                DefenseBonus = 0
-            };
-            patterns.Add(enhancedAttack);
-            
-            return patterns;
+            // 어떠한 이유로 데이터를 가져올 수 없으면 빈 리스트 반환
+            return new List<Pattern>();
         }
         
         private void InitializeCoinSystem()
@@ -679,18 +789,41 @@ namespace MonoChrome.Systems.Combat
         /// </summary>
         private IEnumerator ProcessAITurn(List<bool> coinResults)
         {
-            Debug.Log("[CombatSystem] AI 턴 처리");
+            Debug.Log("[CombatSystem] AI 턴 처리 시작");
+
+            // 적의 의도 표시 업데이트
+            var combatUI = FindFirstObjectByType<CombatUI>();
+            if (combatUI != null && combatUI.EnemyIntentionText != null)
+            {
+                combatUI.EnemyIntentionText.text = "Enemy is acting...";
+            }
 
             // AI 패턴 선택
             var aiManager = AIManager.Instance;
-            var selectedPattern = aiManager?.SelectPattern(_enemy, _player);
+            var selectedPattern = aiManager?.SelectMonsterPattern(_enemy, _player);
 
             if (selectedPattern != null)
             {
+                Debug.Log($"[CombatSystem] AI 선택한 패턴: {selectedPattern.PatternName}");
+                
                 yield return new WaitForSeconds(1f); // AI 사고 시간
-                ExecutePattern(selectedPattern, _enemy, _player);
+                
+                // MonsterPatternSO를 Pattern으로 변환
+                Pattern pattern = selectedPattern.ToPattern();
+                ExecutePattern(pattern, _enemy, _player);
+                
+                Debug.Log($"[CombatSystem] AI 패턴 실행 완료: {pattern.Name}");
+            }
+            else
+            {
+                Debug.LogWarning("[CombatSystem] AI가 패턴을 선택하지 못했습니다.");
             }
 
+            // 잠시 대기 후 턴 종료
+            yield return new WaitForSeconds(0.5f);
+            
+            Debug.Log("[CombatSystem] AI 턴 종료, 플레이어 턴으로 전환");
+            
             // 턴 종료
             EndTurn();
         }
@@ -707,6 +840,21 @@ namespace MonoChrome.Systems.Combat
             }
 
             ExecutePattern(pattern, _player, _enemy);
+            EndTurn();
+        }
+        
+        /// <summary>
+        /// 플레이어 턴 종료 (외부에서 호출 가능)
+        /// </summary>
+        public void EndPlayerTurn()
+        {
+            if (!_isCombatActive || !_isPlayerTurn)
+            {
+                Debug.LogWarning("CombatSystem: Cannot end turn - not player's turn or combat not active");
+                return;
+            }
+            
+            Debug.Log("CombatSystem: Player turn ended by user");
             EndTurn();
         }
 

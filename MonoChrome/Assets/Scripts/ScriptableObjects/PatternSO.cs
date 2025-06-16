@@ -83,29 +83,37 @@ namespace MonoChrome
         /// </summary>
         public bool ValidatePattern(bool[] coinStates)
         {
+            return ValidatePatternWithValue(coinStates, patternValue);
+        }
+        
+        /// <summary>
+        /// 패턴이 특정 값(앞면/뒷면)으로 현재 동전 상태와 일치하는지 검증
+        /// </summary>
+        public bool ValidatePatternWithValue(bool[] coinStates, bool testValue)
+        {
             // PatternConditionSO가 있으면 해당 조건 사용
             if (condition != null)
             {
-                return condition.Validate(coinStates, patternValue);
+                return condition.Validate(coinStates, testValue);
             }
             
             // 조건이 없으면 기존 패턴 타입 기반 검증
             switch (patternType)
             {
                 case PatternType.Consecutive2:
-                    return HasConsecutiveCoins(coinStates, 2, patternValue);
+                    return HasConsecutiveCoins(coinStates, 2, testValue);
                     
                 case PatternType.Consecutive3:
-                    return HasConsecutiveCoins(coinStates, 3, patternValue);
+                    return HasConsecutiveCoins(coinStates, 3, testValue);
                     
                 case PatternType.Consecutive4:
-                    return HasConsecutiveCoins(coinStates, 4, patternValue);
+                    return HasConsecutiveCoins(coinStates, 4, testValue);
                     
                 case PatternType.Consecutive5:
-                    return HasConsecutiveCoins(coinStates, 5, patternValue);
+                    return HasConsecutiveCoins(coinStates, 5, testValue);
                     
                 case PatternType.AllOfOne:
-                    return HasAllSameCoins(coinStates, patternValue);
+                    return HasAllSameCoins(coinStates, testValue);
                     
                 case PatternType.Alternating:
                     return HasAlternatingCoins(coinStates);

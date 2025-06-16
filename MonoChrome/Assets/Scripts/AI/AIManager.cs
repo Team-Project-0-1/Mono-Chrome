@@ -1,13 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using MonoChrome.Systems.Combat;
+using MonoChrome.Data;
 using UnityEngine;
 
-namespace MonoChrome
+namespace MonoChrome.AI
 {
     /// <summary>
     /// 적 AI를 관리하는 싱글톤 매니저 클래스
     /// 몬스터의 행동 패턴과 전략적 결정을 담당한다.
+    /// PatternDataManager와 연동하여 MonsterPatternSO를 활용한다.
     /// </summary>
     public class AIManager : MonoBehaviour
     {
@@ -38,437 +41,524 @@ namespace MonoChrome
             
             _instance = this;
             DontDestroyOnLoad(gameObject);
+            
+            InitializeAISystem();
+        }
+        #endregion
+        
+        #region Fields
+        [Header("AI 시스템 설정")]
+        [SerializeField] private bool enableAdvancedAI = true;
+        [SerializeField] private float decisionDelayTime = 0.5f;
+        
+        // 턴 관리
+        private Dictionary<Character, int> monsterTurnCounts = new Dictionary<Character, int>();
+        private Dictionary<Character, MonsterPatternSO> currentIntents = new Dictionary<Character, MonsterPatternSO>();
+        
+        // 패턴 데이터 캐시
+        private Dictionary<string, List<MonsterPatternSO>> monsterPatternCache = new Dictionary<string, List<MonsterPatternSO>>();
+        #endregion
+        
+        #region Initialization
+        /// <summary>
+        /// AI 시스템 초기화
+        /// </summary>
+        private void InitializeAISystem()
+        {
+            Debug.Log("AIManager: AI 시스템 초기화 완료");
+            
+            // PatternDataManager가 있다면 패턴 데이터 캐시 구성
+            if (PatternDataManager.Instance != null)
+            {
+                LoadPatternDataCache();
+            }
+        }
+        
+        /// <summary>
+        /// 패턴 데이터 캐시 로드
+        /// </summary>
+        private void LoadPatternDataCache()
+        {
+            monsterPatternCache.Clear();
+            
+            var allMonsterPatterns = PatternDataManager.Instance.GetAllMonsterPatterns();
+            
+            // 몬스터 타입별로 패턴 그룹화
+            foreach (var pattern in allMonsterPatterns)
+            {
+                if (pattern == null) continue;
+                
+                string monsterType = pattern.MonsterType;
+                if (!monsterPatternCache.ContainsKey(monsterType))
+                {
+                    monsterPatternCache[monsterType] = new List<MonsterPatternSO>();
+                }
+                
+                monsterPatternCache[monsterType].Add(pattern);
+            }
+            
+            Debug.Log($"AIManager: {monsterPatternCache.Count}개의 몬스터 타입에 대한 패턴 캐시 로드 완료");
         }
         #endregion
         
         #region Pattern Selection
         /// <summary>
-        /// 적 캐릭터의 패턴 선택 로직
+        /// 몬스터의 다음 행동 의도를 결정하고 캐시한다.
+        /// 의도 표시 시스템에서 사용할 수 있도록 한다.
         /// </summary>
-        /// <param name="enemy">적 캐릭터</param>
+        /// <param name="monster">몬스터 캐릭터</param>
         /// <param name="player">플레이어 캐릭터</param>
-        /// <returns>선택된 패턴</returns>
-        public Pattern SelectPattern(Character enemy, Character player)
+        /// <returns>선택된 몬스터 패턴</returns>
+        public MonsterPatternSO DetermineIntent(Character monster, Character player)
         {
-            if (enemy == null || player == null)
+            if (monster == null || player == null)
             {
-                Debug.LogError("Cannot select pattern: null enemy or player");
+                Debug.LogError("AIManager: Cannot determine intent - null monster or player");
                 return null;
             }
             
-            List<Pattern> availablePatterns = enemy.GetAvailablePatterns();
+            MonsterPatternSO selectedPattern = SelectMonsterPattern(monster, player);
+            
+            // 의도 캐시에 저장
+            if (selectedPattern != null)
+            {
+                currentIntents[monster] = selectedPattern;
+                Debug.Log($"AIManager: {monster.CharacterName}의 다음 의도 결정 - {selectedPattern.PatternName}");
+            }
+            
+            return selectedPattern;
+        }
+        
+        /// <summary>
+        /// 몬스터의 현재 의도 가져오기 (의도 표시 시스템용)
+        /// </summary>
+        /// <param name="monster">몬스터 캐릭터</param>
+        /// <returns>현재 의도된 패턴</returns>
+        public MonsterPatternSO GetCurrentIntent(Character monster)
+        {
+            if (monster == null) return null;
+            
+            currentIntents.TryGetValue(monster, out MonsterPatternSO intent);
+            return intent;
+        }
+        
+        /// <summary>
+        /// 몬스터 패턴 선택 로직 (MonsterPatternSO 기반)
+        /// </summary>
+        /// <param name="monster">몬스터 캐릭터</param>
+        /// <param name="player">플레이어 캐릭터</param>
+        /// <returns>선택된 몬스터 패턴</returns>
+        public MonsterPatternSO SelectMonsterPattern(Character monster, Character player)
+        {
+            if (monster == null || player == null)
+            {
+                Debug.LogError("AIManager: Cannot select pattern - null monster or player");
+                return null;
+            }
+            
+            // 몬스터 타입에 맞는 패턴 목록 가져오기
+            List<MonsterPatternSO> availablePatterns = GetAvailableMonsterPatterns(monster);
             
             if (availablePatterns == null || availablePatterns.Count == 0)
             {
-                Debug.LogWarning($"Enemy {enemy.CharacterName} has no available patterns");
+                Debug.LogWarning($"AIManager: {monster.CharacterName}에 사용 가능한 패턴이 없습니다");
                 return null;
             }
             
+            // 턴 카운트 증가
+            IncrementTurnCount(monster);
+            
             // AI 유형에 따라 다른 선택 로직 적용
-            switch (enemy.Type)
+            switch (monster.Type)
             {
                 case CharacterType.Normal:
-                    return SelectNormalEnemyPattern(enemy, player, availablePatterns);
+                    return SelectNormalMonsterPattern(monster, player, availablePatterns);
                     
                 case CharacterType.Elite:
-                    return SelectEliteEnemyPattern(enemy, player, availablePatterns);
+                    return SelectEliteMonsterPattern(monster, player, availablePatterns);
                     
                 case CharacterType.MiniBoss:
-                    return SelectMiniBossPattern(enemy, player, availablePatterns);
+                    return SelectMiniBossMonsterPattern(monster, player, availablePatterns);
                     
                 case CharacterType.Boss:
-                    return SelectBossPattern(enemy, player, availablePatterns);
+                    return SelectBossMonsterPattern(monster, player, availablePatterns);
                     
                 default:
-                    // 기본: 랜덤 선택
-                    return SelectRandomPattern(availablePatterns);
+                    return SelectRandomMonsterPattern(availablePatterns);
             }
         }
         
         /// <summary>
-        /// 일반 적의 패턴 선택 - 단순한 결정 로직
+        /// 몬스터 타입에 맞는 사용 가능한 패턴 목록 가져오기
         /// </summary>
-        private Pattern SelectNormalEnemyPattern(Character enemy, Character player, List<Pattern> availablePatterns)
+        private List<MonsterPatternSO> GetAvailableMonsterPatterns(Character monster)
         {
-            // 체력이 낮으면 방어 우선
-            if (enemy.CurrentHealth < enemy.MaxHealth * 0.3f)
+            // 우선 몬스터 이름으로 패턴 찾기
+            if (monsterPatternCache.ContainsKey(monster.CharacterName))
             {
-                // 방어 패턴 우선 찾기
-                Pattern defensePattern = FindPatternByType(availablePatterns, false);
-                if (defensePattern != null)
-                {
-                    return defensePattern;
-                }
+                return monsterPatternCache[monster.CharacterName];
             }
             
-            // 기본적으로 공격 선호
-            Pattern attackPattern = FindPatternByType(availablePatterns, true);
-            if (attackPattern != null)
+            // 몬스터 타입으로 패턴 찾기
+            string typeKey = monster.Type.ToString();
+            if (monsterPatternCache.ContainsKey(typeKey))
             {
-                return attackPattern;
+                return monsterPatternCache[typeKey];
             }
             
-            // 찾지 못했으면 랜덤 선택
-            return SelectRandomPattern(availablePatterns);
+            // 기본 패턴 반환 (전체 패턴 중 랜덤)
+            var allPatterns = PatternDataManager.Instance?.GetAllMonsterPatterns();
+            if (allPatterns != null && allPatterns.Count > 0)
+            {
+                Debug.LogWarning($"AIManager: {monster.CharacterName}에 특화된 패턴을 찾지 못했습니다. 기본 패턴 사용");
+                return allPatterns.Take(3).ToList(); // 처음 3개만 사용
+            }
+            
+            return new List<MonsterPatternSO>();
+        }
+        #endregion
+        
+        #region AI Logic by Monster Type
+        /// <summary>
+        /// 일반 몬스터 패턴 선택 - 단순한 결정 로직
+        /// </summary>
+        private MonsterPatternSO SelectNormalMonsterPattern(Character monster, Character player, List<MonsterPatternSO> availablePatterns)
+        {
+            // 체력이 낮으면 방어/회복 패턴 우선
+            if (monster.CurrentHealth < monster.MaxHealth * 0.3f)
+            {
+                var defensivePattern = FindPatternByIntent(availablePatterns, "방어", "회복", "치유");
+                if (defensivePattern != null) return defensivePattern;
+            }
+            
+            // 70% 확률로 공격 패턴, 30% 확률로 기타 패턴
+            if (Random.value < 0.7f)
+            {
+                var attackPattern = FindPatternByIntent(availablePatterns, "공격", "타격", "피해");
+                if (attackPattern != null) return attackPattern;
+            }
+            
+            return SelectRandomMonsterPattern(availablePatterns);
         }
         
         /// <summary>
-        /// 엘리트 적의 패턴 선택 - 플레이어 상태 고려
+        /// 엘리트 몬스터 패턴 선택 - 플레이어 상태 고려
         /// </summary>
-        private Pattern SelectEliteEnemyPattern(Character enemy, Character player, List<Pattern> availablePatterns)
+        private MonsterPatternSO SelectEliteMonsterPattern(Character monster, Character player, List<MonsterPatternSO> availablePatterns)
         {
-            // 플레이어 체력이 낮으면 공격 우선
+            int turnCount = GetTurnCount(monster);
+            
+            // 특정 턴에 특수 패턴 사용
+            if (turnCount % 4 == 0)
+            {
+                var specialPattern = FindPatternByIntent(availablePatterns, "특수", "강화", "상태");
+                if (specialPattern != null) return specialPattern;
+            }
+            
+            // 플레이어 체력이 낮으면 공격 집중
             if (player.CurrentHealth < player.MaxHealth * 0.4f)
             {
-                // 공격 패턴 찾기
-                Pattern attackPattern = FindBestAttackPattern(availablePatterns);
-                if (attackPattern != null)
-                {
-                    return attackPattern;
-                }
+                var strongAttackPattern = FindStrongestPattern(availablePatterns, true);
+                if (strongAttackPattern != null) return strongAttackPattern;
             }
             
-            // 적 체력이 낮으면 방어 우선
-            if (enemy.CurrentHealth < enemy.MaxHealth * 0.3f)
-            {
-                // 방어 패턴 찾기
-                Pattern defensePattern = FindBestDefensePattern(availablePatterns);
-                if (defensePattern != null)
-                {
-                    return defensePattern;
-                }
-            }
-            
-            // 플레이어의 방어력이 높으면 상태이상 우선
+            // 플레이어 방어력이 높으면 상태이상 우선
             if (player.CurrentDefense > 5)
             {
-                // 상태이상 중심 패턴 찾기
-                Pattern statusPattern = FindPatternWithStatusEffect(availablePatterns);
-                if (statusPattern != null)
-                {
-                    return statusPattern;
-                }
+                var statusPattern = FindPatternByIntent(availablePatterns, "저주", "독", "출혈", "봉인");
+                if (statusPattern != null) return statusPattern;
             }
             
-            // 40% 확률로 공격, 30% 확률로 방어, 30% 확률로 랜덤
+            // 기본 전략: 60% 공격, 20% 방어, 20% 상태이상
             float rand = Random.value;
-            if (rand < 0.4f)
+            if (rand < 0.6f)
             {
-                Pattern attackPattern = FindPatternByType(availablePatterns, true);
-                if (attackPattern != null)
-                {
-                    return attackPattern;
-                }
+                var attackPattern = FindPatternByIntent(availablePatterns, "공격", "타격");
+                if (attackPattern != null) return attackPattern;
             }
-            else if (rand < 0.7f)
+            else if (rand < 0.8f)
             {
-                Pattern defensePattern = FindPatternByType(availablePatterns, false);
-                if (defensePattern != null)
-                {
-                    return defensePattern;
-                }
+                var defensePattern = FindPatternByIntent(availablePatterns, "방어", "보호");
+                if (defensePattern != null) return defensePattern;
+            }
+            else
+            {
+                var statusPattern = FindPatternByIntent(availablePatterns, "상태", "저주", "독");
+                if (statusPattern != null) return statusPattern;
             }
             
-            // 찾지 못했으면 랜덤 선택
-            return SelectRandomPattern(availablePatterns);
+            return SelectRandomMonsterPattern(availablePatterns);
         }
         
         /// <summary>
-        /// 미니보스의 패턴 선택 - 고급 결정 로직
+        /// 미니보스 패턴 선택 - 페이즈 기반 로직
         /// </summary>
-        private Pattern SelectMiniBossPattern(Character enemy, Character player, List<Pattern> availablePatterns)
+        private MonsterPatternSO SelectMiniBossMonsterPattern(Character monster, Character player, List<MonsterPatternSO> availablePatterns)
         {
-            // 턴 숫자를 사용한 특수 패턴 (3턴마다 특수 공격 등)
-            int turnCount = 0; // 실제 구현 시 턴 카운터를 활용
+            int turnCount = GetTurnCount(monster);
+            float healthRatio = (float)monster.CurrentHealth / monster.MaxHealth;
+            
+            // 첫 번째 턴에는 특수 패턴 사용
+            if (turnCount == 1)
+            {
+                var openingPattern = FindPatternByIntent(availablePatterns, "등장", "시작", "특수");
+                if (openingPattern != null) return openingPattern;
+            }
+            
+            // 3턴마다 강력한 공격
             if (turnCount % 3 == 0)
             {
-                // 특수 턴에는 상태이상 부여 패턴 우선
-                Pattern statusPattern = FindPatternWithStatusEffect(availablePatterns);
-                if (statusPattern != null)
-                {
-                    return statusPattern;
-                }
+                var powerfulPattern = FindStrongestPattern(availablePatterns, true);
+                if (powerfulPattern != null) return powerfulPattern;
             }
             
-            // 플레이어가 상태이상을 가지고 있으면 공격 우선
-            if (HasAnyStatusEffect(player))
-            {
-                Pattern attackPattern = FindBestAttackPattern(availablePatterns);
-                if (attackPattern != null)
-                {
-                    return attackPattern;
-                }
-            }
-            
-            // 체력 비율에 따른 전략 선택
-            float healthRatio = (float)enemy.CurrentHealth / enemy.MaxHealth;
-            
+            // 체력 기반 전략
             if (healthRatio < 0.3f)
             {
-                // 체력이 위험 수준이면 방어 우선
-                Pattern defensePattern = FindBestDefensePattern(availablePatterns);
-                if (defensePattern != null)
-                {
-                    return defensePattern;
-                }
+                // 위험 상황: 방어 또는 회복
+                var emergencyPattern = FindPatternByIntent(availablePatterns, "방어", "회복", "보호");
+                if (emergencyPattern != null) return emergencyPattern;
             }
-            else if (healthRatio < 0.5f)
+            else if (healthRatio < 0.6f)
             {
-                // 체력이 중간 수준이면 균형 잡힌 전략
+                // 중간 상황: 균형잡힌 전략
                 if (Random.value < 0.5f)
                 {
-                    Pattern attackPattern = FindPatternByType(availablePatterns, true);
-                    if (attackPattern != null)
-                    {
-                        return attackPattern;
-                    }
+                    var attackPattern = FindPatternByIntent(availablePatterns, "공격");
+                    if (attackPattern != null) return attackPattern;
                 }
                 else
                 {
-                    Pattern defensePattern = FindPatternByType(availablePatterns, false);
-                    if (defensePattern != null)
-                    {
-                        return defensePattern;
-                    }
+                    var statusPattern = FindPatternByIntent(availablePatterns, "상태");
+                    if (statusPattern != null) return statusPattern;
                 }
             }
             else
             {
-                // 체력이 건강하면 공격적 전략
-                Pattern attackPattern = FindBestAttackPattern(availablePatterns);
-                if (attackPattern != null)
-                {
-                    return attackPattern;
-                }
+                // 건강한 상황: 공격적 전략
+                var aggressivePattern = FindPatternByIntent(availablePatterns, "공격", "타격");
+                if (aggressivePattern != null) return aggressivePattern;
             }
             
-            // 기본 선택
-            return SelectRandomPattern(availablePatterns);
+            return SelectRandomMonsterPattern(availablePatterns);
         }
         
         /// <summary>
-        /// 보스의 패턴 선택 - 페이즈 기반 고급 AI
+        /// 보스 패턴 선택 - 고급 페이즈 기반 AI
         /// </summary>
-        private Pattern SelectBossPattern(Character enemy, Character player, List<Pattern> availablePatterns)
+        private MonsterPatternSO SelectBossMonsterPattern(Character monster, Character player, List<MonsterPatternSO> availablePatterns)
         {
-            // 보스 체력 비율 기반 페이즈 설정
-            float healthRatio = (float)enemy.CurrentHealth / enemy.MaxHealth;
+            int turnCount = GetTurnCount(monster);
+            float healthRatio = (float)monster.CurrentHealth / monster.MaxHealth;
+            
+            // 첫 턴에는 반드시 등장 패턴
+            if (turnCount == 1)
+            {
+                var openingPattern = FindPatternByIntent(availablePatterns, "등장", "시작");
+                if (openingPattern != null) return openingPattern;
+            }
             
             // 페이즈 1: 체력 70% 이상
             if (healthRatio > 0.7f)
             {
-                // 페이즈 1 전략: 플레이어 탐색, 상태이상 부여 중심
-                if (Random.value < 0.7f)
-                {
-                    // 70% 확률로 상태이상 부여 패턴 우선
-                    Pattern statusPattern = FindPatternWithStatusEffect(availablePatterns);
-                    if (statusPattern != null)
-                    {
-                        return statusPattern;
-                    }
-                }
-                else
-                {
-                    // 30% 확률로 공격 패턴
-                    Pattern attackPattern = FindPatternByType(availablePatterns, true);
-                    if (attackPattern != null)
-                    {
-                        return attackPattern;
-                    }
-                }
+                return SelectPhase1Pattern(monster, player, availablePatterns, turnCount);
             }
             // 페이즈 2: 체력 30%~70%
             else if (healthRatio > 0.3f)
             {
-                // 페이즈 2 전략: 공격성 증가, 강력한 패턴 사용
-                if (Random.value < 0.6f)
-                {
-                    // 60% 확률로 최고 공격력 패턴
-                    Pattern strongAttackPattern = FindStrongestPattern(availablePatterns, true);
-                    if (strongAttackPattern != null)
-                    {
-                        return strongAttackPattern;
-                    }
-                }
-                else if (Random.value < 0.3f)
-                {
-                    // 30% 확률로 상태이상 패턴
-                    Pattern statusPattern = FindPatternWithStatusEffect(availablePatterns);
-                    if (statusPattern != null)
-                    {
-                        return statusPattern;
-                    }
-                }
-                else
-                {
-                    // 10% 확률로 방어 패턴
-                    Pattern defensePattern = FindPatternByType(availablePatterns, false);
-                    if (defensePattern != null)
-                    {
-                        return defensePattern;
-                    }
-                }
+                return SelectPhase2Pattern(monster, player, availablePatterns, turnCount);
             }
             // 페이즈 3: 체력 30% 미만 (분노 페이즈)
             else
             {
-                // 페이즈 3 전략: 극도로 공격적인 패턴, 상태이상 커버
-                
-                // 체력이 10% 미만이면 특수 기술 사용 (실제 구현 시 추가적인 로직 필요)
-                if (healthRatio < 0.1f && Random.value < 0.3f)
+                return SelectPhase3Pattern(monster, player, availablePatterns, turnCount);
+            }
+        }
+        
+        private MonsterPatternSO SelectPhase1Pattern(Character monster, Character player, List<MonsterPatternSO> availablePatterns, int turnCount)
+        {
+            // 5턴마다 특수 공격
+            if (turnCount % 5 == 0)
+            {
+                var specialPattern = FindPatternByIntent(availablePatterns, "특수", "강화");
+                if (specialPattern != null) return specialPattern;
+            }
+            
+            // 70% 상태이상, 30% 공격
+            if (Random.value < 0.7f)
+            {
+                var statusPattern = FindPatternByIntent(availablePatterns, "저주", "독", "봉인");
+                if (statusPattern != null) return statusPattern;
+            }
+            else
+            {
+                var attackPattern = FindPatternByIntent(availablePatterns, "공격");
+                if (attackPattern != null) return attackPattern;
+            }
+            
+            return SelectRandomMonsterPattern(availablePatterns);
+        }
+        
+        private MonsterPatternSO SelectPhase2Pattern(Character monster, Character player, List<MonsterPatternSO> availablePatterns, int turnCount)
+        {
+            // 3턴마다 강력한 공격
+            if (turnCount % 3 == 0)
+            {
+                var powerfulPattern = FindStrongestPattern(availablePatterns, true);
+                if (powerfulPattern != null) return powerfulPattern;
+            }
+            
+            // 60% 공격, 25% 상태이상, 15% 방어
+            float rand = Random.value;
+            if (rand < 0.6f)
+            {
+                var attackPattern = FindPatternByIntent(availablePatterns, "공격", "타격");
+                if (attackPattern != null) return attackPattern;
+            }
+            else if (rand < 0.85f)
+            {
+                var statusPattern = FindPatternByIntent(availablePatterns, "상태", "저주");
+                if (statusPattern != null) return statusPattern;
+            }
+            else
+            {
+                var defensePattern = FindPatternByIntent(availablePatterns, "방어", "보호");
+                if (defensePattern != null) return defensePattern;
+            }
+            
+            return SelectRandomMonsterPattern(availablePatterns);
+        }
+        
+        private MonsterPatternSO SelectPhase3Pattern(Character monster, Character player, List<MonsterPatternSO> availablePatterns, int turnCount)
+        {
+            // 매 2턴마다 강력한 공격
+            if (turnCount % 2 == 0)
+            {
+                var desperatePattern = FindStrongestPattern(availablePatterns, true);
+                if (desperatePattern != null) return desperatePattern;
+            }
+            
+            // 80% 공격, 20% 특수 기술
+            if (Random.value < 0.8f)
+            {
+                var attackPattern = FindStrongestPattern(availablePatterns, true);
+                if (attackPattern != null) return attackPattern;
+            }
+            else
+            {
+                var specialPattern = FindPatternByIntent(availablePatterns, "특수", "분노", "절망");
+                if (specialPattern != null) return specialPattern;
+            }
+            
+            return SelectRandomMonsterPattern(availablePatterns);
+        }
+        #endregion
+        
+        #region Utility Methods
+        /// <summary>
+        /// 특정 의도를 가진 패턴 찾기
+        /// </summary>
+        private MonsterPatternSO FindPatternByIntent(List<MonsterPatternSO> patterns, params string[] keywords)
+        {
+            var matchingPatterns = new List<MonsterPatternSO>();
+            
+            foreach (var pattern in patterns)
+            {
+                foreach (string keyword in keywords)
                 {
-                    // 특수 디스페어 기술 가정
-                    Debug.Log("Boss is using desperate special attack!");
-                    // 특수 기술 설정 로직 (추후 구현)
-                }
-                
-                // 80% 확률로 최고 공격 패턴
-                if (Random.value < 0.8f)
-                {
-                    Pattern bestAttackPattern = FindStrongestPattern(availablePatterns, true);
-                    if (bestAttackPattern != null)
+                    if (pattern.PatternName.Contains(keyword) || 
+                        pattern.Description.Contains(keyword) ||
+                        pattern.IntentType.Contains(keyword))
                     {
-                        return bestAttackPattern;
-                    }
-                }
-                else
-                {
-                    // 20% 확률로 강력한 상태이상 패턴
-                    Pattern statusPattern = FindPatternWithStatusEffect(availablePatterns);
-                    if (statusPattern != null)
-                    {
-                        return statusPattern;
+                        matchingPatterns.Add(pattern);
+                        break;
                     }
                 }
             }
             
-            // 어떤 조건도 매칭되지 않으면 랜덤 선택
-            return SelectRandomPattern(availablePatterns);
+            return matchingPatterns.Count > 0 ? SelectRandomMonsterPattern(matchingPatterns) : null;
         }
-        #endregion
         
-        #region Pattern Utility Methods
         /// <summary>
-        /// 랜덤 패턴 선택
+        /// 가장 강력한 패턴 찾기
         /// </summary>
-        private Pattern SelectRandomPattern(List<Pattern> patterns)
+        private MonsterPatternSO FindStrongestPattern(List<MonsterPatternSO> patterns, bool attackOnly = false)
         {
-            if (patterns == null || patterns.Count == 0)
+            MonsterPatternSO strongest = null;
+            int highestValue = -1;
+            
+            foreach (var pattern in patterns)
             {
-                return null;
+                if (attackOnly && !pattern.IntentType.Contains("공격")) continue;
+                
+                int totalValue = pattern.AttackBonus + pattern.DefenseBonus + 
+                               (pattern.StatusEffects?.Length ?? 0) * 2;
+                
+                if (totalValue > highestValue)
+                {
+                    strongest = pattern;
+                    highestValue = totalValue;
+                }
             }
+            
+            return strongest;
+        }
+        
+        /// <summary>
+        /// 랜덤 몬스터 패턴 선택
+        /// </summary>
+        private MonsterPatternSO SelectRandomMonsterPattern(List<MonsterPatternSO> patterns)
+        {
+            if (patterns == null || patterns.Count == 0) return null;
             
             int randomIndex = Random.Range(0, patterns.Count);
             return patterns[randomIndex];
         }
         
         /// <summary>
-        /// 특정 타입(공격/방어)의 패턴 찾기
+        /// 몬스터 턴 카운트 증가
         /// </summary>
-        private Pattern FindPatternByType(List<Pattern> patterns, bool isAttack)
+        private void IncrementTurnCount(Character monster)
         {
-            List<Pattern> matchingPatterns = new List<Pattern>();
-            
-            foreach (Pattern pattern in patterns)
+            if (!monsterTurnCounts.ContainsKey(monster))
             {
-                if (pattern.IsAttack == isAttack)
-                {
-                    matchingPatterns.Add(pattern);
-                }
+                monsterTurnCounts[monster] = 0;
             }
             
-            if (matchingPatterns.Count > 0)
-            {
-                return SelectRandomPattern(matchingPatterns);
-            }
-            
-            return null;
+            monsterTurnCounts[monster]++;
         }
         
         /// <summary>
-        /// 가장 강력한 공격 패턴 찾기
+        /// 몬스터 턴 카운트 가져오기
         /// </summary>
-        private Pattern FindBestAttackPattern(List<Pattern> patterns)
+        private int GetTurnCount(Character monster)
         {
-            Pattern bestPattern = null;
-            int highestAttackBonus = -1;
-            
-            foreach (Pattern pattern in patterns)
-            {
-                if (pattern.IsAttack && pattern.AttackBonus > highestAttackBonus)
-                {
-                    bestPattern = pattern;
-                    highestAttackBonus = pattern.AttackBonus;
-                }
-            }
-            
-            return bestPattern;
+            monsterTurnCounts.TryGetValue(monster, out int count);
+            return count;
         }
         
         /// <summary>
-        /// 가장 강력한 방어 패턴 찾기
+        /// 몬스터 전투 종료 시 정리
         /// </summary>
-        private Pattern FindBestDefensePattern(List<Pattern> patterns)
+        public void CleanupMonster(Character monster)
         {
-            Pattern bestPattern = null;
-            int highestDefenseBonus = -1;
+            if (monster == null) return;
             
-            foreach (Pattern pattern in patterns)
-            {
-                if (!pattern.IsAttack && pattern.DefenseBonus > highestDefenseBonus)
-                {
-                    bestPattern = pattern;
-                    highestDefenseBonus = pattern.DefenseBonus;
-                }
-            }
+            monsterTurnCounts.Remove(monster);
+            currentIntents.Remove(monster);
             
-            return bestPattern;
+            Debug.Log($"AIManager: {monster.CharacterName} 전투 데이터 정리 완료");
         }
         
         /// <summary>
-        /// 상태이상 효과가 있는 패턴 찾기
+        /// 전투 종료 시 모든 데이터 정리
         /// </summary>
-        private Pattern FindPatternWithStatusEffect(List<Pattern> patterns)
+        public void CleanupBattleData()
         {
-            List<Pattern> statusPatterns = new List<Pattern>();
+            monsterTurnCounts.Clear();
+            currentIntents.Clear();
             
-            foreach (Pattern pattern in patterns)
-            {
-                if (pattern.StatusEffects != null && pattern.StatusEffects.Length > 0)
-                {
-                    statusPatterns.Add(pattern);
-                }
-            }
-            
-            if (statusPatterns.Count > 0)
-            {
-                return SelectRandomPattern(statusPatterns);
-            }
-            
-            return null;
-        }
-        
-        /// <summary>
-        /// 특정 타입에서 가장 강력한 패턴 찾기
-        /// </summary>
-        private Pattern FindStrongestPattern(List<Pattern> patterns, bool isAttack)
-        {
-            if (isAttack)
-            {
-                return FindBestAttackPattern(patterns);
-            }
-            else
-            {
-                return FindBestDefensePattern(patterns);
-            }
-        }
-        
-        /// <summary>
-        /// 캐릭터가 어떤 상태이상을 가지고 있는지 확인
-        /// </summary>
-        private bool HasAnyStatusEffect(Character character)
-        {
-            return character.GetAllStatusEffects().Count > 0;
+            Debug.Log("AIManager: 전투 종료 - 모든 AI 데이터 정리 완료");
         }
         #endregion
     }

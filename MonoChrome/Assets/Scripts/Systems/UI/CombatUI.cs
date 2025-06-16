@@ -38,6 +38,9 @@ namespace MonoChrome
         [SerializeField] private Text turnInfoText;
         [SerializeField] private Text enemyIntentionText;
         
+        // Public accessor for enemy intention text
+        public Text EnemyIntentionText => enemyIntentionText;
+        
         // 기존 생성된 UI 요소 참조
         private List<GameObject> coinObjects = new List<GameObject>();
         private List<GameObject> patternObjects = new List<GameObject>();
@@ -964,9 +967,8 @@ namespace MonoChrome
         {
             if (combatManager != null)
             {
-                // CombatSystem에서는 턴 종료를 외부에서 직접 호출하지 않음
-                // 향후 필요 시 CombatSystem에 공개 메서드를 추가하세요
-                Debug.Log("CombatUI: End turn button clicked - no direct method available");
+                combatManager.EndPlayerTurn();
+                Debug.Log("CombatUI: Player turn ended via end turn button");
             }
             else
             {

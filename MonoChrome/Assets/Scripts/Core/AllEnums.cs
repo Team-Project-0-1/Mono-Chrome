@@ -124,4 +124,41 @@ namespace MonoChrome
         MiniBoss = 5,  // 미니보스
         Boss = 6       // 보스
     }
+    
+    /// <summary>
+    /// AI 성격 유형을 정의합니다.
+    /// </summary>
+    public enum AIPersonality
+    {
+        Balanced = 0,     // 균형: 기본 AI
+        Aggressive = 1,   // 공격적: 공격 패턴 선호
+        Defensive = 2,    // 방어적: 방어 패턴 선호
+        Strategic = 3,    // 전략적: 상황 판단 우선
+        Chaotic = 4       // 혼돈: 예측 불가능한 행동
+    }
+    
+    /// <summary>
+    /// 몬스터 의도 유형을 정의합니다.
+    /// </summary>
+    public enum IntentType
+    {
+        None = 0,
+        Attack = 1,       // 공격
+        Defend = 2,       // 방어
+        Buff = 3,         // 버프
+        Debuff = 4,       // 디버프
+        Special = 5,      // 특수 행동
+        Ultimate = 6      // 궁극기
+    }
+    
+    /// <summary>
+    /// 전투 페이즈를 정의합니다.
+    /// </summary>
+    public enum BattlePhase
+    {
+        Phase1 = 1,       // 1페이즈 (100-75% 체력)
+        Phase2 = 2,       // 2페이즈 (75-50% 체력)
+        Phase3 = 3,       // 3페이즈 (50-25% 체력)
+        Final = 4         // 최종 페이즈 (25-0% 체력)
+    }
 }

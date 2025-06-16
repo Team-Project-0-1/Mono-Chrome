@@ -49,310 +49,91 @@ namespace MonoChrome
         }
         
         /// <summary>
-        /// 유형에 따른 패턴 초기화
+        /// 유형에 따른 패턴 초기화 - ScriptableObject에서 로드
         /// </summary>
         private void InitializePatterns()
         {
+            var patternManager = PatternDataManager.Instance;
+            if (patternManager == null)
+            {
+                Debug.LogError("PatternDataManager not found! Using fallback patterns.");
+                CreateDefaultPatterns();
+                return;
+            }
+
+            // 기본 패턴 로드
+            var basicPatterns = patternManager.GetBasicPatterns();
+            foreach (var patternSO in basicPatterns)
+            {
+                if (patternSO != null)
+                {
+                    _availablePatterns.Add(patternSO.ToPattern());
+                }
+            }
+
+            // 적 유형별 패턴
+            List<PatternSO> enemyPatterns = new List<PatternSO>();
+            
             if (Type.IsNormal())
             {
-                CreateNormalEnemyPatterns();
+                enemyPatterns = patternManager.GetPatternsByCharacterType(CharacterType.Normal);
             }
             else if (Type.IsElite())
             {
-                CreateEliteEnemyPatterns();
+                enemyPatterns = patternManager.GetPatternsByCharacterType(CharacterType.Elite);
             }
             else if (Type.IsMiniBoss())
             {
-                CreateMiniBossPatterns();
+                enemyPatterns = patternManager.GetPatternsByCharacterType(CharacterType.MiniBoss);
             }
             else if (Type.IsBoss())
             {
-                CreateBossPatterns();
+                enemyPatterns = patternManager.GetPatternsByCharacterType(CharacterType.Boss);
             }
-            else
+
+            foreach (var patternSO in enemyPatterns)
             {
-                CreateDefaultPatterns();
+                if (patternSO != null)
+                {
+                    _availablePatterns.Add(patternSO.ToPattern());
+                }
             }
             
-            Debug.Log($"Initialized {_availablePatterns.Count} patterns for enemy: {CharacterName}");
+            Debug.Log($"Initialized {_availablePatterns.Count} patterns for {Type} enemy: {CharacterName} from ScriptableObject data");
         }
         #endregion
         
-        #region Pattern Methods
-        /// <summary>
-        /// 일반 적 패턴 생성
-        /// </summary>
-        private void CreateNormalEnemyPatterns()
-        {
-            // 기본 공격 패턴
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "기본 공격",
-                Description = $"적에게 기본 공격을 가한다",
-                ID = 1001,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = true, // 앞면
-                AttackBonus = 1
-            });
-            
-            // 메인 효과 기반 패턴
-            _availablePatterns.Add(new Pattern
-            {
-                Name = $"{_primaryEffectType} 부여",
-                Description = $"적에게 {_primaryEffectType} 상태 부여",
-                ID = 1002,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive3,
-                PatternValue = true, // 앞면
-                AttackBonus = 2,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(_primaryEffectType, 2, 2) 
-                }
-            });
-            
-            // 방어 패턴
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "방어 태세",
-                Description = "방어 자세를 취해 방어력 증가",
-                ID = 1003,
-                IsAttack = false,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = false, // 뒷면
-                DefenseBonus = 2
-            });
-            
-            // 루멘 리퍼 등 특정 적에 대한 특수 패턴 추가
-            if (CharacterName == "루멘 리퍼" && _primaryEffectType == StatusEffectType.Mark)
-            {
-                _availablePatterns.Add(new Pattern
-                {
-                    Name = "수확",
-                    Description = "표식 수치만큼 연속 공격",
-                    ID = 1004,
-                    IsAttack = true,
-                    PatternType = PatternType.Consecutive4,
-                    PatternValue = true, // 앞면
-                    AttackBonus = 3,
-                    SpecialEffect = "표식 수치만큼 추가 공격"
-                });
-            }
-        }
+        #region Legacy Pattern Methods (DEPRECATED)
+        // 하드코딩된 패턴 생성 메서드들 제거됨
+        // 현재는 ScriptableObject 기반 패턴 시스템 사용
         
         /// <summary>
-        /// 엘리트 적 패턴 생성
-        /// </summary>
-        private void CreateEliteEnemyPatterns()
-        {
-            // 일반 적 패턴 포함
-            CreateNormalEnemyPatterns();
-            
-            // 강력한 공격 패턴
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "강화 공격",
-                Description = "강력한 일격을 가한다",
-                ID = 2001,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive4,
-                PatternValue = true, // 앞면
-                AttackBonus = 4
-            });
-            
-            // 보조 효과 기반 패턴
-            if (_secondaryEffectType != StatusEffectType.None)
-            {
-                _availablePatterns.Add(new Pattern
-                {
-                    Name = $"{_secondaryEffectType} 강화",
-                    Description = $"적에게 {_secondaryEffectType} 강화 효과 부여",
-                    ID = 2002,
-                    IsAttack = true,
-                    PatternType = PatternType.Consecutive3,
-                    PatternValue = true, // 앞면
-                    AttackBonus = 3,
-                    StatusEffects = new StatusEffect.StatusEffectData[] 
-                    { 
-                        new StatusEffect.StatusEffectData(_secondaryEffectType, 3, 2) 
-                    }
-                });
-            }
-            
-            // 강화 방어 패턴
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "견고한 방어",
-                Description = "강력한 방어 자세로 방어력 크게 증가",
-                ID = 2003,
-                IsAttack = false,
-                PatternType = PatternType.Consecutive3,
-                PatternValue = false, // 뒷면
-                DefenseBonus = 4
-            });
-        }
-        
-        /// <summary>
-        /// 미니보스 패턴 생성
-        /// </summary>
-        private void CreateMiniBossPatterns()
-        {
-            // 엘리트 패턴 포함
-            CreateEliteEnemyPatterns();
-            
-            // 특수 공격 패턴
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "특수 공격",
-                Description = "강력한 특수 공격",
-                ID = 3001,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive5,
-                PatternValue = true, // 앞면
-                AttackBonus = 6,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(_primaryEffectType, 3, 3),
-                    new StatusEffect.StatusEffectData(_secondaryEffectType, 2, 2)
-                }
-            });
-            
-            // 매우 강력한 방어 패턴
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "절대 방어",
-                Description = "거의 모든 공격을 막아내는 방어 태세",
-                ID = 3002,
-                IsAttack = false,
-                PatternType = PatternType.AllOfOne,
-                PatternValue = false, // 뒷면
-                DefenseBonus = 6
-            });
-        }
-        
-        /// <summary>
-        /// 보스 패턴 생성
-        /// </summary>
-        private void CreateBossPatterns()
-        {
-            // 기본 공격 패턴
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "압도적 일격",
-                Description = "매우 강력한 공격",
-                ID = 4001,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive3,
-                PatternValue = true, // 앞면
-                AttackBonus = 5
-            });
-            
-            // 다단 히트 패턴
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "연쇄 공격",
-                Description = "여러 번의 연속 공격",
-                ID = 4002,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive4,
-                PatternValue = true, // 앞면
-                AttackBonus = 4,
-                SpecialEffect = "2 연속 공격"
-            });
-            
-            // 강력한 주 효과
-            _availablePatterns.Add(new Pattern
-            {
-                Name = $"강력한 {_primaryEffectType}",
-                Description = $"적에게 강력한 {_primaryEffectType} 상태 부여",
-                ID = 4003,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive3,
-                PatternValue = true, // 앞면
-                AttackBonus = 3,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(_primaryEffectType, 4, 3) 
-                }
-            });
-            
-            // 강력한 보조 효과
-            if (_secondaryEffectType != StatusEffectType.None)
-            {
-                _availablePatterns.Add(new Pattern
-                {
-                    Name = $"강력한 {_secondaryEffectType}",
-                    Description = $"적에게 강력한 {_secondaryEffectType} 상태 부여",
-                    ID = 4004,
-                    IsAttack = true,
-                    PatternType = PatternType.Consecutive4,
-                    PatternValue = true, // 앞면
-                    AttackBonus = 3,
-                    StatusEffects = new StatusEffect.StatusEffectData[] 
-                    { 
-                        new StatusEffect.StatusEffectData(_secondaryEffectType, 4, 3) 
-                    }
-                });
-            }
-            
-            // 궁극의 방어
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "불가침 장벽",
-                Description = "거의 완벽한 방어 상태가 된다",
-                ID = 4005,
-                IsAttack = false,
-                PatternType = PatternType.AllOfOne,
-                PatternValue = false, // 뒷면
-                DefenseBonus = 8
-            });
-            
-            // 필살기
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "멸망의 심판",
-                Description = "엄청난 파괴력의 궁극기",
-                ID = 4006,
-                IsAttack = true,
-                PatternType = PatternType.Alternating,
-                PatternValue = true, // 앞면
-                AttackBonus = 10,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(_primaryEffectType, 5, 3),
-                    new StatusEffect.StatusEffectData(_secondaryEffectType, 5, 3),
-                    new StatusEffect.StatusEffectData(StatusEffectType.Bleed, 3, 2)
-                }
-            });
-        }
-        
-        /// <summary>
-        /// 기본 패턴 생성 (기본 대비책)
+        /// 기본 패턴 생성 (폴백용)
         /// </summary>
         private void CreateDefaultPatterns()
         {
-            // 기본 공격 패턴
+            Debug.LogWarning("Using fallback pattern creation for enemy - ScriptableObject system not available");
+            
+            // 최소한의 기본 패턴만 생성
             _availablePatterns.Add(new Pattern
             {
-                Name = "약한 공격",
-                Description = "힘없는 공격",
+                Name = "기본 공격",
+                Description = "일반적인 공격",
                 ID = 1,
                 IsAttack = true,
                 PatternType = PatternType.Consecutive2,
-                PatternValue = true, // 앞면
+                PatternValue = true,
                 AttackBonus = 1
             });
             
-            // 기본 방어 패턴
             _availablePatterns.Add(new Pattern
             {
-                Name = "약한 방어",
-                Description = "허술한 방어 자세",
+                Name = "기본 방어",
+                Description = "일반적인 방어",
                 ID = 2,
                 IsAttack = false,
                 PatternType = PatternType.Consecutive2,
-                PatternValue = false, // 뒷면
+                PatternValue = false,
                 DefenseBonus = 1
             });
         }

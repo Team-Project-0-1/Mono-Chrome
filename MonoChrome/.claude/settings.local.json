@@ -6,7 +6,8 @@
       "Bash(grep:*)",
       "Bash(rg:*)",
       "Bash(rm:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(echo:*)"
     ],
     "deny": []
   }

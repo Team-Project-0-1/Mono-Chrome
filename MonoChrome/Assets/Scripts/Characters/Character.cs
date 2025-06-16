@@ -19,6 +19,9 @@ namespace MonoChrome
         public string CharacterName { get; protected set; }
         public CharacterType Type { get; protected set; }
         
+        // GameObject 참조 (AI 컴포넌트 접근용)
+        public GameObject gameObject { get; set; }
+        
         // 기본 능력치
         [SerializeField] protected int _maxHealth;
         [SerializeField] protected int _baseAttackPower;
@@ -27,6 +30,12 @@ namespace MonoChrome
         
         // 현재 상태
         [SerializeField] protected int _currentDefense;
+        
+        // 현재 공격력 (보너스 포함)
+        protected int _currentAttack;
+        
+        // 생존 상태
+        public bool IsAlive => _currentHealth > 0;
         
         // 스킬 쿨다운
         [SerializeField] protected int _activeSkillCooldown;
@@ -41,6 +50,7 @@ namespace MonoChrome
         public int AttackPower => _baseAttackPower;
         public int DefensePower => _baseDefensePower;
         public int CurrentDefense => _currentDefense;
+        public int CurrentAttack => _currentAttack;
         #endregion
         
         #region Events
@@ -59,6 +69,10 @@ namespace MonoChrome
         
         // 사망 이벤트
         public event Action OnDeath;
+        
+        // 턴 관련 이벤트 (AI 시스템용)
+        public event Action OnTurnStart;
+        public event Action OnTurnEnd;
         #endregion
         
         #region Initialization
@@ -74,6 +88,7 @@ namespace MonoChrome
             _baseDefensePower = defensePower;
             _currentHealth = maxHealth;
             _currentDefense = 0;
+            _currentAttack = attackPower;
             _activeSkillCooldown = 0;
         }
         
@@ -84,6 +99,7 @@ namespace MonoChrome
         {
             _currentHealth = _maxHealth;
             _currentDefense = 0;
+            _currentAttack = _baseAttackPower;
             _activeSkillCooldown = 0;
             _statusEffects.Clear();
             
@@ -338,6 +354,40 @@ namespace MonoChrome
         }
         
         /// <summary>
+        /// 턴 시작 알림 (AI 시스템에서 호출)
+        /// </summary>
+        public virtual void NotifyTurnStart()
+        {
+            OnTurnStart?.Invoke();
+        }
+        
+        /// <summary>
+        /// 턴 종료 알림 (AI 시스템에서 호출)
+        /// </summary>
+        public virtual void NotifyTurnEnd()
+        {
+            OnTurnEnd?.Invoke();
+        }
+        
+        /// <summary>
+        /// 공격력 수정 (임시 보너스 적용)
+        /// </summary>
+        /// <param name="amount">공격력 변화량</param>
+        public virtual void ModifyAttack(int amount)
+        {
+            _currentAttack = Mathf.Max(0, _currentAttack + amount);
+            Debug.Log($"{CharacterName} attack modified by {amount}, current: {_currentAttack}");
+        }
+        
+        /// <summary>
+        /// 공격력 초기화 (기본값으로 복원)
+        /// </summary>
+        public virtual void ResetAttack()
+        {
+            _currentAttack = _baseAttackPower;
+        }
+        
+        /// <summary>
         /// 상태 효과를 업데이트한다 (턴마다 호출)
         /// </summary>
         public virtual void UpdateStatusEffects()
@@ -390,6 +440,20 @@ namespace MonoChrome
         /// 사용 가능한 패턴(족보) 목록을 가져온다
         /// </summary>
         public abstract List<Pattern> GetAvailablePatterns();
+        
+        /// <summary>
+        /// GameObject에서 컴포넌트 가져오기 (편의 메서드)
+        /// </summary>
+        public T GetComponent<T>() where T : Component
+        {
+            if (gameObject == null)
+            {
+                Debug.LogWarning($"Character {CharacterName}: gameObject is null, cannot get component {typeof(T).Name}");
+                return null;
+            }
+            
+            return gameObject.GetComponent<T>();
+        }
         #endregion
     }
 }

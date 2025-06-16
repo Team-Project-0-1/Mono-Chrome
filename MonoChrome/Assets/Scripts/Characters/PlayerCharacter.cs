@@ -95,32 +95,37 @@ namespace MonoChrome
         }
         
         /// <summary>
-        /// 기본 패턴 초기화
+        /// 기본 패턴 초기화 - ScriptableObject에서 로드
         /// </summary>
         private void InitializePatterns()
         {
-            // 기본 패턴 생성 (캐릭터 타입에 따라 달라짐)
-            switch (_senseType)
+            // PatternDataManager에서 감각 유형별 패턴 로드
+            var patternManager = PatternDataManager.Instance;
+            if (patternManager == null)
             {
-                case SenseType.Auditory: // 청각
-                    CreateAuditoryPatterns();
-                    break;
-                    
-                case SenseType.Olfactory: // 후각
-                    CreateOlfactoryPatterns();
-                    break;
-                    
-                case SenseType.Tactile: // 촉각
-                    CreateTactilePatterns();
-                    break;
-                    
-                case SenseType.Spiritual: // 영적
-                    CreateSpiritualPatterns();
-                    break;
-                    
-                default:
-                    CreateDefaultPatterns();
-                    break;
+                Debug.LogError("PatternDataManager not found! Loading fallback patterns.");
+                CreateDefaultPatterns();
+                return;
+            }
+
+            // 기본 패턴 (모든 감각 유형 공통)
+            var basicPatterns = patternManager.GetBasicPatterns();
+            foreach (var patternSO in basicPatterns)
+            {
+                if (patternSO != null)
+                {
+                    _availablePatterns.Add(patternSO.ToPattern());
+                }
+            }
+
+            // 감각 유형별 전용 패턴
+            var sensePatterns = patternManager.GetPatternsBySense(_senseType);
+            foreach (var patternSO in sensePatterns)
+            {
+                if (patternSO != null)
+                {
+                    _availablePatterns.Add(patternSO.ToPattern());
+                }
             }
             
             // 기본 패턴 해금
@@ -129,7 +134,7 @@ namespace MonoChrome
                 _unlockedPatterns.Add(pattern);
             }
             
-            Debug.Log($"Initialized {_availablePatterns.Count} patterns for player");
+            Debug.Log($"Initialized {_availablePatterns.Count} patterns for {_senseType} player from ScriptableObject data");
         }
         
         /// <summary>
@@ -211,192 +216,18 @@ namespace MonoChrome
         }
         #endregion
         
-        #region Pattern Creation Methods
-        /// <summary>
-        /// 청각 캐릭터(증폭/공명 특화) 패턴 생성
-        /// </summary>
-        private void CreateAuditoryPatterns()
-        {
-            // 앞면 패턴(공격)
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "공명 타격",
-                Description = "증폭 1 소모해서 공명 1 부여",
-                ID = 101,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = true, // 앞면
-                AttackBonus = 1,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(StatusEffectType.Resonance, 1, 2) 
-                }
-            });
-            
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "진동 연쇄",
-                Description = "2연타 + 증폭 2 소모해서 공명 2 부여",
-                ID = 102,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive3,
-                PatternValue = true, // 앞면
-                AttackBonus = 2,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(StatusEffectType.Resonance, 2, 2) 
-                }
-            });
-            
-            // 뒷면 패턴(방어)
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "잔향 방어",
-                Description = "진동을 일으켜 적의 공격 방어, 다음 턴 증폭 +2",
-                ID = 201,
-                IsAttack = false,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = false, // 뒷면
-                DefenseBonus = 2,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(StatusEffectType.Amplify, 2, 1) 
-                }
-            });
-        }
+        #region Legacy Pattern Creation Methods (DEPRECATED)
+        // 하드코딩된 패턴 생성 메서드들 제거됨
+        // 현재는 ScriptableObject 기반 패턴 시스템 사용
         
         /// <summary>
-        /// 후각 캐릭터(표식/출혈 특화) 패턴 생성
-        /// </summary>
-        private void CreateOlfactoryPatterns()
-        {
-            // 앞면 패턴(공격)
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "추적",
-                Description = "1회 공격 + 적에게 표식 2 부여",
-                ID = 301,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = true, // 앞면
-                AttackBonus = 1,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(StatusEffectType.Mark, 2, 2) 
-                }
-            });
-            
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "수확",
-                Description = "표식 수치만큼 연속 공격, 표식 초기화",
-                ID = 302,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive3,
-                PatternValue = true, // 앞면
-                AttackBonus = 2,
-                SpecialEffect = "표식 수치 + 공격력만큼 연속 공격"
-            });
-            
-            // 뒷면 패턴(방어)
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "은닉",
-                Description = "방어 성공 시 적에게 출혈 부여",
-                ID = 401,
-                IsAttack = false,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = false, // 뒷면
-                DefenseBonus = 2,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(StatusEffectType.Bleed, 2, 2) 
-                }
-            });
-        }
-        
-        /// <summary>
-        /// 촉각 캐릭터(반격/분쇄 특화) 패턴 생성
-        /// </summary>
-        private void CreateTactilePatterns()
-        {
-            // 앞면 패턴(공격)
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "반격 공격",
-                Description = "공격 + 반격 1 부여",
-                ID = 501,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = true, // 앞면
-                AttackBonus = 2,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(StatusEffectType.Counter, 1, 2) 
-                }
-            });
-            
-            // 뒷면 패턴(방어)
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "역동팔",
-                Description = "방어 성공 시 적 방어력 분쇄",
-                ID = 601,
-                IsAttack = false,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = false, // 뒷면
-                DefenseBonus = 3,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(StatusEffectType.Crush, 1, 2) 
-                }
-            });
-        }
-        
-        /// <summary>
-        /// 영적 캐릭터(저주/봉인 특화) 패턴 생성
-        /// </summary>
-        private void CreateSpiritualPatterns()
-        {
-            // 앞면 패턴(공격)
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "저주 부여",
-                Description = "공격 + 저주 2 부여",
-                ID = 701,
-                IsAttack = true,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = true, // 앞면
-                AttackBonus = 1,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(StatusEffectType.Curse, 2, 2) 
-                }
-            });
-            
-            // 뒷면 패턴(방어)
-            _availablePatterns.Add(new Pattern
-            {
-                Name = "봉인 방어",
-                Description = "방어 + 적 동전 1개 봉인",
-                ID = 801,
-                IsAttack = false,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = false, // 뒷면
-                DefenseBonus = 2,
-                StatusEffects = new StatusEffect.StatusEffectData[] 
-                { 
-                    new StatusEffect.StatusEffectData(StatusEffectType.Seal, 1, 1) 
-                }
-            });
-        }
-        
-        /// <summary>
-        /// 기본 패턴 생성
+        /// 기본 패턴 생성 (폴백용)
         /// </summary>
         private void CreateDefaultPatterns()
         {
-            // 앞면 패턴(공격)
+            Debug.LogWarning("Using fallback pattern creation - ScriptableObject system not available");
+            
+            // 최소한의 기본 패턴만 생성
             _availablePatterns.Add(new Pattern
             {
                 Name = "기본 공격",
@@ -404,11 +235,10 @@ namespace MonoChrome
                 ID = 1,
                 IsAttack = true,
                 PatternType = PatternType.Consecutive2,
-                PatternValue = true, // 앞면
+                PatternValue = true,
                 AttackBonus = 1
             });
             
-            // 뒷면 패턴(방어)
             _availablePatterns.Add(new Pattern
             {
                 Name = "기본 방어",
@@ -416,7 +246,7 @@ namespace MonoChrome
                 ID = 2,
                 IsAttack = false,
                 PatternType = PatternType.Consecutive2,
-                PatternValue = false, // 뒷면
+                PatternValue = false,
                 DefenseBonus = 1
             });
         }

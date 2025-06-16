@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using MonoChrome.Core;
 using MonoChrome.Systems.Combat;
 using MonoChrome.StatusEffects;
+using MonoChrome.AI;
 using UnityEngine;
 using UnityEngine.UI;
 
