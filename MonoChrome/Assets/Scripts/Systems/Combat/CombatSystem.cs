@@ -463,29 +463,51 @@ namespace MonoChrome.Systems.Combat
                     {
                         combatUI.ShowEnemyIntention(pattern);
                         Debug.Log($"CombatSystem: Showing enemy intention - {pattern.Name}");
+                        
+                        // 플레이어 턴으로 전환
+                        StartCoroutine(StartPlayerTurnAfterDelay(0.5f));
                     }
                     else
                     {
                         Debug.LogError("CombatSystem: Cannot show enemy intention - CombatUI not found");
+                        // UI가 없어도 플레이어 턴 시작
+                        StartCoroutine(StartPlayerTurnAfterDelay(0.5f));
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("CombatSystem: No pattern selected for enemy intention");
+                    Debug.LogWarning("CombatSystem: No pattern selected for enemy intention - using backup logic");
                     if (combatUI != null && combatUI.EnemyIntentionText != null)
                     {
-                        combatUI.EnemyIntentionText.text = "Enemy is preparing...";
+                        combatUI.EnemyIntentionText.text = "적이 공격을 준비 중...";
                     }
+                    // 백업 로직으로 플레이어 턴 시작
+                    StartCoroutine(StartPlayerTurnAfterDelay(1.0f));
                 }
             }
             else
             {
-                Debug.LogError("CombatSystem: AIManager not found");
+                Debug.LogError("CombatSystem: AIManager not found - proceeding anyway");
                 if (combatUI != null && combatUI.EnemyIntentionText != null)
                 {
-                    combatUI.EnemyIntentionText.text = "AI system error";
+                    combatUI.EnemyIntentionText.text = "적이 준비 중...";
                 }
+                // AIManager가 없어도 게임 진행
+                StartCoroutine(StartPlayerTurnAfterDelay(1.0f));
             }
+        }
+        
+        /// <summary>
+        /// 지연 후 플레이어 턴 시작
+        /// </summary>
+        private IEnumerator StartPlayerTurnAfterDelay(float delay)
+        {
+            yield return new WaitForSeconds(delay);
+            
+            _isPlayerTurn = true;
+            UpdateCombatUI();
+            
+            Debug.Log("CombatSystem: Player turn started after enemy intention display");
         }
         
         /// <summary>

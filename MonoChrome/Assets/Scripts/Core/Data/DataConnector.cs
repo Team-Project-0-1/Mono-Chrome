@@ -311,32 +311,102 @@ namespace MonoChrome.Core.Data
             
             List<Pattern> patterns = new List<Pattern>();
             
-            // 최소한의 기본 패턴만 생성
-            patterns.Add(new Pattern
+            if (coinStates == null || coinStates.Length == 0)
             {
-                ID = 1,
-                Name = "기본 공격",
-                Description = "기본적인 공격",
-                IsAttack = true,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = true,
-                AttackBonus = 2,
-                DefenseBonus = 0
-            });
+                Debug.LogError("DataConnector: Invalid coin states for fallback patterns");
+                return patterns;
+            }
             
-            patterns.Add(new Pattern
+            // 동전 상태 분석
+            int headsCount = 0;
+            int tailsCount = 0;
+            foreach (bool coin in coinStates)
             {
-                ID = 2,
-                Name = "기본 방어",
-                Description = "기본적인 방어",
-                IsAttack = false,
-                PatternType = PatternType.Consecutive2,
-                PatternValue = false,
-                AttackBonus = 0,
-                DefenseBonus = 2
-            });
+                if (coin) headsCount++;
+                else tailsCount++;
+            }
             
-            Debug.LogWarning($"DataConnector: {patterns.Count}개의 폴백 패턴 생성");
+            // 연속 패턴 확인 및 생성
+            for (int length = 2; length <= 5; length++)
+            {
+                if (HasConsecutivePattern(coinStates, true, length))
+                {
+                    patterns.Add(new Pattern
+                    {
+                        ID = patterns.Count + 1,
+                        Name = $"앞면 {length}연속",
+                        Description = $"앞면 {length}연속 패턴",
+                        IsAttack = true,
+                        PatternType = (PatternType)(length - 1),
+                        PatternValue = true,
+                        AttackBonus = length * 2,
+                        DefenseBonus = 0
+                    });
+                }
+                
+                if (HasConsecutivePattern(coinStates, false, length))
+                {
+                    patterns.Add(new Pattern
+                    {
+                        ID = patterns.Count + 1,
+                        Name = $"뒷면 {length}연속",
+                        Description = $"뒷면 {length}연속 패턴",
+                        IsAttack = false,
+                        PatternType = (PatternType)(length - 1),
+                        PatternValue = false,
+                        AttackBonus = 0,
+                        DefenseBonus = length * 2
+                    });
+                }
+            }
+            
+            // 모든 동전이 같은 면인 경우
+            if (headsCount == coinStates.Length)
+            {
+                patterns.Add(new Pattern
+                {
+                    ID = patterns.Count + 1,
+                    Name = "모든 앞면",
+                    Description = "모든 앞면 패턴",
+                    IsAttack = true,
+                    PatternType = PatternType.AllOfOne,
+                    PatternValue = true,
+                    AttackBonus = 8,
+                    DefenseBonus = 0
+                });
+            }
+            else if (tailsCount == coinStates.Length)
+            {
+                patterns.Add(new Pattern
+                {
+                    ID = patterns.Count + 1,
+                    Name = "모든 뒷면",
+                    Description = "모든 뒷면 패턴",
+                    IsAttack = false,
+                    PatternType = PatternType.AllOfOne,
+                    PatternValue = false,
+                    AttackBonus = 0,
+                    DefenseBonus = 8
+                });
+            }
+            
+            // 최소 1개 패턴 보장
+            if (patterns.Count == 0)
+            {
+                patterns.Add(new Pattern
+                {
+                    ID = 1,
+                    Name = "기본 행동",
+                    Description = "기본적인 행동",
+                    IsAttack = headsCount >= tailsCount,
+                    PatternType = PatternType.None,
+                    PatternValue = headsCount >= tailsCount,
+                    AttackBonus = headsCount >= tailsCount ? 1 : 0,
+                    DefenseBonus = headsCount >= tailsCount ? 0 : 1
+                });
+            }
+            
+            Debug.LogWarning($"DataConnector: {patterns.Count}개의 폴백 패턴 생성 (앞면:{headsCount}, 뒷면:{tailsCount})");
             return patterns;
         }
         

@@ -99,20 +99,37 @@ namespace MonoChrome.Systems.Combat
             switch (PatternType)
             {
                 case PatternType.Consecutive2:
-                    return $"{(PatternValue ? "앞면" : "뒷면")} 2연속";
+                    return $"2연 {(PatternValue ? "앞면" : "뒷면")}";
                 case PatternType.Consecutive3:
-                    return $"{(PatternValue ? "앞면" : "뒷면")} 3연속";
+                    return $"3연 {(PatternValue ? "앞면" : "뒷면")}";
                 case PatternType.Consecutive4:
-                    return $"{(PatternValue ? "앞면" : "뒷면")} 4연속";
+                    return $"4연 {(PatternValue ? "앞면" : "뒷면")}";
                 case PatternType.Consecutive5:
-                    return $"{(PatternValue ? "앞면" : "뒷면")} 5연속";
+                    return $"5연 {(PatternValue ? "앞면" : "뒷면")}";
                 case PatternType.AllOfOne:
-                    return $"모두 {(PatternValue ? "앞면" : "뒷면")}";
+                    return $"전체 {(PatternValue ? "앞면" : "뒷면")}";
                 case PatternType.Alternating:
-                    return "앞뒤 교차";
+                    return "교대 패턴";
                 default:
-                    return "알 수 없음";
+                    return "기본 패턴";
             }
+        }
+        
+        /// <summary>
+        /// 족보명 추가 정보와 함께 표시 (족보명 (2연 앞면) 형식)
+        /// </summary>
+        public string GetDisplayName()
+        {
+            // 기본 족보명만 사용하고 패턴 정보는 별도로 표시하지 않음
+            return Name;
+        }
+        
+        /// <summary>
+        /// 패턴 상세 정보 (부제멩용)
+        /// </summary>
+        public string GetPatternDetails()
+        {
+            return GetPatternTypeString();
         }
         
         /// <summary>

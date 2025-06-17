@@ -113,7 +113,7 @@ namespace MonoChrome
         
                 if (enemyIntentionText != null)
                 {
-                    enemyIntentionText.text = "Enemy is preparing..."; // 적 의도 초기화
+                    enemyIntentionText.text = "적이 준비 중..."; // 적 의도 초기화
                 }
         
                 // 기존 UI 요소 정리
@@ -357,9 +357,25 @@ namespace MonoChrome
             {
                 coinContainer = transform.Find("CoinArea");
                 if (coinContainer == null)
-                    Debug.LogError("CombatUI: coinContainer is missing!");
+                {
+                    // 여러 가지 가능한 이름으로 찾기
+                    coinContainer = transform.Find("CoinContainer") ?? 
+                                   transform.Find("Coins");
+                                   
+                    if (coinContainer == null)
+                    {
+                        Debug.LogWarning("CombatUI: 정적 CoinArea를 찾을 수 없어 동적 생성합니다. 정적 UI 설정을 권장합니다.");
+                        CreateCoinContainer();
+                    }
+                    else
+                    {
+                        Debug.Log("CombatUI: 대체 정적 CoinContainer 찾음");
+                    }
+                }
                 else
-                    Debug.Log("CombatUI: CoinArea found and assigned");
+                {
+                    Debug.Log("CombatUI: 정적 CoinArea 찾음");
+                }
             }
                 
             // 패턴 컨테이너 검증
@@ -367,9 +383,26 @@ namespace MonoChrome
             {
                 patternContainer = transform.Find("PatternArea");
                 if (patternContainer == null)
-                    Debug.LogError("CombatUI: patternContainer is missing!");
+                {
+                    // 여러 가지 가능한 이름으로 찾기
+                    patternContainer = transform.Find("PatternContainer") ?? 
+                                      transform.Find("Patterns") ??
+                                      transform.Find("PatternArea/Content"); // ScrollRect의 Content 영역
+                                      
+                    if (patternContainer == null)
+                    {
+                        Debug.LogWarning("CombatUI: 정적 PatternArea를 찾을 수 없어 동적 생성합니다. 정적 UI 설정을 권장합니다.");
+                        CreatePatternContainer();
+                    }
+                    else
+                    {
+                        Debug.Log("CombatUI: 대체 정적 PatternContainer 찾음");
+                    }
+                }
                 else
-                    Debug.Log("CombatUI: PatternArea found and assigned");
+                {
+                    Debug.Log("CombatUI: 정적 PatternArea 찾음");
+                }
             }
                 
             // 버튼 검증
@@ -434,7 +467,7 @@ namespace MonoChrome
             textRT.anchoredPosition = Vector2.zero;
             
             enemyIntentionText = intentionTextGO.AddComponent<Text>();
-            enemyIntentionText.text = "Enemy is preparing...";
+            enemyIntentionText.text = "적이 준비 중...";
             enemyIntentionText.alignment = TextAnchor.MiddleCenter;
             enemyIntentionText.color = Color.yellow;
             enemyIntentionText.fontSize = 16;
@@ -582,10 +615,23 @@ namespace MonoChrome
             }
             coinObjects.Clear();
             
-            // 동전 프리팹이 없는 경우 개선된 프리팹 생성
+            // 동전 프리팹 찾기 (정적 우선)
             if (coinPrefab == null)
             {
-                CreateImprovedCoinPrefab();
+                // Resources 폴더에서 정적 프리팹 찾기
+                coinPrefab = Resources.Load<GameObject>("UI/CoinPrefab") ?? 
+                            Resources.Load<GameObject>("CoinPrefab") ??
+                            Resources.Load<GameObject>("Prefabs/CoinPrefab");
+                            
+                if (coinPrefab == null)
+                {
+                    Debug.LogWarning("CombatUI: 정적 CoinPrefab을 찾을 수 없어 동적 생성합니다.");
+                    CreateImprovedCoinPrefab();
+                }
+                else
+                {
+                    Debug.Log("CombatUI: 정적 CoinPrefab 로드 완료");
+                }
             }
             
             // 새 동전 UI 생성
@@ -597,19 +643,19 @@ namespace MonoChrome
                 Image coinImage = coinObj.GetComponent<Image>();
                 Text coinText = coinObj.GetComponentInChildren<Text>();
                 
-                if (coinResults[i]) // 공격면
+                if (coinResults[i]) // 앞면
                 {
                     if (coinImage != null)
-                        coinImage.color = new Color(0.8f, 0.3f, 0.3f, 0.9f);
+                        coinImage.color = new Color(0.8f, 0.2f, 0.2f, 0.9f); // 앞면 - 빨간색
                     if (coinText != null)
-                        coinText.text = "공격";
+                        coinText.text = "앞면";
                 }
-                else // 방어면
+                else // 뒷면
                 {
                     if (coinImage != null)
-                        coinImage.color = new Color(0.3f, 0.3f, 0.8f, 0.9f);
+                        coinImage.color = new Color(0.2f, 0.3f, 0.8f, 0.9f); // 뒷면 - 파란색
                     if (coinText != null)
-                        coinText.text = "방어";
+                        coinText.text = "뒷면";
                 }
                 
                 // 위치 설정
@@ -681,10 +727,23 @@ namespace MonoChrome
             }
             patternObjects.Clear();
             
-            // 개선된 프리팹 확인
+            // 패턴 프리팹 찾기 (정적 우선)
             if (patternButtonPrefab == null)
             {
-                CreateImprovedPatternPrefab();
+                // Resources 폴더에서 정적 프리팹 찾기
+                patternButtonPrefab = Resources.Load<GameObject>("UI/PatternButtonPrefab") ?? 
+                                     Resources.Load<GameObject>("PatternButtonPrefab") ??
+                                     Resources.Load<GameObject>("Prefabs/PatternButtonPrefab");
+                                     
+                if (patternButtonPrefab == null)
+                {
+                    Debug.LogWarning("CombatUI: 정적 PatternButtonPrefab을 찾을 수 없어 동적 생성합니다.");
+                    CreateImprovedPatternPrefab();
+                }
+                else
+                {
+                    Debug.Log("CombatUI: 정적 PatternButtonPrefab 로드 완료");
+                }
             }
             
             // 패턴 버튼 생성
@@ -693,18 +752,26 @@ namespace MonoChrome
                 Pattern pattern = availablePatterns[i];
                 GameObject patternObj = Instantiate(patternButtonPrefab, patternContainer);
                 
-                // 패턴 이름 설정
+                // 패턴 이름 설정 (족보명 (패턴정보) 형식)
                 Text nameText = patternObj.transform.Find("PatternName")?.GetComponent<Text>();
                 if (nameText != null)
                 {
-                    nameText.text = pattern.Name;
+                    string patternInfo = pattern.GetPatternTypeString();
+                    nameText.text = $"{pattern.Name} ({patternInfo})";
                 }
                 
                 // 패턴 효과 설명 설정
                 Text effectText = patternObj.transform.Find("PatternEffect")?.GetComponent<Text>();
                 if (effectText != null)
                 {
-                    effectText.text = pattern.Description;
+                    if (pattern.IsAttack)
+                    {
+                        effectText.text = $"공격 +{pattern.AttackBonus}";
+                    }
+                    else
+                    {
+                        effectText.text = $"방어 +{pattern.DefenseBonus}";
+                    }
                 }
                 
                 // 공격력/방어력 표시
@@ -723,13 +790,18 @@ namespace MonoChrome
                     }
                 }
                 
-                // 버튼 색상 설정
+                // 버튼 색상 설정 (앞면 빨간색, 뒷면 파란색 통일)
                 Image buttonImage = patternObj.GetComponent<Image>();
                 if (buttonImage != null)
                 {
-                    buttonImage.color = pattern.IsAttack ? 
-                        new Color(0.8f, 0.3f, 0.3f, 0.8f) : 
-                        new Color(0.3f, 0.3f, 0.8f, 0.8f);
+                    if (pattern.PatternValue) // 앞면 패턴
+                    {
+                        buttonImage.color = new Color(0.8f, 0.2f, 0.2f, 0.8f); // 빨간색
+                    }
+                    else // 뒷면 패턴
+                    {
+                        buttonImage.color = new Color(0.2f, 0.3f, 0.8f, 0.8f); // 파란색
+                    }
                 }
                 
                 // 버튼 이벤트 설정
@@ -1005,10 +1077,23 @@ namespace MonoChrome
                 return;
             }
             
-            // 상태 효과 프리팹 확인
+            // 상태 효과 프리팹 찾기 (정적 우선)
             if (statusEffectPrefab == null)
             {
-                CreateImprovedStatusEffectPrefab();
+                // Resources 폴더에서 정적 프리팹 찾기
+                statusEffectPrefab = Resources.Load<GameObject>("UI/StatusEffectPrefab") ?? 
+                                    Resources.Load<GameObject>("StatusEffectPrefab") ??
+                                    Resources.Load<GameObject>("Prefabs/StatusEffectPrefab");
+                                    
+                if (statusEffectPrefab == null)
+                {
+                    Debug.LogWarning("CombatUI: 정적 StatusEffectPrefab을 찾을 수 없어 동적 생성합니다.");
+                    CreateImprovedStatusEffectPrefab();
+                }
+                else
+                {
+                    Debug.Log("CombatUI: 정적 StatusEffectPrefab 로드 완료");
+                }
             }
             
             // 플레이어 상태 효과 UI 생성
@@ -1141,6 +1226,63 @@ namespace MonoChrome
                 case StatusEffectType.Burn:      return "화상";
                 default:                   return "효과";
             }
+        }
+        #endregion
+        
+        #region Container Creation Methods
+        /// <summary>
+        /// 코인 컨테이너 자동 생성
+        /// </summary>
+        private void CreateCoinContainer()
+        {
+            GameObject coinAreaGO = new GameObject("CoinArea");
+            coinAreaGO.transform.SetParent(transform, false);
+            
+            RectTransform coinRT = coinAreaGO.AddComponent<RectTransform>();
+            coinRT.anchorMin = new Vector2(0.2f, 0.1f);
+            coinRT.anchorMax = new Vector2(0.8f, 0.3f);
+            coinRT.sizeDelta = Vector2.zero;
+            coinRT.offsetMin = Vector2.zero;
+            coinRT.offsetMax = Vector2.zero;
+            
+            coinContainer = coinAreaGO.transform;
+            Debug.Log("CombatUI: CoinArea container created automatically");
+        }
+        
+        /// <summary>
+        /// 패턴 컨테이너 자동 생성
+        /// </summary>
+        private void CreatePatternContainer()
+        {
+            GameObject patternAreaGO = new GameObject("PatternArea");
+            patternAreaGO.transform.SetParent(transform, false);
+            
+            RectTransform patternRT = patternAreaGO.AddComponent<RectTransform>();
+            patternRT.anchorMin = new Vector2(0.05f, 0.35f);
+            patternRT.anchorMax = new Vector2(0.45f, 0.85f);
+            patternRT.sizeDelta = Vector2.zero;
+            patternRT.offsetMin = Vector2.zero;
+            patternRT.offsetMax = Vector2.zero;
+            
+            // 스크롤 가능하도록 ScrollRect 추가
+            ScrollRect scrollRect = patternAreaGO.AddComponent<ScrollRect>();
+            scrollRect.vertical = true;
+            scrollRect.horizontal = false;
+            
+            // Content 영역 생성
+            GameObject contentGO = new GameObject("Content");
+            contentGO.transform.SetParent(patternAreaGO.transform, false);
+            RectTransform contentRT = contentGO.AddComponent<RectTransform>();
+            contentRT.anchorMin = new Vector2(0, 0);
+            contentRT.anchorMax = new Vector2(1, 1);
+            contentRT.sizeDelta = Vector2.zero;
+            contentRT.offsetMin = Vector2.zero;
+            contentRT.offsetMax = Vector2.zero;
+            
+            scrollRect.content = contentRT;
+            
+            patternContainer = contentGO.transform;
+            Debug.Log("CombatUI: PatternArea container created automatically with scroll support");
         }
         #endregion
     }
