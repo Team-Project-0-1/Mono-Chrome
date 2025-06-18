@@ -22,13 +22,13 @@ namespace MonoChrome
 
         public void ActivateCombatPanel()
         {
-            GameObject combatPanel = GameObject.Find("CombatPanel");
+            GameObject combatPanel = GameObject.Find("CombatUI");
             if (combatPanel == null)
             {
                 Canvas[] canvases = FindObjectsOfType<Canvas>();
                 foreach (Canvas canvas in canvases)
                 {
-                    Transform combatPanelTransform = canvas.transform.Find("CombatPanel");
+                    Transform combatPanelTransform = canvas.transform.Find("CombatUI");
                     if (combatPanelTransform != null)
                     {
                         combatPanel = combatPanelTransform.gameObject;
@@ -53,7 +53,7 @@ namespace MonoChrome
 
         public void TestCombatUI()
         {
-            GameObject combatPanel = GameObject.Find("CombatPanel");
+            GameObject combatPanel = GameObject.Find("CombatUI");
             if (combatPanel != null && combatPanel.activeSelf)
             {
                 CombatUI combatUI = combatPanel.GetComponent<CombatUI>();

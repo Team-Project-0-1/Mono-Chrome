@@ -18,7 +18,7 @@ namespace MonoChrome
             Debug.Log("ImmediateUITest: Running immediate test...");
             
             // CombatPanel 찾기
-            GameObject combatPanel = GameObject.Find("CombatPanel");
+            GameObject combatPanel = GameObject.Find("CombatUI");
             if (combatPanel == null)
             {
                 Debug.LogError("ImmediateUITest: CombatPanel not found!");

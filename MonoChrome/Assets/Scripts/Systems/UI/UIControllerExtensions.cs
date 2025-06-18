@@ -18,7 +18,7 @@ namespace MonoChrome
         public static void UpdateHealthBar(this UIController controller, string targetType, int current, int max)
         {
             GameObject combatPanel = controller.GetCurrentPanel();
-            if (combatPanel == null || combatPanel.name != "CombatPanel") return;
+            if (combatPanel == null || combatPanel.name != "CombatUI") return;
 
             string sliderName = targetType == "Player" ? "PlayerHealthBar" : "EnemyHealthBar";
             Slider healthBar = combatPanel.transform.Find(sliderName)?.GetComponent<Slider>();
@@ -37,7 +37,7 @@ namespace MonoChrome
         public static void UpdateCoinDisplay(this UIController controller, List<bool> coinResults)
         {
             GameObject combatPanel = controller.GetCurrentPanel();
-            if (combatPanel == null || combatPanel.name != "CombatPanel") return;
+            if (combatPanel == null || combatPanel.name != "CombatUI") return;
 
             Transform coinArea = combatPanel.transform.Find("CoinArea");
             if (coinArea == null) return;
@@ -63,7 +63,7 @@ namespace MonoChrome
         public static void UpdatePatternButtons(this UIController controller, List<Pattern> patterns)
         {
             GameObject combatPanel = controller.GetCurrentPanel();
-            if (combatPanel == null || combatPanel.name != "CombatPanel") return;
+            if (combatPanel == null || combatPanel.name != "CombatUI") return;
 
             Transform patternArea = combatPanel.transform.Find("PatternArea");
             if (patternArea == null) return;
@@ -89,7 +89,7 @@ namespace MonoChrome
         public static void UpdateActiveSkillButton(this UIController controller, bool available)
         {
             GameObject combatPanel = controller.GetCurrentPanel();
-            if (combatPanel == null || combatPanel.name != "CombatPanel") return;
+            if (combatPanel == null || combatPanel.name != "CombatUI") return;
 
             Button skillButton = combatPanel.transform.Find("ActiveSkillButton")?.GetComponent<Button>();
             if (skillButton != null)
@@ -109,7 +109,7 @@ namespace MonoChrome
         public static void UpdateTurnInfo(this UIController controller, int turnCount)
         {
             GameObject combatPanel = controller.GetCurrentPanel();
-            if (combatPanel == null || combatPanel.name != "CombatPanel") return;
+            if (combatPanel == null || combatPanel.name != "CombatUI") return;
 
             Text turnText = combatPanel.transform.Find("TurnInfoText")?.GetComponent<Text>();
             if (turnText != null)
@@ -124,7 +124,7 @@ namespace MonoChrome
         public static void UpdateCharacterInfo(this UIController controller, string playerName, string enemyName)
         {
             GameObject combatPanel = controller.GetCurrentPanel();
-            if (combatPanel == null || combatPanel.name != "CombatPanel") return;
+            if (combatPanel == null || combatPanel.name != "CombatUI") return;
 
             Text playerNameText = combatPanel.transform.Find("PlayerNameText")?.GetComponent<Text>();
             Text enemyNameText = combatPanel.transform.Find("EnemyNameText")?.GetComponent<Text>();
@@ -176,7 +176,7 @@ namespace MonoChrome
         public static GameObject GetCurrentPanel(this UIController controller)
         {
             // CombatPanel 찾기
-            return GameObject.Find("CombatPanel");
+            return GameObject.Find("CombatUI");
         }
 
         /// <summary>

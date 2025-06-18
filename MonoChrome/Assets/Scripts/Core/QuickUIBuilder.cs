@@ -351,7 +351,7 @@ namespace MonoChrome.Core
         /// </summary>
         private void CreateOtherPanels(Transform parent)
         {
-            string[] panelNames = { "CombatPanel", "EventPanel", "ShopPanel", "RestPanel", "GameOverPanel", "VictoryPanel" };
+            string[] panelNames = { "CombatUI", "EventPanel", "ShopPanel", "RestPanel", "GameOverPanel", "VictoryPanel" };
             
             foreach (string panelName in panelNames)
             {
@@ -499,7 +499,7 @@ namespace MonoChrome.Core
             if (canvas == null) return;
             
             string[] panelNames = { 
-                "CharacterSelectionPanel", "DungeonPanel", "CombatPanel", 
+                "CharacterSelectionPanel", "DungeonPanel", "CombatUI", 
                 "EventPanel", "ShopPanel", "RestPanel", 
                 "GameOverPanel", "VictoryPanel", "DebugPanel" 
             };

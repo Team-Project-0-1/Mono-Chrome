@@ -288,7 +288,7 @@ namespace MonoChrome.Core
                 LogMessage($"  Canvas: 있음");
                 LogMessage($"  CharacterSelectionPanel: {(canvas.transform.Find("CharacterSelectionPanel") != null ? "있음" : "없음")}");
                 LogMessage($"  DungeonPanel: {(canvas.transform.Find("DungeonPanel") != null ? "있음" : "없음")}");
-                LogMessage($"  CombatPanel: {(canvas.transform.Find("CombatPanel") != null ? "있음" : "없음")}");
+                LogMessage($"  CombatUI: {(canvas.transform.Find("CombatUI") != null ? "있음" : "없음")}");
             }
             else
             {

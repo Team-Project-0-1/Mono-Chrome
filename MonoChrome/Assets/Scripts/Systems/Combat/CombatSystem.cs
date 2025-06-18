@@ -166,13 +166,13 @@ namespace MonoChrome.Systems.Combat
         /// </summary>
         private void InitializeCombatUI()
         {
-            // CombatPanel을 통해 CombatUI 찾기
+            // CombatUI를 통해 CombatUI 찾기
             var combatUI = FindFirstObjectByType<CombatUI>();
             
-            // CombatUI가 없으면 CombatPanel에서 생성 시도
+            // CombatUI가 없으면 CombatUI에서 생성 시도
             if (combatUI == null)
             {
-                var combatPanel = GameObject.Find("CombatPanel");
+                var combatPanel = GameObject.Find("CombatUI");
                 if (combatPanel != null)
                 {
                     combatUI = combatPanel.GetComponent<CombatUI>();
@@ -180,12 +180,12 @@ namespace MonoChrome.Systems.Combat
                     {
                         // CombatUI 컴포넌트가 없으면 추가
                         combatUI = combatPanel.AddComponent<CombatUI>();
-                        Debug.Log("CombatSystem: Added CombatUI component to CombatPanel");
+                        Debug.Log("CombatSystem: Added CombatUI component to CombatUI");
                     }
                 }
                 else
                 {
-                    Debug.LogWarning("CombatSystem: CombatPanel not found! Creating basic UI structure...");
+                    Debug.LogWarning("CombatSystem: CombatUI not found! Creating basic UI structure...");
                     CreateBasicCombatUI();
                     combatUI = FindFirstObjectByType<CombatUI>();
                 }
@@ -215,8 +215,8 @@ namespace MonoChrome.Systems.Combat
                 return;
             }
             
-            // CombatPanel 생성
-            GameObject combatPanel = new GameObject("CombatPanel");
+            // CombatUI 생성
+            GameObject combatPanel = new GameObject("CombatUI");
             combatPanel.transform.SetParent(canvas.transform, false);
             
             // RectTransform 설정 (전체 화면 차지)
@@ -235,7 +235,7 @@ namespace MonoChrome.Systems.Combat
             // 기본적으로 비활성화 (UIController가 관리)
             combatPanel.SetActive(false);
             
-            Debug.Log("CombatSystem: Created complete CombatPanel with all required UI elements");
+            Debug.Log("CombatSystem: Created complete CombatUI with all required UI elements");
         }
         
         /// <summary>
@@ -477,12 +477,24 @@ namespace MonoChrome.Systems.Combat
                 else
                 {
                     Debug.LogWarning("CombatSystem: No pattern selected for enemy intention - using backup logic");
+                    
+                    // 백업 로직: 적의 패턴 중에서 랜덤 선택
+                    if (_enemy != null && _enemy.Patterns != null && _enemy.Patterns.Count > 0)
+                    {
+                        var randomPattern = _enemy.Patterns[Random.Range(0, _enemy.Patterns.Count)];
+                        if (combatUI != null)
+                        {
+                            combatUI.ShowEnemyIntention(randomPattern);
+                            Debug.Log($"CombatSystem: Using backup enemy pattern - {randomPattern.Name}");
+                        }
+                    }
+                    
+                    // 어떤 경우든 플레이어 턴으로 진행
                     if (combatUI != null && combatUI.EnemyIntentionText != null)
                     {
                         combatUI.EnemyIntentionText.text = "적이 공격을 준비 중...";
                     }
-                    // 백업 로직으로 플레이어 턴 시작
-                    StartCoroutine(StartPlayerTurnAfterDelay(1.0f));
+                    StartCoroutine(StartPlayerTurnAfterDelay(0.5f));
                 }
             }
             else

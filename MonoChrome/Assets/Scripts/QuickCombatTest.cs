@@ -15,11 +15,11 @@ namespace MonoChrome
         {
             Debug.Log("QuickCombatTest: Starting combat UI test");
             
-            // CombatPanel 찾기 및 활성화
-            GameObject combatPanel = FindCombatPanel();
+            // CombatUI 찾기 및 활성화
+            GameObject combatPanel = FindCombatUI();
             if (combatPanel != null)
             {
-                Debug.Log("QuickCombatTest: Found CombatPanel, activating...");
+                Debug.Log("QuickCombatTest: Found CombatUI, activating...");
                 combatPanel.SetActive(true);
                 
                 // CombatUI 컴포넌트 가져오기
@@ -37,7 +37,7 @@ namespace MonoChrome
         
         private void TestUI()
         {
-            GameObject combatPanel = FindCombatPanel();
+            GameObject combatPanel = FindCombatUI();
             if (combatPanel != null && combatPanel.activeSelf)
             {
                 CombatUI combatUI = combatPanel.GetComponent<CombatUI>();
@@ -58,15 +58,15 @@ namespace MonoChrome
             }
         }
         
-        private GameObject FindCombatPanel()
+        private GameObject FindCombatUI()
         {
-            GameObject combatPanel = GameObject.Find("CombatPanel");
+            GameObject combatPanel = GameObject.Find("CombatUI");
             if (combatPanel == null)
             {
                 Canvas[] canvases = FindObjectsOfType<Canvas>();
                 foreach (Canvas canvas in canvases)
                 {
-                    Transform panelTransform = canvas.transform.Find("CombatPanel");
+                    Transform panelTransform = canvas.transform.Find("CombatUI");
                     if (panelTransform != null)
                     {
                         combatPanel = panelTransform.gameObject;

@@ -173,7 +173,7 @@ namespace MonoChrome.Testing
             yield return new WaitForSeconds(1f); // 전투 초기화 대기
             
             // CombatPanel 확인
-            var combatPanel = GameObject.Find("CombatPanel");
+            var combatPanel = GameObject.Find("CombatUI");
             if (combatPanel != null)
             {
                 Debug.Log("✅ CombatPanel 발견됨");

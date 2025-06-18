@@ -135,7 +135,7 @@ namespace MonoChrome.Core
         private void ShowCombatUI()
         {
             LogDebug("전투 UI 표시");
-            DungeonEvents.UIEvents.RequestPanelShow("CombatPanel");
+            DungeonEvents.UIEvents.RequestPanelShow("CombatUI");
         }
         
         /// <summary>

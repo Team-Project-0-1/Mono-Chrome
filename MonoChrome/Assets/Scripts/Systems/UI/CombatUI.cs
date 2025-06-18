@@ -756,8 +756,8 @@ namespace MonoChrome
                 Text nameText = patternObj.transform.Find("PatternName")?.GetComponent<Text>();
                 if (nameText != null)
                 {
-                    string patternInfo = pattern.GetPatternTypeString();
-                    nameText.text = $"{pattern.Name} ({patternInfo})";
+                    // 족보 이름만 표시 (더 깔끔한 UI)
+                    nameText.text = pattern.Name;
                 }
                 
                 // 패턴 효과 설명 설정

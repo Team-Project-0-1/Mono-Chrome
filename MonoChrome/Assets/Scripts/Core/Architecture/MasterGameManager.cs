@@ -735,7 +735,7 @@ namespace MonoChrome.Core
             
             GameObject charPanel = GameObject.Find("CharacterSelectionPanel");
             GameObject dungeonPanel = GameObject.Find("DungeonPanel");
-            GameObject combatPanel = GameObject.Find("CombatPanel");
+            GameObject combatPanel = GameObject.Find("CombatUI");
             
             // 모든 패널 비활성화
             if (dungeonPanel != null) dungeonPanel.SetActive(false);
@@ -762,7 +762,7 @@ namespace MonoChrome.Core
             
             GameObject charPanel = GameObject.Find("CharacterSelectionPanel");
             GameObject dungeonPanel = GameObject.Find("DungeonPanel");
-            GameObject combatPanel = GameObject.Find("CombatPanel");
+            GameObject combatPanel = GameObject.Find("CombatUI");
             
             // 모든 패널 비활성화
             if (charPanel != null) charPanel.SetActive(false);

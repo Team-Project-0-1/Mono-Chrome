@@ -164,8 +164,8 @@ namespace MonoChrome
                             availablePatterns.Add(frontPattern);
                         }
                         
-                        // 뒷면 패턴 확인 (원본 패턴이 앞면용인 경우에만)
-                        if (pattern.patternValue && pattern.ValidatePatternWithValue(coinStates, false))
+                        // 뒷면 패턴 확인
+                        if (pattern.ValidatePatternWithValue(coinStates, false))
                         {
                             var backPattern = CreatePatternVariant(pattern, false);
                             availablePatterns.Add(backPattern);
@@ -188,8 +188,8 @@ namespace MonoChrome
                             availablePatterns.Add(frontPattern);
                         }
                         
-                        // 뒷면 패턴 확인 (원본 패턴이 앞면용인 경우에만)
-                        if (pattern.patternValue && pattern.ValidatePatternWithValue(coinStates, false))
+                        // 뒷면 패턴 확인
+                        if (pattern.ValidatePatternWithValue(coinStates, false))
                         {
                             var backPattern = CreatePatternVariant(pattern, false);
                             availablePatterns.Add(backPattern);
@@ -211,9 +211,12 @@ namespace MonoChrome
             var variant = CreateInstance<PatternSO>();
             
             // 기본 속성 복사
-            variant.patternName = basePattern.patternName + (isHeads ? " (앞면)" : " (뒷면)");
+            // 기본 족보 표기법 사용
+            string suffix = isHeads ? " (앞면)" : " (뒷면)";
+            variant.patternName = basePattern.patternName + suffix;
             variant.description = basePattern.description;
-            variant.id = basePattern.id + (isHeads ? 0 : 10000); // 뒷면은 ID에 10000 추가
+            // ID 중복 방지: 뒷면 패턴은 음수 ID 사용
+            variant.id = isHeads ? basePattern.id : -basePattern.id;
             variant.icon = basePattern.icon;
             variant.patternType = basePattern.patternType;
             variant.patternValue = isHeads;

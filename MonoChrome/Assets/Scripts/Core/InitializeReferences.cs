@@ -83,7 +83,7 @@ namespace MonoChrome
                 // 각 패널 참조 찾기
                 GameObject characterSelectionPanel = GameObject.Find("CharacterSelectionPanel");
                 GameObject dungeonPanel = GameObject.Find("DungeonPanel");
-                GameObject combatPanel = GameObject.Find("CombatPanel");
+                GameObject combatPanel = GameObject.Find("CombatUI");
                 
                 // 기본적으로 모든 패널 비활성화
                 if (characterSelectionPanel != null) characterSelectionPanel.SetActive(false);
@@ -187,7 +187,7 @@ namespace MonoChrome
             else
             {
                 // 기본 전투 UI 패널 생성
-                GameObject combatPanel = new GameObject("CombatPanel");
+                GameObject combatPanel = new GameObject("CombatUI");
                 combatPanel.transform.SetParent(canvasTransform, false);
                 RectTransform rectTransform = combatPanel.AddComponent<RectTransform>();
                 rectTransform.anchorMin = Vector2.zero;
@@ -209,8 +209,8 @@ namespace MonoChrome
         
         private void CheckUIElementsExist(Transform canvasTransform)
         {
-            // CombatPanel 확인
-            Transform combatPanel = canvasTransform.Find("CombatPanel");
+            // CombatUI 확인
+            Transform combatPanel = canvasTransform.Find("CombatUI");
             if (combatPanel == null)
             {
                 if (_combatUIPrefab != null)
@@ -221,7 +221,7 @@ namespace MonoChrome
                 else
                 {
                     // 기본 전투 UI 패널 생성
-                    GameObject combatPanelObj = new GameObject("CombatPanel");
+                    GameObject combatPanelObj = new GameObject("CombatUI");
                     combatPanelObj.transform.SetParent(canvasTransform, false);
                     RectTransform rectTransform = combatPanelObj.AddComponent<RectTransform>();
                     rectTransform.anchorMin = Vector2.zero;
@@ -247,7 +247,7 @@ namespace MonoChrome
                 if (combatUI == null)
                 {
                     combatUI = combatPanel.gameObject.AddComponent<MonoChrome.CombatUI>();
-                    Debug.Log("Added CombatUI component to existing CombatPanel");
+                    Debug.Log("Added CombatUI component to existing CombatUI");
                 }
                 
                 // 필수 UI 요소 확인

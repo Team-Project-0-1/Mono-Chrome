@@ -82,7 +82,7 @@ namespace MonoChrome.Systems.Combat
             if (_uiController == null) return;
 
             // 전투 패널 표시
-            _uiController.ShowPanel("CombatPanel");
+            _uiController.ShowPanel("CombatUI");
 
             // 캐릭터 정보 업데이트 (확장 메서드 사용)
             _uiController.UpdateCharacterInfo(player.CharacterName, enemy.CharacterName);

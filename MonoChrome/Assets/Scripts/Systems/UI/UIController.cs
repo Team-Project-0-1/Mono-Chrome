@@ -73,7 +73,7 @@ namespace MonoChrome
             _mainMenuPanel = FindPanel(canvasTransform, "MainMenuPanel");
             _characterSelectionPanel = FindPanel(canvasTransform, "CharacterSelectionPanel");
             _dungeonPanel = FindPanel(canvasTransform, "DungeonPanel");
-            _combatPanel = FindPanel(canvasTransform, "CombatPanel");
+            _combatPanel = FindPanel(canvasTransform, "CombatUI");
             _gameOverPanel = FindPanel(canvasTransform, "GameOverPanel");
             _victoryPanel = FindPanel(canvasTransform, "VictoryPanel");
         }
@@ -216,7 +216,7 @@ namespace MonoChrome
                 "MainMenuPanel" => _mainMenuPanel,
                 "CharacterSelectionPanel" => _characterSelectionPanel,
                 "DungeonPanel" => _dungeonPanel,
-                "CombatPanel" => _combatPanel,
+                "CombatUI" => _combatPanel,
                 "GameOverPanel" => _gameOverPanel,
                 "VictoryPanel" => _victoryPanel,
                 _ => null
@@ -230,7 +230,7 @@ namespace MonoChrome
                 GameStateMachine.GameState.MainMenu => "MainMenuPanel",
                 GameStateMachine.GameState.CharacterSelection => "CharacterSelectionPanel",
                 GameStateMachine.GameState.Dungeon => "DungeonPanel",
-                GameStateMachine.GameState.Combat => "CombatPanel",
+                GameStateMachine.GameState.Combat => "CombatUI",
                 GameStateMachine.GameState.Event => "DungeonPanel",
                 GameStateMachine.GameState.Shop => "DungeonPanel",
                 GameStateMachine.GameState.Rest => "DungeonPanel",

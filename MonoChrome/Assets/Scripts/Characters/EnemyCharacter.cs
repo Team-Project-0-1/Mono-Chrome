@@ -29,6 +29,11 @@ namespace MonoChrome
         
         // 턴 기반 행동 카운터
         private int _actionCounter = 0;
+        
+        // Public accessors
+        public List<Pattern> Patterns => _availablePatterns;
+        public StatusEffectType PrimaryEffectType => _primaryEffectType;
+        public StatusEffectType SecondaryEffectType => _secondaryEffectType;
         #endregion
         
         #region Initialization
