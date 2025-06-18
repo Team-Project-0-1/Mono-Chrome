@@ -53,7 +53,7 @@ namespace MonoChrome.AI
         
         // 턴 관리
         private Dictionary<Character, int> monsterTurnCounts = new Dictionary<Character, int>();
-        private Dictionary<Character, MonsterPatternSO> currentIntents = new Dictionary<Character, MonsterPatternSO>();
+        private Dictionary<Character, Pattern> currentIntents = new Dictionary<Character, Pattern>();
         
         // 패턴 데이터 캐시
         private Dictionary<string, List<MonsterPatternSO>> monsterPatternCache = new Dictionary<string, List<MonsterPatternSO>>();
@@ -109,7 +109,7 @@ namespace MonoChrome.AI
         /// <param name="monster">몬스터 캐릭터</param>
         /// <param name="player">플레이어 캐릭터</param>
         /// <returns>선택된 몬스터 패턴</returns>
-        public MonsterPatternSO DetermineIntent(Character monster, Character player)
+        public Pattern DetermineIntent(Character monster, Character player)
         {
             if (monster == null || player == null)
             {
@@ -117,16 +117,50 @@ namespace MonoChrome.AI
                 return null;
             }
             
-            MonsterPatternSO selectedPattern = SelectMonsterPattern(monster, player);
-            
-            // 의도 캐시에 저장
-            if (selectedPattern != null)
+            // EnemyCharacter의 패턴에서 선택
+            if (monster is EnemyCharacter enemy && enemy.Patterns != null && enemy.Patterns.Count > 0)
             {
-                currentIntents[monster] = selectedPattern;
-                Debug.Log($"AIManager: {monster.CharacterName}의 다음 의도 결정 - {selectedPattern.PatternName}");
+                Pattern selectedPattern = SelectEnemyPattern(enemy, player);
+                
+                if (selectedPattern != null)
+                {
+                    // 의도 캐시에 저장
+                    currentIntents[monster] = selectedPattern;
+                    Debug.Log($"AIManager: {monster.CharacterName}의 다음 의도 결정 - {selectedPattern.Name}");
+                    return selectedPattern;
+                }
             }
             
-            return selectedPattern;
+            Debug.LogWarning($"AIManager: {monster.CharacterName}에 사용 가능한 패턴이 없습니다");
+            return null;
+        }
+        
+        /// <summary>
+        /// 적 캐릭터의 패턴에서 선택 (기존 Pattern 시스템 사용)
+        /// </summary>
+        private Pattern SelectEnemyPattern(EnemyCharacter enemy, Character player)
+        {
+            var patterns = enemy.Patterns;
+            if (patterns == null || patterns.Count == 0) return null;
+            
+            // 체력 기반 전략
+            float healthRatio = (float)enemy.CurrentHealth / enemy.MaxHealth;
+            
+            if (healthRatio < 0.3f)
+            {
+                // 위험: 방어 패턴 우선
+                var defensePattern = patterns.Find(p => !p.IsAttack);
+                if (defensePattern != null) return defensePattern;
+            }
+            else if (healthRatio > 0.7f)
+            {
+                // 건강: 공격 패턴 우선
+                var attackPattern = patterns.Find(p => p.IsAttack);
+                if (attackPattern != null) return attackPattern;
+            }
+            
+            // 랜덤 선택
+            return patterns[Random.Range(0, patterns.Count)];
         }
         
         /// <summary>
@@ -134,11 +168,11 @@ namespace MonoChrome.AI
         /// </summary>
         /// <param name="monster">몬스터 캐릭터</param>
         /// <returns>현재 의도된 패턴</returns>
-        public MonsterPatternSO GetCurrentIntent(Character monster)
+        public Pattern GetCurrentIntent(Character monster)
         {
             if (monster == null) return null;
             
-            currentIntents.TryGetValue(monster, out MonsterPatternSO intent);
+            currentIntents.TryGetValue(monster, out Pattern intent);
             return intent;
         }
         

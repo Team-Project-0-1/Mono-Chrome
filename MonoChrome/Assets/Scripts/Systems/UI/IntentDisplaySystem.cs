@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 using MonoChrome.AI;
 using MonoChrome.Data;
+using MonoChrome.Systems.Combat;
 
 namespace MonoChrome.Systems.UI
 {
@@ -100,7 +101,7 @@ namespace MonoChrome.Systems.UI
             }
             
             // AI Manager를 통해 몬스터의 의도 결정
-            MonsterPatternSO intent = AIManager.Instance.DetermineIntent(monster, player);
+            Pattern intent = AIManager.Instance.DetermineIntent(monster, player);
             
             if (intent == null)
             {
@@ -125,7 +126,7 @@ namespace MonoChrome.Systems.UI
         {
             if (monster == null) return;
             
-            MonsterPatternSO currentIntent = AIManager.Instance.GetCurrentIntent(monster);
+            Pattern currentIntent = AIManager.Instance.GetCurrentIntent(monster);
             
             if (currentIntent == null)
             {
@@ -262,7 +263,7 @@ namespace MonoChrome.Systems.UI
         /// <summary>
         /// 의도 UI 업데이트
         /// </summary>
-        private void UpdateIntentUI(IntentUI intentUI, MonsterPatternSO pattern)
+        private void UpdateIntentUI(IntentUI intentUI, Pattern pattern)
         {
             if (intentUI == null || pattern == null) return;
             
@@ -309,35 +310,30 @@ namespace MonoChrome.Systems.UI
         /// <summary>
         /// 패턴의 의도 타입 결정
         /// </summary>
-        private IntentType DetermineIntentType(MonsterPatternSO pattern)
+        private IntentType DetermineIntentType(Pattern pattern)
         {
-            string intentType = pattern.IntentType.ToLower();
-            
-            if (intentType.Contains("공격") || intentType.Contains("타격") || intentType.Contains("피해"))
+            // Pattern의 속성을 기반으로 의도 유형 결정
+            if (pattern.IsAttack)
             {
                 return IntentType.Attack;
             }
-            else if (intentType.Contains("방어") || intentType.Contains("보호") || intentType.Contains("회복"))
+            else
             {
+                // 방어 패턴
                 return IntentType.Defense;
             }
-            else if (intentType.Contains("상태") || intentType.Contains("저주") || intentType.Contains("독") || 
-                     intentType.Contains("출혈") || intentType.Contains("봉인"))
-            {
-                return IntentType.Status;
-            }
-            else if (intentType.Contains("특수") || intentType.Contains("강화") || intentType.Contains("분노"))
-            {
-                return IntentType.Special;
-            }
             
-            return IntentType.Unknown;
+            // 나중에 상태 효과나 특수 효과를 확인하여 더 세분화 가능
+            // if (pattern.StatusEffects != null && pattern.StatusEffects.Length > 0)
+            // {
+            //     return IntentType.Status;
+            // }
         }
         
         /// <summary>
         /// 표시할 텍스트 생성
         /// </summary>
-        private string GetDisplayText(MonsterPatternSO pattern, IntentType intentType)
+        private string GetDisplayText(Pattern pattern, IntentType intentType)
         {
             switch (intentType)
             {

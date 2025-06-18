@@ -455,14 +455,11 @@ namespace MonoChrome.Systems.Combat
                 var selectedPattern = aiManager.DetermineIntent(_enemy, _player);
                 if (selectedPattern != null)
                 {
-                    // MonsterPatternSO를 Pattern으로 변환
-                    Pattern pattern = selectedPattern.ToPattern();
-                    
                     // CombatUI에 적의 의도 표시
                     if (combatUI != null)
                     {
-                        combatUI.ShowEnemyIntention(pattern);
-                        Debug.Log($"CombatSystem: Showing enemy intention - {pattern.Name}");
+                        combatUI.ShowEnemyIntention(selectedPattern);
+                        Debug.Log($"CombatSystem: Showing enemy intention - {selectedPattern.Name}");
                         
                         // 플레이어 턴으로 전환
                         StartCoroutine(StartPlayerTurnAfterDelay(0.5f));

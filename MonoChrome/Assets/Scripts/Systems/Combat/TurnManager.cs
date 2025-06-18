@@ -37,7 +37,7 @@ namespace MonoChrome.Systems.Combat
         private bool isBattleActive = false;
         
         // 의도 및 패턴 관리
-        private Dictionary<Character, MonsterPatternSO> currentIntents = new Dictionary<Character, MonsterPatternSO>();
+        private Dictionary<Character, Pattern> currentIntents = new Dictionary<Character, Pattern>();
         private Dictionary<Character, int> enemyTurnCounts = new Dictionary<Character, int>();
         
         // 시스템 참조
@@ -47,7 +47,7 @@ namespace MonoChrome.Systems.Combat
         public event Action<int> OnTurnStart;
         public event Action<int> OnTurnEnd;
         public event Action<TurnPhase, TurnPhase> OnPhaseChanged;
-        public event Action<Character, MonsterPatternSO> OnIntentDetermined;
+        public event Action<Character, Pattern> OnIntentDetermined;
         public event Action<Character, int, int> OnEnemyPhaseChanged;
         
         #region Unity Lifecycle
@@ -259,13 +259,14 @@ namespace MonoChrome.Systems.Combat
                 enemyTurnCounts[enemy]++;
                 
                 // AI를 통해 의도 결정
-                MonsterPatternSO intent = null;
+                Pattern intent = null;
                 
-                // MonsterAI가 있으면 우선 사용
+                // MonsterAI가 있으면 우선 사용 (현재는 사용하지 않음)
                 MonsterAI monsterAI = enemy.GetComponent<MonsterAI>();
                 if (monsterAI != null)
                 {
-                    intent = monsterAI.DecideAction(playerCharacter);
+                    // MonsterAI는 현재 비활성화됨 - AIManager 사용
+                    intent = AIManager.Instance?.DetermineIntent(enemy, playerCharacter);
                 }
                 else
                 {
@@ -278,7 +279,7 @@ namespace MonoChrome.Systems.Combat
                     currentIntents[enemy] = intent;
                     OnIntentDetermined?.Invoke(enemy, intent);
                     
-                    LogDebug($"{enemy.CharacterName}의 의도: {intent.PatternName}");
+                    LogDebug($"{enemy.CharacterName}의 의도: {intent.Name}");
                 }
                 
                 yield return new WaitForSeconds(0.1f); // 의도 결정 간격
@@ -369,9 +370,9 @@ namespace MonoChrome.Systems.Combat
             LogDebug($"{enemy.CharacterName} 턴 시작");
             
             // 의도된 패턴 실행
-            if (currentIntents.TryGetValue(enemy, out MonsterPatternSO intent))
+            if (currentIntents.TryGetValue(enemy, out Pattern intent))
             {
-                yield return StartCoroutine(ExecuteMonsterPattern(enemy, intent));
+                yield return StartCoroutine(ExecutePattern(enemy, intent));
             }
             
             LogDebug($"{enemy.CharacterName} 턴 완료");
@@ -380,11 +381,11 @@ namespace MonoChrome.Systems.Combat
         /// <summary>
         /// 몬스터 패턴 실행
         /// </summary>
-        private IEnumerator ExecuteMonsterPattern(Character enemy, MonsterPatternSO pattern)
+        private IEnumerator ExecutePattern(Character enemy, Pattern pattern)
         {
             if (enemy == null || pattern == null) yield break;
             
-            LogDebug($"{enemy.CharacterName}이 {pattern.PatternName} 사용");
+            LogDebug($"{enemy.CharacterName}이 {pattern.Name} 사용");
             
             // 패턴 실행 로직
             // 실제 구현에서는 CombatManager를 통해 처리
@@ -572,9 +573,9 @@ namespace MonoChrome.Systems.Combat
         /// <summary>
         /// 특정 적의 현재 의도 가져오기
         /// </summary>
-        public MonsterPatternSO GetEnemyIntent(Character enemy)
+        public Pattern GetEnemyIntent(Character enemy)
         {
-            currentIntents.TryGetValue(enemy, out MonsterPatternSO intent);
+            currentIntents.TryGetValue(enemy, out Pattern intent);
             return intent;
         }
         
