@@ -184,16 +184,34 @@ namespace MonoChrome
         /// </summary>
         private static void CreateCoinUI(Transform parent, int index, bool isHeads)
         {
-            GameObject coinObj = new GameObject($"Coin_{index}");
-            coinObj.transform.SetParent(parent);
-
-            Image coinImage = coinObj.AddComponent<Image>();
-            // TODO: 앞면/뒷면 스프라이트 설정
-            coinImage.color = isHeads ? Color.yellow : Color.blue;
-
-            RectTransform rectTransform = coinObj.GetComponent<RectTransform>();
+            // 프리팹을 Resources에서 로드하여 사용
+            GameObject coinPrefab = Resources.Load<GameObject>("UI/CoinPrefab");
+            if (coinPrefab == null)
+            {
+                Debug.LogWarning("CoinPrefab not found in Resources/UI/, creating fallback UI");
+                // 기존 코드로 폴백
+                GameObject fallbackCoin = new GameObject($"Coin_{index}");
+                fallbackCoin.transform.SetParent(parent);
+                Image fallbackImage = fallbackCoin.AddComponent<Image>();
+                fallbackImage.color = isHeads ? Color.yellow : Color.blue;
+                RectTransform fallbackRect = fallbackCoin.GetComponent<RectTransform>();
+                fallbackRect.anchoredPosition = new Vector2(index * 60 - 120, 0);
+                fallbackRect.sizeDelta = new Vector2(50, 50);
+                return;
+            }
+            
+            GameObject coinInstance = Object.Instantiate(coinPrefab, parent);
+            coinInstance.name = $"Coin_{index}";
+            
+            // 프리팹 기반 동전 설정
+            Image coinImage = coinInstance.GetComponent<Image>();
+            if (coinImage != null)
+            {
+                coinImage.color = isHeads ? Color.yellow : Color.blue;
+            }
+            
+            RectTransform rectTransform = coinInstance.GetComponent<RectTransform>();
             rectTransform.anchoredPosition = new Vector2(index * 60 - 120, 0);
-            rectTransform.sizeDelta = new Vector2(50, 50);
         }
 
         /// <summary>
@@ -201,41 +219,61 @@ namespace MonoChrome
         /// </summary>
         private static void CreatePatternButton(Transform parent, int index, Pattern pattern)
         {
-            GameObject buttonObj = new GameObject($"PatternButton_{index}");
-            buttonObj.transform.SetParent(parent);
-
-            Button button = buttonObj.AddComponent<Button>();
-            Image buttonImage = buttonObj.AddComponent<Image>();
-            buttonImage.color = Color.white;
-
-            // 버튼 텍스트 추가
-            GameObject textObj = new GameObject("Text");
-            textObj.transform.SetParent(buttonObj.transform);
-            Text text = textObj.AddComponent<Text>();
-            text.text = pattern.Name;
-            text.alignment = TextAnchor.MiddleCenter;
-            text.color = Color.black;
-
-            // TODO: 폰트 설정
-            // text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-
+            // 프리팹을 Resources에서 로드하여 사용
+            GameObject patternPrefab = Resources.Load<GameObject>("UI/PatternButtonPrefab");
+            if (patternPrefab == null)
+            {
+                Debug.LogWarning("PatternButtonPrefab not found in Resources/UI/, creating fallback UI");
+                // 기존 코드로 폴백
+                GameObject fallbackButton = new GameObject($"PatternButton_{index}");
+                fallbackButton.transform.SetParent(parent);
+                Button fallbackButtonComp = fallbackButton.AddComponent<Button>();
+                Image fallbackButtonImage = fallbackButton.AddComponent<Image>();
+                fallbackButtonImage.color = Color.white;
+                GameObject fallbackTextObj = new GameObject("Text");
+                fallbackTextObj.transform.SetParent(fallbackButton.transform);
+                Text fallbackText = fallbackTextObj.AddComponent<Text>();
+                fallbackText.text = pattern.Name;
+                fallbackText.alignment = TextAnchor.MiddleCenter;
+                fallbackText.color = Color.black;
+                fallbackButtonComp.onClick.AddListener(() => {
+                    Debug.Log($"[UIController] 패턴 선택: {pattern.Name}");
+                });
+                RectTransform fallbackButtonRect = fallbackButton.GetComponent<RectTransform>();
+                fallbackButtonRect.anchoredPosition = new Vector2(index * 120 - 180, 0);
+                fallbackButtonRect.sizeDelta = new Vector2(100, 50);
+                RectTransform fallbackTextRect = fallbackTextObj.GetComponent<RectTransform>();
+                fallbackTextRect.anchorMin = Vector2.zero;
+                fallbackTextRect.anchorMax = Vector2.one;
+                fallbackTextRect.sizeDelta = Vector2.zero;
+                fallbackTextRect.anchoredPosition = Vector2.zero;
+                return;
+            }
+            
+            GameObject buttonInstance = Object.Instantiate(patternPrefab, parent);
+            buttonInstance.name = $"PatternButton_{index}";
+            
+            // 프리팹 기반 패턴 버튼 설정
+            Button buttonComponent = buttonInstance.GetComponent<Button>();
+            Text nameText = buttonInstance.transform.Find("PatternName")?.GetComponent<Text>();
+            if (nameText != null)
+            {
+                nameText.text = pattern.Name;
+            }
+            
             // 버튼 이벤트 등록
-            button.onClick.AddListener(() => {
-                // 패턴 선택 이벤트 발행 (CombatEvents를 통해)
-                Debug.Log($"[UIController] 패턴 선택: {pattern.Name}");
-                // TODO: 패턴 선택 로직 구현
-            });
-
+            if (buttonComponent != null)
+            {
+                buttonComponent.onClick.RemoveAllListeners();
+                buttonComponent.onClick.AddListener(() => {
+                    Debug.Log($"[UIController] 패턴 선택: {pattern.Name}");
+                    // TODO: 패턴 선택 로직 구현
+                });
+            }
+            
             // 레이아웃 설정
-            RectTransform buttonRect = buttonObj.GetComponent<RectTransform>();
+            RectTransform buttonRect = buttonInstance.GetComponent<RectTransform>();
             buttonRect.anchoredPosition = new Vector2(index * 120 - 180, 0);
-            buttonRect.sizeDelta = new Vector2(100, 50);
-
-            RectTransform textRect = textObj.GetComponent<RectTransform>();
-            textRect.anchorMin = Vector2.zero;
-            textRect.anchorMax = Vector2.one;
-            textRect.sizeDelta = Vector2.zero;
-            textRect.anchoredPosition = Vector2.zero;
         }
         #endregion
     }

@@ -376,6 +376,11 @@ namespace MonoChrome.Systems.Combat
         /// </summary>
         private void InitializeForNewCombat()
         {
+            // 전투 상태 활성화
+            _isCombatActive = true;
+            _isPlayerTurn = true;
+            _turnCount = 1;
+            
             // 모든 동전 상태 초기화
             for (int i = 0; i < _coinCount; i++)
             {
@@ -822,16 +827,23 @@ namespace MonoChrome.Systems.Combat
         {
             Debug.Log("[CombatSystem] AI 턴 처리 시작");
 
+            // AI 패턴 선택
+            var aiManager = AIManager.Instance;
+            var selectedPattern = aiManager?.SelectMonsterPattern(_enemy, _player);
+
             // 적의 의도 표시 업데이트
             var combatUI = FindFirstObjectByType<CombatUI>();
             if (combatUI != null && combatUI.EnemyIntentionText != null)
             {
-                combatUI.EnemyIntentionText.text = "Enemy is acting...";
+                if (selectedPattern != null)
+                {
+                    combatUI.EnemyIntentionText.text = $"적이 {selectedPattern.PatternName}을(를) 사용합니다...";
+                }
+                else
+                {
+                    combatUI.EnemyIntentionText.text = "적이 행동을 준비 중...";
+                }
             }
-
-            // AI 패턴 선택
-            var aiManager = AIManager.Instance;
-            var selectedPattern = aiManager?.SelectMonsterPattern(_enemy, _player);
 
             if (selectedPattern != null)
             {
